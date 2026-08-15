@@ -20,6 +20,13 @@
 # production
 /build
 
+# environment variables
+.env
+.env.local
+.env.production
+.env*.local
+
+
 # misc
 .DS_Store
 *.pem
@@ -39,3 +46,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma

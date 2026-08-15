@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model Problem {
+  id              Int      @id @default(autoincrement())
+  slug            String   @unique
+  title           String
+  company         String
+  role            String
+  difficulty      String
+  category        String
+  description     String
+  example         String
+  approach        String
+  solution        String
+  timeComplexity  String
+  spaceComplexity String
+  topics          String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([company])
+  @@index([category])
+  @@index([difficulty])
+  @@index([createdAt])
+}
+
+model Post {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  title       String
+  description String
+  content     String
+  category    String
+  date        String
+  readingTime String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([createdAt])
+}
