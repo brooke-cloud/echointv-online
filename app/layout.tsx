@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
@@ -9,51 +10,30 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
 
   title: {
-    default: "FastPrep",
+    default: "FastPrep - Software Engineering Interview Preparation",
     template: "%s | FastPrep",
   },
 
   description:
-    "Software engineering interview preparation platform with coding problems, interview experiences, and technical guides.",
+    "Practice software engineering interview problems, read interview experiences, and prepare for technical interviews.",
 
   keywords: [
     "software engineering interview",
     "coding interview",
     "technical interview",
-    "leetcode",
-    "system design",
+    "LeetCode",
     "software engineer",
     "interview preparation",
+    "FastPrep",
   ],
-
-  authors: [
-    {
-      name: "FastPrep",
-    },
-  ],
-
-  creator: "FastPrep",
-
-  publisher: "FastPrep",
-
-  alternates: {
-    canonical: "/",
-  },
 
   openGraph: {
-    type: "website",
+    title: "FastPrep - Software Engineering Interview Preparation",
+    description:
+      "Prepare smarter for software engineering interviews with real interview problems and experiences.",
     url: siteUrl,
-    title: "FastPrep",
-    description:
-      "Software engineering interview preparation platform.",
     siteName: "FastPrep",
-  },
-
-  twitter: {
-    card: "summary_large_image",
-    title: "FastPrep",
-    description:
-      "Software engineering interview preparation platform.",
+    type: "website",
   },
 
   robots: {
@@ -62,7 +42,6 @@ export const metadata: Metadata = {
   },
 };
 
-// 网站最外层 Root Layout
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -70,8 +49,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* 网站 Body */}
-      <body className="min-h-screen bg-gray-50 text-gray-900">
+      <body>
+        <Navbar />
         {children}
       </body>
     </html>
