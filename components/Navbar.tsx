@@ -23,7 +23,7 @@ export default function Navbar() {
           onClick={closeMenu}
           className="text-xl font-bold text-gray-900"
         >
-          FastPrep
+          Echo Intv
         </Link>
 
 
@@ -35,7 +35,7 @@ export default function Navbar() {
             href="/"
             className="font-medium text-gray-600 transition hover:text-blue-600"
           >
-            Home
+            首页
           </Link>
 
           {/* Problems */}
@@ -43,7 +43,7 @@ export default function Navbar() {
             href="/problem"
             className="font-medium text-gray-600 transition hover:text-blue-600"
           >
-            Problems
+            面试真题
           </Link>
 
           {/* Blog */}
@@ -51,7 +51,7 @@ export default function Navbar() {
             href="/blog"
             className="font-medium text-gray-600 transition hover:text-blue-600"
           >
-            Blog
+            面试经验
           </Link>
 
           {/* Contact */}
@@ -59,7 +59,7 @@ export default function Navbar() {
             href="/contact"
             className="font-medium text-gray-600 transition hover:text-blue-600"
           >
-            Contact
+            我们的服务
           </Link>
 
         </nav>

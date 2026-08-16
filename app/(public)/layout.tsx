@@ -1,5 +1,6 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+
+
+
 
 type PublicLayoutProps = {
   children: React.ReactNode;
@@ -11,18 +12,10 @@ export default function PublicLayout({
 }: PublicLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
-
-      {/* 前台 Navbar */}
-      <Navbar />
-
       {/* 前台页面主体 */}
-      <div className="flex-1">
+      <main className="flex-1">
         {children}
-      </div>
-
-      {/* 前台 Footer */}
-      <Footer />
-
+      </main>
     </div>
   );
 }

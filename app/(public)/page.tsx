@@ -64,10 +64,7 @@ export default async function HomePage() {
           {/* Hero 主体 */}
           <div className="mx-auto max-w-4xl text-center">
 
-            {/* Hero 标签 */}
-            <p className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
-              Software Engineering Interview Preparation
-            </p>
+          
 
             {/* Hero 标题 */}
             <h1 className="mt-8 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl lg:text-7xl">
