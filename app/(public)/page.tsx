@@ -294,8 +294,8 @@ export default async function HomePage() {
           <div className="mx-auto max-w-3xl text-center">
 
             {/* 小标题 */}
-            <p className="font-semibold text-blue-600">
-              Why FastPrep
+            <p className="font-semibold text-4xl text-blue-600">
+              Why Echo INTV？
             </p>
 
             {/* 标题 */}

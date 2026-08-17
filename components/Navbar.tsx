@@ -23,7 +23,7 @@ export default function Navbar() {
           onClick={closeMenu}
           className="text-xl font-bold text-gray-900"
         >
-          Echo Intv
+          Echo INTV
         </Link>
 
 
