@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
-  "http://localhost:3000";
+  "https://www.echointv.shop";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
