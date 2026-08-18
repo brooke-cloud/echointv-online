@@ -35,7 +35,7 @@ export default async function AdminLoginPage({
 
         {/* 页面说明 */}
         <p className="mt-3 text-gray-600">
-          Sign in to manage FastPrep content.
+          Sign in to manage Echo INTV content.
         </p>
 
         {error === "invalid" && (

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Contact",
 
   description:
-    "Contact FastPrep for software engineering interview preparation resources and services.",
+    "Contact Echo INTV for software engineering interview preparation resources and services.",
 
   alternates: {
     canonical: "/contact",
@@ -83,7 +83,7 @@ export default function ContactPage() {
 
             {/* Email 地址 */}
             <p className="mt-5 break-all font-medium text-blue-600">
-              contact@fastprep.com
+              contact@Echo INTV.com
             </p>
 
           </div>

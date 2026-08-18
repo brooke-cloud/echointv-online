@@ -20,7 +20,7 @@ export default function Footer() {
               href="/"
               className="text-xl font-bold text-gray-900"
             >
-              FastPrep
+              Echo INTV
             </Link>
 
             {/* 网站说明 */}
@@ -75,7 +75,7 @@ export default function Footer() {
 
           {/* Copyright */}
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} FastPrep. All rights reserved.
+            © {new Date().getFullYear()} Echo INTV. All rights reserved.
           </p>
 
         </div>

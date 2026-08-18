@@ -1,136 +1,152 @@
-
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import CopyButton from "./CopyButton";
+// 引入经典优雅的暗色代码高亮主题
+import "highlight.js/styles/github-dark.css";
 
 type MarkdownRendererProps = {
   content: string;
 };
 
-// Markdown 内容渲染组件
-export default function MarkdownRenderer({
-  content,
-}: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
-    <div className="min-w-0 break-words text-gray-700">
-
-      {/* Markdown 内容 */}
+    <div className="markdown-content text-gray-800 leading-relaxed">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeHighlight]}
         components={{
-          h1: ({ children }) => (
-            <h1 className="mb-6 mt-10 break-words text-3xl font-bold text-gray-900 sm:text-4xl">
-              {children}
-            </h1>
-          ),
+          // 1. 代码块渲染 (语法高亮 + 仿终端三色圆点 + 复制按钮)
+          pre({ children, ...props }) {
+            let rawCode = "";
+            if (
+              children &&
+              typeof children === "object" &&
+              "props" in (children as any)
+            ) {
+              rawCode = String(
+                (children as any).props.children || ""
+              ).replace(/\n$/, "");
+            }
 
-          h2: ({ children }) => (
-            <h2 className="mb-4 mt-10 break-words text-2xl font-bold text-gray-900 sm:text-3xl">
-              {children}
-            </h2>
-          ),
+            return (
+              <div className="group relative my-5 overflow-hidden rounded-xl border border-gray-800 bg-[#0d1117] shadow-lg">
+                {/* 顶部工具栏 (仿 Mac 窗口控制点 + 复制按钮) */}
+                <div className="flex items-center justify-between border-b border-gray-800/80 bg-[#161b22] px-4 py-2 text-xs text-gray-400">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-500/80"></span>
+                    <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80"></span>
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-500/80"></span>
+                  </div>
+                  {rawCode && <CopyButton text={rawCode} />}
+                </div>
 
-          h3: ({ children }) => (
-            <h3 className="mb-3 mt-8 break-words text-xl font-semibold text-gray-900 sm:text-2xl">
-              {children}
-            </h3>
-          ),
+                {/* 语法着色后的代码正文 */}
+                <pre
+                  {...props}
+                  className="overflow-x-auto p-4 font-mono text-sm leading-6 text-gray-100"
+                >
+                  {children}
+                </pre>
+              </div>
+            );
+          },
 
-          p: ({ children }) => (
-            <p className="my-5 break-words leading-8">
-              {children}
-            </p>
-          ),
-
-          ul: ({ children }) => (
-            <ul className="my-5 list-disc space-y-2 pl-6 sm:pl-7">
-              {children}
-            </ul>
-          ),
-
-          ol: ({ children }) => (
-            <ol className="my-5 list-decimal space-y-2 pl-6 sm:pl-7">
-              {children}
-            </ol>
-          ),
-
-          li: ({ children }) => (
-            <li className="break-words leading-7">
-              {children}
-            </li>
-          ),
-
-          strong: ({ children }) => (
-            <strong className="font-semibold text-gray-900">
-              {children}
-            </strong>
-          ),
-
-          blockquote: ({ children }) => (
-            <blockquote className="my-6 border-l-4 border-blue-500 bg-blue-50 px-4 py-3 italic text-gray-700 sm:px-5">
-              {children}
-            </blockquote>
-          ),
-
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="break-all font-medium text-blue-600 underline underline-offset-4 hover:text-blue-800"
-            >
-              {children}
-            </a>
-          ),
-
-          code: ({ children }) => (
-            <code className="break-words rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm text-red-600">
-              {children}
-            </code>
-          ),
-
-          pre: ({ children }) => (
-            <pre className="my-6 max-w-full overflow-x-auto rounded-xl bg-gray-950 p-4 text-sm leading-7 text-gray-100 sm:p-5">
-              {children}
-            </pre>
-          ),
-
-          hr: () => (
-            <hr className="my-10 border-gray-200" />
-          ),
-
-          table: ({ children }) => (
-            <div className="my-8 max-w-full overflow-x-auto">
-
-              {/* Markdown 表格 */}
-              <table className="min-w-[600px] w-full border-collapse text-left">
+          // 2. 行内代码 `inline code`
+          code({ className, children, ...props }) {
+            const isBlock = Boolean(className);
+            if (isBlock) {
+              return (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            }
+            return (
+              <code
+                className="rounded-md bg-gray-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-pink-600 sm:text-sm"
+                {...props}
+              >
                 {children}
-              </table>
+              </code>
+            );
+          },
 
-            </div>
-          ),
+          // 3. 表格样式增强
+          table({ children }) {
+            return (
+              <div className="my-6 overflow-x-auto rounded-xl border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  {children}
+                </table>
+              </div>
+            );
+          },
+          thead({ children }) {
+            return (
+              <thead className="bg-gray-50 font-semibold text-gray-700">
+                {children}
+              </thead>
+            );
+          },
+          th({ children }) {
+            return <th className="px-4 py-3 text-left">{children}</th>;
+          },
+          td({ children }) {
+            return (
+              <td className="border-t border-gray-100 px-4 py-2.5 text-gray-600">
+                {children}
+              </td>
+            );
+          },
 
-          thead: ({ children }) => (
-            <thead className="bg-gray-100">
-              {children}
-            </thead>
-          ),
+          // 4. 标题排版
+          h1({ children }) {
+            return (
+              <h1 className="mt-8 mb-4 text-2xl font-bold text-gray-900 sm:text-3xl">
+                {children}
+              </h1>
+            );
+          },
+          h2({ children }) {
+            return (
+              <h2 className="mt-6 mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                {children}
+              </h2>
+            );
+          },
+          h3({ children }) {
+            return (
+              <h3 className="mt-4 mb-2 text-lg font-semibold text-gray-800 sm:text-xl">
+                {children}
+              </h3>
+            );
+          },
 
-          th: ({ children }) => (
-            <th className="border border-gray-300 px-4 py-3 font-semibold text-gray-900">
-              {children}
-            </th>
-          ),
-
-          td: ({ children }) => (
-            <td className="border border-gray-300 px-4 py-3">
-              {children}
-            </td>
-          ),
+          // 5. 链接与引用块
+          a({ href, children }) {
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-500"
+              >
+                {children}
+              </a>
+            );
+          },
+          blockquote({ children }) {
+            return (
+              <blockquote className="my-4 rounded-r-lg border-l-4 border-blue-500 bg-blue-50/50 py-2.5 pl-4 text-sm italic text-gray-700">
+                {children}
+              </blockquote>
+            );
+          },
         }}
       >
         {content}
       </ReactMarkdown>
-
     </div>
   );
 }

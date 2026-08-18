@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://www.echointv.shop";
+  "https://www.Echo INTV.shop";
 
 // 生成网站 Sitemap
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

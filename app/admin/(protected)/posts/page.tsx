@@ -62,7 +62,7 @@ export default async function AdminPage() {
 
           {/* 页面说明 */}
           <p className="mt-3 text-gray-600">
-            Overview of your FastPrep content and database.
+            Overview of your Echo INTV content and database.
           </p>
 
         </section>

@@ -24,7 +24,7 @@ export default function AdminSidebar() {
           onClick={closeMenu}
           className="font-bold text-gray-900"
         >
-          FastPrep Admin
+          Echo INTV Admin
         </Link>
 
         {/* 手机菜单按钮 */}
@@ -113,7 +113,7 @@ export default function AdminSidebar() {
           <div>
             {/* Admin 名称 */}
             <h2 className="text-2xl font-bold text-gray-900">
-              FastPrep Admin
+              Echo INTV Admin
             </h2>
 
             {/* Admin 说明 */}

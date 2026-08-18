@@ -32,7 +32,7 @@ export default async function BlogPage() {
         <section>
           {/* 页面标题 */}
           <h1 className="text-5xl font-bold tracking-tight text-gray-900">
-            FastPrep Blog
+            面试经验
           </h1>
 
           {/* 页面介绍 */}

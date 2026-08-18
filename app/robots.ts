@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://www.echointv.shop";
+  "https://www.Echo INTV.shop";
 
 // 搜索引擎爬虫规则
 export default function robots(): MetadataRoute.Robots {

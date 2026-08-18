@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 const ADMIN_COOKIE_NAME =
-  "fastprep_admin_session";
+  "Echo INTV_admin_session";
 
 const SESSION_DURATION =
   60 * 60 * 24;

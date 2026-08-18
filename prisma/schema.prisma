@@ -52,3 +52,16 @@ model Post {
   @@index([category])
   @@index([createdAt])
 }
+
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String   // 加密后的密码哈希
+  role      String   @default("USER") // USER 或 ADMIN
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}

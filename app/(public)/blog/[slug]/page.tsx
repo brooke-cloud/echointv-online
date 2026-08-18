@@ -1,158 +1,276 @@
-
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import {
+  Calendar,
+  Clock,
+  Tag,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
 
-type BlogPostPageProps = {
-  params: Promise<{
-    slug: string;
-  }>;
+type Props = {
+  params: Promise<{ slug: string }>;
 };
 
-// 生成 Blog SEO Metadata
-export async function generateMetadata({
-  params,
-}: BlogPostPageProps): Promise<Metadata> {
+// 1. 动态生成博客详情页 SEO 元数据
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-
   const post = await prisma.post.findUnique({
-    where: {
-      slug,
-    },
+    where: { slug },
   });
 
   if (!post) {
     return {
-      title: "Post Not Found",
-      robots: {
-        index: false,
-        follow: false,
-      },
+      title: "文章未找到 | Echo INTV",
     };
   }
 
+  const title = `${post.title} - 面试经验与求职攻略`;
+  const description = post.description
+    ? post.description.slice(0, 160).replace(/\n/g, " ")
+    : `阅读关于 ${post.title} 的深入解析与求职经验。`;
+
   return {
-    title: post.title,
-
-    description: post.description,
-
-    alternates: {
-      canonical: `/blog/${post.slug}`,
-    },
-
+    title,
+    description,
     openGraph: {
+      title,
+      description,
       type: "article",
-      title: post.title,
-      description: post.description,
-      url: `/blog/${post.slug}`,
-      siteName: "FastPrep",
-    },
-
-    twitter: {
-      card: "summary_large_image",
-      title: post.title,
-      description: post.description,
     },
   };
 }
 
-// Blog 详情页面
-export default async function BlogPostPage({
-  params,
-}: BlogPostPageProps) {
+// 自动计算阅读时长工具函数
+const getReadingTime = (content: string, customTime?: string | null) => {
+  if (customTime) return customTime;
+  if (!content) return "3 min read";
+  const words = content.trim().length;
+  const minutes = Math.max(1, Math.ceil(words / 400));
+  return `${minutes} min read`;
+};
+
+export default async function BlogDetailPage({ params }: Props) {
   const { slug } = await params;
 
+  // 2. 查询当前文章数据
   const post = await prisma.post.findUnique({
-    where: {
-      slug,
-    },
+    where: { slug },
   });
 
   if (!post) {
     notFound();
   }
 
+  // 3. 并行查询「上一篇」、「下一篇」与「相关推荐文章」
+  const [prevPost, nextPost, relatedPosts] = await Promise.all([
+    // 上一篇
+    prisma.post.findFirst({
+      where: { createdAt: { lt: post.createdAt } },
+      orderBy: { createdAt: "desc" },
+      select: { slug: true, title: true },
+    }),
+    // 下一篇
+    prisma.post.findFirst({
+      where: { createdAt: { gt: post.createdAt } },
+      orderBy: { createdAt: "asc" },
+      select: { slug: true, title: true },
+    }),
+    // 同分类推荐文章（取 3 篇）
+    prisma.post.findMany({
+      where: {
+        id: { not: post.id },
+        category: post.category,
+      },
+      take: 3,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        description: true,
+        category: true,
+        date: true,
+        readingTime: true,
+      },
+    }),
+  ]);
+
+  const readingTimeText = getReadingTime(post.content, post.readingTime);
+
   return (
-    <main className="bg-white py-12 sm:py-16">
-
-      {/* Blog 内容容器 */}
-      <article className="mx-auto max-w-4xl px-5 sm:px-6">
-
-        {/* 返回 Blog */}
-        <Link
-          href="/blog"
-          className="text-sm font-medium text-blue-600 transition hover:text-blue-800"
-        >
-          ← Back to Blog
-        </Link>
-
-        {/* Blog Header */}
-        <header className="mt-8 border-b border-gray-200 pb-8 sm:mt-10 sm:pb-10">
-
-          {/* Blog Category */}
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
-            {post.category}
-          </p>
-
-          {/* Blog Title */}
-          <h1 className="mt-4 break-words text-3xl font-bold leading-tight text-gray-900 sm:text-4xl md:text-5xl">
-            {post.title}
-          </h1>
-
-          {/* Blog Description */}
-          <p className="mt-6 break-words text-lg leading-8 text-gray-600 sm:text-xl">
-            {post.description}
-          </p>
-
-          {/* Blog Metadata */}
-          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-gray-500">
-
-            {/* 发布日期 */}
-            <span>
-              {post.date}
-            </span>
-
-            {/* 分隔符 */}
-            <span>
-              ·
-            </span>
-
-            {/* 阅读时间 */}
-            <span>
-              {post.readingTime}
-            </span>
-
-          </div>
-
-        </header>
-
-        {/* Blog Markdown 正文 */}
-        <section className="mt-8 min-w-0 sm:mt-10">
-
-          {/* Markdown Renderer */}
-          <MarkdownRenderer
-            content={post.content}
-          />
-
-        </section>
-
-        {/* Blog 底部 */}
-        <footer className="mt-12 border-t border-gray-200 pt-8 sm:mt-16">
-
-          {/* 返回 Blog */}
+    <div className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        
+        {/* 🌟 1. 顶部返回按钮与面包屑导航 */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <Link
             href="/blog"
-            className="font-medium text-blue-600 transition hover:text-blue-800"
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 hover:text-blue-600"
           >
-            ← Back to all articles
+            <ArrowLeft className="h-3.5 w-3.5" />
+            返回全部文章
           </Link>
 
-        </footer>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Link href="/blog" className="hover:text-blue-600 transition">
+              面试经验与攻略
+            </Link>
+            <span>/</span>
+            <span className="max-w-[180px] truncate font-medium text-gray-700 sm:max-w-xs">
+              {post.title}
+            </span>
+          </div>
+        </div>
 
-      </article>
+        {/* 文章主体卡片 */}
+        <article className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm">
+          
+          {/* 文章头部元数据 */}
+          <header className="border-b border-gray-100 pb-8">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+              {/* 分类标签 */}
+              <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 font-semibold text-blue-700 border border-blue-100">
+                <Tag className="h-3 w-3" />
+                {post.category || "经验分享"}
+              </span>
 
-    </main>
+              {/* 发布时间 */}
+              {post.date && (
+                <span className="inline-flex items-center gap-1 text-gray-500">
+                  <Calendar className="h-3.5 w-3.5" />
+                  {post.date}
+                </span>
+              )}
+
+              {/* 阅读时长 */}
+              <span className="inline-flex items-center gap-1 text-gray-500">
+                <Clock className="h-3.5 w-3.5" />
+                {readingTimeText}
+              </span>
+            </div>
+
+            {/* 文章主标题 */}
+            <h1 className="mt-4 text-2xl font-extrabold text-gray-900 sm:text-4xl leading-tight">
+              {post.title}
+            </h1>
+
+            {/* 文章摘要 Callout */}
+            {post.description && (
+              <p className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4 text-base text-gray-600 leading-relaxed">
+                {post.description}
+              </p>
+            )}
+          </header>
+
+          {/* 文章 Markdown 正文 */}
+          <div className="mt-8">
+            <MarkdownRenderer content={post.content} />
+          </div>
+
+          {/* 🌟 2. 底部「上一篇 / 下一篇」切换导航 */}
+          <div className="mt-12 flex flex-col gap-4 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            {prevPost ? (
+              <Link
+                href={`/blog/${prevPost.slug}`}
+                className="group flex flex-1 items-center gap-3 rounded-xl border border-gray-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/30"
+              >
+                <ChevronLeft className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition" />
+                <div className="text-left">
+                  <span className="block text-xs text-gray-400">上一篇</span>
+                  <span className="line-clamp-1 text-sm font-medium text-gray-800 group-hover:text-blue-600">
+                    {prevPost.title}
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div className="flex-1"></div>
+            )}
+
+            {nextPost && (
+              <Link
+                href={`/blog/${nextPost.slug}`}
+                className="group flex flex-1 items-center justify-end gap-3 rounded-xl border border-gray-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/30 text-right"
+              >
+                <div>
+                  <span className="block text-xs text-gray-400">下一篇</span>
+                  <span className="line-clamp-1 text-sm font-medium text-gray-800 group-hover:text-blue-600">
+                    {nextPost.title}
+                  </span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition" />
+              </Link>
+            )}
+          </div>
+
+          {/* 🌟 3. 文章末尾常驻的返回列表按钮 */}
+          <div className="mt-8 flex justify-center border-t border-gray-100 pt-6">
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              返回全部面试经验列表
+            </Link>
+          </div>
+
+        </article>
+
+        {/* 🌟 4. 相关面经与攻略推荐 (Related Posts) */}
+        {relatedPosts.length > 0 && (
+          <div className="mt-14">
+            <div className="flex items-center gap-2 mb-5">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              <h2 className="text-xl font-bold text-gray-900">
+                相关求职面经与攻略推荐
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              {relatedPosts.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/blog/${item.slug}`}
+                  className="group flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-400 hover:shadow-md"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 text-xs text-gray-500">
+                      <span className="font-semibold text-blue-600">
+                        {item.category || "经验分享"}
+                      </span>
+                      <span>{item.readingTime || "5 min read"}</span>
+                    </div>
+
+                    <h3 className="mt-3 line-clamp-2 text-base font-bold text-gray-900 group-hover:text-blue-600">
+                      {item.title}
+                    </h3>
+
+                    {item.description && (
+                      <p className="mt-2 line-clamp-2 text-xs text-gray-500 leading-relaxed">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-5 flex items-center justify-between border-t border-gray-50 pt-3 text-xs text-gray-400">
+                    <span>{item.date || "近期发布"}</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-blue-600 group-hover:underline">
+                      阅读全文 <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
   );
 }
