@@ -10,12 +10,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
 
   title: {
-    default: "FastPrep - Software Engineering Interview Preparation",
-    template: "%s | FastPrep",
+    default: "Echo INTV - Software Engineering Interview Preparation",
+    template: "%s | Echo INTV",
   },
 
   description:
     "Practice software engineering interview problems, read interview experiences, and prepare for technical interviews.",
+
+
+  verification: {
+    google: "google7230d392597b4c08.html",
+  },
+
 
   keywords: [
     "software engineering interview",
@@ -24,15 +30,15 @@ export const metadata: Metadata = {
     "LeetCode",
     "software engineer",
     "interview preparation",
-    "FastPrep",
+    "Echo INTV",
   ],
 
   openGraph: {
-    title: "FastPrep - Software Engineering Interview Preparation",
+    title: "Echo INTV - Software Engineering Interview Preparation",
     description:
       "Prepare smarter for software engineering interviews with real interview problems and experiences.",
     url: siteUrl,
-    siteName: "FastPrep",
+    siteName: "Echo INTV",
     type: "website",
   },
 
