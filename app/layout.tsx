@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 
   verification: {
-    google: "google7230d392597b4c08.html",
+    google: "nBGCCY_cRfwqRsOhGBJRZkcddyWlxbjt-jAhViY-n7A",
   },
 
 
