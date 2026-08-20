@@ -1,125 +1,72 @@
-import { prisma } from "@/lib/prisma";
+import {prisma} from "@/lib/prisma";
 
-// 把普通文本转换成 Slug
-export function createSlug(
-  value: string
-) {
-  return value
+/**
+ * 将标题/文本转换为 URL 友好的 slug
+ */
+export function createSlug(text: string): string {
+  return text
+    .toString()
     .toLowerCase()
     .trim()
-    .replace(/['"]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/\s+/g, "-") // 空格替换为 -
+    .replace(/[^\w\u4e00-\u9fa5-]+/g, "") // 保留英文字符、数字和中文
+    .replace(/--+/g, "-") // 多个连字符合并为一个
+    .replace(/^-+/, "") // 去除开头的 -
+    .replace(/-+$/, ""); // 去除结尾的 -
 }
 
-
-// 为 Problem 创建唯一 Slug
+/**
+ * 生成唯一的题目 Slug（避免重复）
+ */
 export async function createUniqueProblemSlug(
-  title: string
-) {
-  const baseSlug =
-    createSlug(title) || "problem";
-
+  title: string,
+  currentId?: number | string
+): Promise<string> {
+  const baseSlug = createSlug(title) || "problem";
   let slug = baseSlug;
-  let counter = 2;
+  let count = 1;
 
-  while (
-    await prisma.problem.findUnique({
+  while (true) {
+    const existing = await prisma.problem.findFirst({
       where: {
         slug,
+        ...(currentId ? { NOT: { id: currentId as any } } : {}),
       },
-    })
-  ) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
-  }
+    });
 
-  return slug;
+    if (!existing) {
+      return slug;
+    }
+
+    slug = `${baseSlug}-${count}`;
+    count++;
+  }
 }
 
-
-// 为 Blog 创建唯一 Slug
+/**
+ * 生成唯一的文章/经验贴 Slug（避免重复）
+ */
 export async function createUniquePostSlug(
-  title: string
-) {
-  const baseSlug =
-    createSlug(title) || "post";
-
+  title: string,
+  currentId?: number | string
+): Promise<string> {
+  const baseSlug = createSlug(title) || "post";
   let slug = baseSlug;
-  let counter = 2;
+  let count = 1;
 
-  while (
-    await prisma.post.findUnique({
+  while (true) {
+    const existing = await prisma.post.findFirst({
       where: {
         slug,
+        ...(currentId ? { NOT: { id: currentId as any } } : {}),
       },
-    })
-  ) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
+    });
+
+    if (!existing) {
+      return slug;
+    }
+
+    slug = `${baseSlug}-${count}`;
+    count++;
   }
-
-  return slug;
-}import { prisma } from "@/lib/prisma";
-
-// 把普通文本转换成 Slug
-export function createSlug(
-  value: string
-) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/['"]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-
-// 为 Problem 创建唯一 Slug
-export async function createUniqueProblemSlug(
-  title: string
-) {
-  const baseSlug =
-    createSlug(title) || "problem";
-
-  let slug = baseSlug;
-  let counter = 2;
-
-  while (
-    await prisma.problem.findUnique({
-      where: {
-        slug,
-      },
-    })
-  ) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-
-  return slug;
-}
-
-
-// 为 Blog 创建唯一 Slug
-export async function createUniquePostSlug(
-  title: string
-) {
-  const baseSlug =
-    createSlug(title) || "post";
-
-  let slug = baseSlug;
-  let counter = 2;
-
-  while (
-    await prisma.post.findUnique({
-      where: {
-        slug,
-      },
-    })
-  ) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-
-  return slug;
 }

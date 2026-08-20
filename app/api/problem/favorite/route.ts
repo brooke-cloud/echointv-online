@@ -1,47 +1,44 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/user-auth";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return Response.json({ error: "请先登录" }, { status: 401 });
+    const session = await getCurrentUser();
+    if (!session) {
+      return NextResponse.json({ error: "请先登录" }, { status: 401 });
     }
 
-    const { problemId, isFavorite } = await request.json();
-
+    const { problemId } = await req.json();
     if (!problemId) {
-      return Response.json({ error: "缺少题目 ID" }, { status: 400 });
+      return NextResponse.json({ error: "缺少 problemId" }, { status: 400 });
     }
 
-    if (isFavorite) {
-      // 添加收藏
-      await prisma.favorite.upsert({
-        where: {
-          userId_problemId: {
-            userId: user.id,
-            problemId: problemId,
-          },
+    const existing = await (prisma as any).favorite.findUnique({
+      where: {
+        userId_problemId: {
+          userId: session.id,
+          problemId: Number(problemId),
         },
-        update: {},
-        create: {
-          userId: user.id,
-          problemId: problemId,
-        },
+      },
+    });
+
+    if (existing) {
+      await (prisma as any).favorite.delete({
+        where: { id: existing.id },
       });
+      return NextResponse.json({ isFavorited: false, message: "已取消收藏" });
     } else {
-      // 取消收藏
-      await prisma.favorite.deleteMany({
-        where: {
-          userId: user.id,
-          problemId: problemId,
+      await (prisma as any).favorite.create({
+        data: {
+          userId: session.id,
+          problemId: Number(problemId),
         },
       });
+      return NextResponse.json({ isFavorited: true, message: "已加入收藏！" });
     }
-
-    return Response.json({ success: true, isFavorite });
   } catch (error) {
-    console.error("更新收藏状态异常:", error);
-    return Response.json({ error: "服务器内部错误" }, { status: 500 });
+    console.error("Favorite error:", error);
+    return NextResponse.json({ error: "操作失败" }, { status: 500 });
   }
 }

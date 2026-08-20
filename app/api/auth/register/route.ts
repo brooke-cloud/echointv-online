@@ -1,6 +1,8 @@
-import { NextResponse } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, setUserSession } from "@/lib/user-auth";
+
+// 预设管理员邮箱列表（注册时自动分配 ADMIN 角色并拥有全部会员权限）
+const ADMIN_EMAILS = [ "shihaoy74@gmail.com"];
 
 export async function POST(request: Request) {
   try {
@@ -22,9 +24,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     // 检查邮箱是否已被注册
     const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -34,14 +38,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // 判断是否为管理员账号：管理员自动设为 ADMIN，其余普通注册为 USER（非会员）
+    const role = ADMIN_EMAILS.includes(normalizedEmail) ? "ADMIN" : "USER";
+
     // 密码加密并创建用户
-    const hashedPassword = hashPassword(password);
+    const hashedPassword = await hashPassword(password);
     const user = await prisma.user.create({
       data: {
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         password: hashedPassword,
-        name: name ? name.trim() : email.split("@")[0],
-        role: "USER",
+        name: name ? name.trim() : normalizedEmail.split("@")[0],
+        role,
       },
       select: {
         id: true,

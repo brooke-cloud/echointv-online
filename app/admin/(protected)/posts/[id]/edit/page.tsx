@@ -123,7 +123,7 @@ export default async function EditPostPage({
 
           {/* Blog Markdown 内容 */}
           <BlogContentEditor
-            defaultValue={post.content}
+            defaultValue={post.content ?? ""}
           />
 
 

@@ -83,7 +83,7 @@ export default function ContactPage() {
 
             {/* Email 地址 */}
             <p className="mt-5 break-all font-medium text-blue-600">
-              contact@Echo INTV.com
+              echointv@gmail.com
             </p>
 
           </div>

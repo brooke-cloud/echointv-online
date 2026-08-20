@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/user-auth";
+import PaywallCard from "@/components/PaywallCard";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import CodeBlock from "@/components/CodeBlock";
 import {
@@ -18,6 +20,19 @@ import {
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+// ⚡ 1. 开启 ISR 增量静态再生（每 60 秒后台静默刷新缓存）
+export const revalidate = 60;
+
+// ⚡ 2. 预生成静态路由参数（打包构建时预先生成所有真题的静态页面）
+export async function generateStaticParams() {
+  const problems = await prisma.problem.findMany({
+    select: { slug: true },
+  });
+  return problems.map((problem) => ({
+    slug: problem.slug,
+  }));
+}
 
 // 1. 动态生成 SEO 标题与描述
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -75,21 +90,43 @@ export default async function ProblemDetailPage({ params }: Props) {
     notFound();
   }
 
-  // 3. 并行查询「上一题」、「下一题」与「相关推荐真题」
+  // 🔒 3. 会员权限校验逻辑：前 5 道题免费，第 6 道起需要 Pro/Admin 会员
+  const freeProblems = await prisma.problem.findMany({
+    take: 5,
+    orderBy: { id: "asc" },
+    select: { id: true },
+  });
+  const isFree = freeProblems.some((p) => p.id === problem.id);
+
+  const session = await getCurrentUser();
+  let isMember = false;
+
+  // 预设管理员邮箱白名单（自动放行）
+  const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
+
+  if (session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.id },
+    });
+
+    const isEmailAdmin = session.email && ADMIN_EMAILS.includes(session.email.toLowerCase().trim());
+    isMember = isEmailAdmin || user?.role === "PRO" || user?.role === "ADMIN";
+  }
+
+  const canAccess = isFree || isMember;
+
+  // 4. 并行查询「上一题」、「下一题」与「相关推荐真题」
   const [prevProblem, nextProblem, relatedProblems] = await Promise.all([
-    // 上一题 (按创建时间较早的题目)
     prisma.problem.findFirst({
       where: { createdAt: { lt: problem.createdAt } },
       orderBy: { createdAt: "desc" },
       select: { slug: true, title: true, difficulty: true },
     }),
-    // 下一题 (按创建时间较晚的题目)
     prisma.problem.findFirst({
       where: { createdAt: { gt: problem.createdAt } },
       orderBy: { createdAt: "asc" },
       select: { slug: true, title: true, difficulty: true },
     }),
-    // 相关真题推荐：同公司或同分类的其它 3 道题目
     prisma.problem.findMany({
       where: {
         id: { not: problem.id },
@@ -123,7 +160,7 @@ export default async function ProblemDetailPage({ params }: Props) {
         </div>
 
         {/* 题目主卡片 */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
           
           {/* 题目头部信息 */}
           <div className="border-b border-gray-100 pb-6">
@@ -155,7 +192,7 @@ export default async function ProblemDetailPage({ params }: Props) {
             </h1>
           </div>
 
-          {/* 题目描述 (Problem Description) */}
+          {/* 题目描述 (所有人可见) */}
           <div className="mt-8">
             <h2 className="text-lg font-bold text-gray-900">Problem Description</h2>
             <div className="mt-3 text-gray-700">
@@ -163,87 +200,102 @@ export default async function ProblemDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* 示例 (Example) */}
-          {problem.example && (
-            <div className="mt-8">
-              <h2 className="text-lg font-bold text-gray-900">Example</h2>
-              <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 p-4 font-mono text-sm text-gray-800">
-                <pre className="whitespace-pre-wrap">{problem.example}</pre>
-              </div>
-            </div>
-          )}
-
-          {/* 解题思路 (Approach) */}
-          {problem.approach && (
-            <div className="mt-8">
-              <h2 className="text-lg font-bold text-gray-900">Approach</h2>
-              <div className="mt-3 text-gray-700">
-                <MarkdownRenderer content={problem.approach} />
-              </div>
-            </div>
-          )}
-
-          {/* 复杂度卡片 (Complexity) */}
-          {(problem.timeComplexity || problem.spaceComplexity) && (
-            <div className="mt-8">
-              <h2 className="text-lg font-bold text-gray-900">Complexity</h2>
-              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {problem.timeComplexity && (
-                  <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/40 p-4">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <span className="block text-xs font-medium text-gray-500">
-                        Time Complexity
-                      </span>
-                      <span className="font-mono text-sm font-semibold text-gray-900">
-                        {problem.timeComplexity}
-                      </span>
-                    </div>
+          {/* 🔒 权限控制区：前5题或会员展示核心题解，否则展示模糊遮罩与付费卡片 */}
+          {canAccess ? (
+            <>
+              {/* 示例 (Example) */}
+              {problem.example && (
+                <div className="mt-8">
+                  <h2 className="text-lg font-bold text-gray-900">Example</h2>
+                  <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 p-4 font-mono text-sm text-gray-800">
+                    <pre className="whitespace-pre-wrap">{problem.example}</pre>
                   </div>
-                )}
-                {problem.spaceComplexity && (
-                  <div className="flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50/40 p-4">
-                    <HardDrive className="h-5 w-5 text-purple-600" />
-                    <div>
-                      <span className="block text-xs font-medium text-gray-500">
-                        Space Complexity
-                      </span>
-                      <span className="font-mono text-sm font-semibold text-gray-900">
-                        {problem.spaceComplexity}
-                      </span>
-                    </div>
+                </div>
+              )}
+
+              {/* 解题思路 (Approach) */}
+              {problem.approach && (
+                <div className="mt-8">
+                  <h2 className="text-lg font-bold text-gray-900">Approach</h2>
+                  <div className="mt-3 text-gray-700">
+                    <MarkdownRenderer content={problem.approach} />
                   </div>
-                )}
-              </div>
-            </div>
-          )}
+                </div>
+              )}
 
-          {/* 解题代码 (Solution) */}
-          {problem.solution && (
-            <div className="mt-8">
-              <h2 className="text-lg font-bold text-gray-900">Solution</h2>
-              <CodeBlock
-                code={problem.solution}
-                language="python"
-                title="Python 3 Solution"
-              />
-            </div>
-          )}
+              {/* 复杂度卡片 (Complexity) */}
+              {(problem.timeComplexity || problem.spaceComplexity) && (
+                <div className="mt-8">
+                  <h2 className="text-lg font-bold text-gray-900">Complexity</h2>
+                  <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {problem.timeComplexity && (
+                      <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/40 p-4">
+                        <Clock className="h-5 w-5 text-blue-600" />
+                        <div>
+                          <span className="block text-xs font-medium text-gray-500">
+                            Time Complexity
+                          </span>
+                          <span className="font-mono text-sm font-semibold text-gray-900">
+                            {problem.timeComplexity}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {problem.spaceComplexity && (
+                      <div className="flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50/40 p-4">
+                        <HardDrive className="h-5 w-5 text-purple-600" />
+                        <div>
+                          <span className="block text-xs font-medium text-gray-500">
+                            Space Complexity
+                          </span>
+                          <span className="font-mono text-sm font-semibold text-gray-900">
+                            {problem.spaceComplexity}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
-          {/* 相关考点标签 (Topics) */}
-          {problem.topics && problem.topics.length > 0 && (
-            <div className="mt-8 border-t border-gray-100 pt-6">
-              <h3 className="text-sm font-semibold text-gray-500">Related Topics</h3>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {problem.topics.map((topic, index) => (
-                  <span
-                    key={index}
-                    className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
-                  >
-                    {topic}
-                  </span>
-                ))}
+              {/* 解题代码 (Solution) */}
+              {problem.solution && (
+                <div className="mt-8">
+                  <h2 className="text-lg font-bold text-gray-900">Solution</h2>
+                  <CodeBlock
+                    code={problem.solution}
+                    language="python"
+                    title="Python 3 Solution"
+                  />
+                </div>
+              )}
+
+              {/* 相关考点标签 (Topics) */}
+              {problem.topics && problem.topics.length > 0 && (
+                <div className="mt-8 border-t border-gray-100 pt-6">
+                  <h3 className="text-sm font-semibold text-gray-500">Related Topics</h3>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {problem.topics.map((topic, index) => (
+                      <span
+                        key={index}
+                        className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
+                      >
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="relative mt-8">
+              {/* 模糊遮罩效果 */}
+              <div className="filter blur-sm select-none pointer-events-none opacity-30 space-y-4">
+                <div className="h-20 bg-gray-100 rounded-xl" />
+                <div className="h-44 bg-gray-900 rounded-xl" />
               </div>
+              {/* 付费墙引导卡片 */}
+              <PaywallCard isLoggedIn={Boolean(session)} />
             </div>
           )}
 

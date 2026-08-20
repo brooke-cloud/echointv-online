@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/user-auth";
+import PaywallCard from "@/components/PaywallCard";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import {
   Calendar,
@@ -17,6 +19,19 @@ import {
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+// ⚡ 1. 开启 ISR 增量静态再生（每 60 秒后台静默刷新缓存）
+export const revalidate = 60;
+
+// ⚡ 2. 预生成静态路由参数（打包构建时预先生成所有文章的静态页面）
+export async function generateStaticParams() {
+  const posts = await prisma.post.findMany({
+    select: { slug: true },
+  });
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
+}
 
 // 1. 动态生成博客详情页 SEO 元数据
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -68,7 +83,32 @@ export default async function BlogDetailPage({ params }: Props) {
     notFound();
   }
 
-  // 3. 并行查询「上一篇」、「下一篇」与「相关推荐文章」
+  // 🔒 3. 会员权限校验逻辑：前 5 篇免费，第 6 篇起需要 Pro/Admin 会员
+  const freePosts = await prisma.post.findMany({
+    take: 5,
+    orderBy: { id: "asc" },
+    select: { id: true },
+  });
+  const isFree = freePosts.some((p) => p.id === post.id);
+
+  const session = await getCurrentUser();
+  let isMember = false;
+
+  // 预设管理员邮箱白名单（自动放行）
+  const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
+
+  if (session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.id },
+    });
+
+    const isEmailAdmin = session.email && ADMIN_EMAILS.includes(session.email.toLowerCase().trim());
+    isMember = isEmailAdmin || user?.role === "PRO" || user?.role === "ADMIN";
+  }
+
+  const canAccess = isFree || isMember;
+
+  // 4. 并行查询「上一篇」、「下一篇」与「相关推荐文章」
   const [prevPost, nextPost, relatedPosts] = await Promise.all([
     // 上一篇
     prisma.post.findFirst({
@@ -102,7 +142,7 @@ export default async function BlogDetailPage({ params }: Props) {
     }),
   ]);
 
-  const readingTimeText = getReadingTime(post.content, post.readingTime);
+  const readingTimeText = getReadingTime(post.content || "", post.readingTime);
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
@@ -130,7 +170,7 @@ export default async function BlogDetailPage({ params }: Props) {
         </div>
 
         {/* 文章主体卡片 */}
-        <article className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm">
+        <article className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
           
           {/* 文章头部元数据 */}
           <header className="border-b border-gray-100 pb-8">
@@ -161,7 +201,7 @@ export default async function BlogDetailPage({ params }: Props) {
               {post.title}
             </h1>
 
-            {/* 文章摘要 Callout */}
+            {/* 文章摘要 Callout (所有人可见) */}
             {post.description && (
               <p className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4 text-base text-gray-600 leading-relaxed">
                 {post.description}
@@ -169,10 +209,22 @@ export default async function BlogDetailPage({ params }: Props) {
             )}
           </header>
 
-          {/* 文章 Markdown 正文 */}
-          <div className="mt-8">
-            <MarkdownRenderer content={post.content} />
-          </div>
+          {/* 🔒 权限控制区：前5篇或会员展示正文，否则展示模糊遮罩与付费卡片 */}
+          {canAccess ? (
+            <div className="mt-8">
+              <MarkdownRenderer content={post.content || ""} />
+            </div>
+          ) : (
+            <div className="relative mt-8">
+              <div className="filter blur-sm select-none pointer-events-none opacity-30 space-y-4">
+                <p className="text-gray-300">
+                  这是一段关于大厂面试的核心解析内容，包含具体的系统架构方案、算法 Trade-offs 分析以及独家 BQ 提分答题策略...
+                </p>
+                <div className="h-32 bg-gray-100 rounded-xl" />
+              </div>
+              <PaywallCard isLoggedIn={Boolean(session)} />
+            </div>
+          )}
 
           {/* 🌟 2. 底部「上一篇 / 下一篇」切换导航 */}
           <div className="mt-12 flex flex-col gap-4 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
