@@ -2,6 +2,12 @@
   "name": "Echo INTV",
   "version": "0.1.0",
   "private": true,
+  "allowScripts": {
+  "@prisma/engines": ["postinstall"],
+  "esbuild": ["postinstall"],
+  "prisma": ["preinstall"],
+  "unrs-resolver": ["postinstall"]
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
