@@ -13,12 +13,9 @@ export default async function CheckoutSuccessPage({
   const { token: orderId } = await searchParams;
   const currentUser = await getCurrentUser();
 
-  // 🌟 服务端真实向 PayPal 验证扣款状态并开通会员
   if (orderId) {
     try {
       const captureData = await capturePayPalOrder(orderId);
-      
-      // 只有状态为 COMPLETED（已成功付款）时才给会员
       if (captureData.status === "COMPLETED") {
         const userId =
           captureData.purchase_units?.[0]?.payments?.captures?.[0]?.custom_id ||
@@ -30,11 +27,10 @@ export default async function CheckoutSuccessPage({
             where: { id: userId },
             data: { role: "PRO" },
           });
-          console.log(`[PayPal] 用户 ${userId} 已成功自动升级为 Pro 会员！`);
         }
       }
     } catch (err) {
-      console.error("PayPal 订单捕获与开通失败:", err);
+      console.error("PayPal 验证异常:", err);
     }
   }
 
@@ -48,7 +44,7 @@ export default async function CheckoutSuccessPage({
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-gray-900">支付成功，欢迎加入 Pro 会员！</h1>
           <p className="text-sm text-gray-500 leading-relaxed">
-            您的账户已成功升级为 <span className="text-blue-600 font-bold">EchoINTV Pro 会员</span>，全站所有大厂面试真题与深度求职面经已全部解锁！
+            您的账户已成功开通 <span className="text-blue-600 font-bold">EchoINTV Pro 会员</span>，全站所有大厂面试真题与深度求职面经已全部解锁！
           </p>
         </div>
 
