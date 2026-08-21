@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const response = NextResponse.next();
 
-  // 🛡️ 1. 安全响应头
+  // 🛡️ 1. 注入生产级安全 HTTP 响应头
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
