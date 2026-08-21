@@ -1,9 +1,10 @@
+// app/(public)/profile/page.tsx
+
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/user-auth";
 
-// 预设管理员邮箱白名单
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
 export default async function ProfilePage() {
@@ -20,7 +21,6 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  // 🌟 自动提权检测：如果用户邮箱在管理员列表中，自动同步更新数据库并切换身份
   const isEmailAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
   const isAdmin = user.role === "ADMIN" || isEmailAdmin;
 
@@ -32,7 +32,7 @@ export default async function ProfilePage() {
     user.role = "ADMIN";
   }
 
-  // 统计系统题目总数与难度分布
+  // 统计数据
   const [totalProblems, easyCount, mediumCount, hardCount, totalPosts] =
     await Promise.all([
       prisma.problem.count(),
@@ -45,7 +45,7 @@ export default async function ProfilePage() {
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* 用户信息卡片 */}
+        {/* 用户资料卡 */}
         <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-blue-600 text-white text-2xl font-bold flex items-center justify-center shadow-inner">
@@ -57,7 +57,6 @@ export default async function ProfilePage() {
                   {user.name || user.email.split("@")[0]}
                 </h1>
 
-                {/* 动态身份徽章 */}
                 {isAdmin ? (
                   <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                     👑 系统管理员 (Pro)
@@ -87,12 +86,25 @@ export default async function ProfilePage() {
             </div>
           </div>
 
-          <Link
-            href="/problem"
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition shadow-sm"
-          >
-            &lt;/&gt; 进入题库刷题
-          </Link>
+          {/* 右侧操作按钮组 */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"
+              >
+                <span>👑</span>
+                <span>进入管理后台</span>
+              </Link>
+            )}
+
+            <Link
+              href="/problem"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition shadow-sm"
+            >
+              &lt;/&gt; 进入题库刷题
+            </Link>
+          </div>
         </div>
 
         {/* 题库大厂真题总览 */}

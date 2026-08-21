@@ -1,35 +1,10 @@
-import { redirect } from "next/navigation";
-import { isAdminLoggedIn } from "@/lib/auth";
-import AdminSidebar from "@/components/AdminSidebar";
+// app/admin/(protected)/layout.tsx
 
-type ProtectedAdminLayoutProps = {
-  children: React.ReactNode;
-};
-
-// Admin 后台 Layout
-export default async function ProtectedAdminLayout({
+export default function ProtectedAdminLayout({
   children,
-}: ProtectedAdminLayoutProps) {
-  const loggedIn =
-    await isAdminLoggedIn();
-
-  if (!loggedIn) {
-    redirect(
-      "/admin/login"
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 md:flex">
-
-      {/* Admin Sidebar */}
-      <AdminSidebar />
-
-      {/* Admin 页面 */}
-      <div className="min-w-0 flex-1">
-        {children}
-      </div>
-
-    </div>
-  );
+}: {
+  children: React.ReactNode;
+}) {
+  // 直接放行，由外层统一鉴权，不再进行二次拦截
+  return <>{children}</>;
 }

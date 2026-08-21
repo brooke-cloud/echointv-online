@@ -1,38 +1,41 @@
+// components/Navbar.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { User, LogOut, Code2, Menu, X } from "lucide-react";
 
-type CurrentUser = {
+const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
+
+interface User {
   id: string;
   email: string;
-  name: string | null;
+  name?: string;
   role: string;
-};
+}
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<CurrentUser | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 页面加载或路由跳转时拉取当前登录用户信息
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.user) {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      })
-      .catch(() => setUser(null));
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        setUser(data.user);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
   }, [pathname]);
 
-  // 退出登录
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
@@ -47,153 +50,92 @@ export default function Navbar() {
     { name: "我们的服务", href: "/contact" },
   ];
 
+  // 判定是否为管理员
+  const isAdmin =
+    user?.role === "ADMIN" ||
+    (user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim()));
+
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-        
-        {/* 左侧 Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-600/30">
-            <Code2 className="h-5 w-5" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-gray-900">
-            EchoINTV
-          </span>
-        </Link>
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        {/* Logo 与菜单 */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-gray-900">
+            <span className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-mono text-sm">
+              &lt;/&gt;
+            </span>
+            <span>EchoINTV</span>
+          </Link>
 
-        {/* 中间桌面导航链接 */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-          {navLinks.map((link) => {
-            const isActive =
-              link.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`transition hover:text-blue-600 ${
-                  isActive ? "font-semibold text-blue-600" : ""
-                }`}
-              >
-                {link.name}
-              </Link>
-            );
-          })}
-        </nav>
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`text-sm font-medium transition ${
+                    isActive ? "text-blue-600 font-semibold" : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-        {/* 右侧用户状态与操作区 */}
-        <div className="hidden md:flex items-center gap-4">
-          {user ? (
-            /* 已登录状态：点击跳转个人中心 */
+        {/* 用户操作区 */}
+        <div className="flex items-center gap-4">
+          {loading ? (
+            <div className="w-20 h-8 bg-gray-100 animate-pulse rounded-lg" />
+          ) : user ? (
             <div className="flex items-center gap-3">
+              {/* 👑 管理员专属快捷按钮 */}
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="text-xs font-bold px-3 py-1.5 rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-sm transition flex items-center gap-1.5"
+                >
+                  <span>👑</span>
+                  <span>管理后台</span>
+                </Link>
+              )}
+
+              {/* 👤 个人中心入口 */}
               <Link
                 href="/profile"
-                className="flex items-center gap-2 rounded-xl bg-gray-50 border border-gray-200 px-3 py-1.5 text-xs text-gray-700 transition hover:border-blue-300 hover:bg-blue-50/50"
-                title="进入个人中心"
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 transition flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50"
               >
-                <User className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold">{user.name || user.email.split("@")[0]}</span>
+                <span>👤</span>
+                <span>个人中心</span>
               </Link>
+
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 transition hover:text-rose-600"
-                title="退出登录"
+                className="text-xs px-3 py-1.5 border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 rounded-lg transition"
               >
-                <LogOut className="h-3.5 w-3.5" />
                 退出
               </button>
             </div>
           ) : (
-            /* 未登录状态 */
             <div className="flex items-center gap-3">
               <Link
                 href="/login"
-                className="text-sm font-semibold text-gray-700 transition hover:text-blue-600 px-3 py-2"
+                className="text-sm font-medium text-gray-700 hover:text-gray-900 px-3 py-2"
               >
                 登录
               </Link>
               <Link
                 href="/register"
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+                className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg shadow-sm transition"
               >
                 免费注册
               </Link>
             </div>
           )}
         </div>
-
-        {/* 移动端汉堡菜单按钮 */}
-        <div className="flex md:hidden">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
-        </div>
-
       </div>
-
-      {/* 移动端下拉抽屉菜单 */}
-      {mobileMenuOpen && (
-        <div className="border-b border-gray-200 bg-white px-4 pt-2 pb-6 md:hidden">
-          <div className="flex flex-col space-y-3">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-              >
-                {link.name}
-              </Link>
-            ))}
-
-            <div className="border-t border-gray-100 pt-4">
-              {user ? (
-                <div className="flex items-center justify-between px-3">
-                  <Link
-                    href="/profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600"
-                  >
-                    <User className="h-4 w-4 text-blue-600" />
-                    <span>{user.name || user.email}</span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm font-medium text-rose-600"
-                  >
-                    退出登录
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full text-center rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-700"
-                  >
-                    登录
-                  </Link>
-                  <Link
-                    href="/register"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full text-center rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white"
-                  >
-                    免费注册
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

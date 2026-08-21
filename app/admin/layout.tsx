@@ -1,3 +1,5 @@
+// app/admin/layout.tsx
+
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -10,19 +12,32 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // 🌟 1. 直接读取当前前台的登录会话（免二次登录）
   const session = await getCurrentUser();
   if (!session) {
-    redirect("/login");
+    redirect("/login?redirect=/admin");
   }
 
   const user = await prisma.user.findUnique({
     where: { id: session.id },
   });
 
-  const isEmailAdmin = user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
-  const isAdmin = user?.role === "ADMIN" || isEmailAdmin;
+  if (!user) {
+    redirect("/login?redirect=/admin");
+  }
 
-  // 非管理员禁止访问后台，直接重定向回首页
+  const isEmailAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
+  const isAdmin = user.role === "ADMIN" || isEmailAdmin;
+
+  // 自动确保数据库角色为 ADMIN
+  if (isEmailAdmin && user.role !== "ADMIN") {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { role: "ADMIN" },
+    });
+  }
+
+  // 非管理员拦截回首页
   if (!isAdmin) {
     redirect("/");
   }
@@ -38,7 +53,6 @@ export default async function AdminLayout({
       {/* 侧边栏 */}
       <aside className="w-64 bg-gray-900 text-white flex flex-col justify-between flex-shrink-0">
         <div>
-          {/* 后台 Logo */}
           <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-800">
             <span className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-mono font-bold text-sm">
               &lt;/&gt;
@@ -49,7 +63,6 @@ export default async function AdminLayout({
             </div>
           </div>
 
-          {/* 导航菜单 */}
           <nav className="p-4 space-y-1">
             {navItems.map((item) => (
               <Link
@@ -64,11 +77,10 @@ export default async function AdminLayout({
           </nav>
         </div>
 
-        {/* 底部返回前台 */}
         <div className="p-4 border-t border-gray-800 space-y-2">
           <div className="px-4 py-2 text-xs text-gray-400">
             当前管理员：<br />
-            <span className="font-mono text-gray-200">{user?.email}</span>
+            <span className="font-mono text-gray-200">{user.email}</span>
           </div>
           <Link
             href="/"
@@ -79,7 +91,7 @@ export default async function AdminLayout({
         </div>
       </aside>
 
-      {/* 右侧主内容区域 */}
+      {/* 主工作区 */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
           <h2 className="text-lg font-bold text-gray-800">控制台管理中心</h2>
