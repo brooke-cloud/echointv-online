@@ -32,15 +32,30 @@ export default async function ProfilePage() {
     user.role = "ADMIN";
   }
 
-  // 统计数据
-  const [totalProblems, easyCount, mediumCount, hardCount, totalPosts] =
-    await Promise.all([
-      prisma.problem.count(),
-      prisma.problem.count({ where: { difficulty: "EASY" } }),
-      prisma.problem.count({ where: { difficulty: "MEDIUM" } }),
-      prisma.problem.count({ where: { difficulty: "HARD" } }),
-      prisma.post.count(),
-    ]);
+  // 1. 查询全部题目并进行大小写与中英文兼容统计
+  const [allProblems, totalPosts] = await Promise.all([
+    prisma.problem.findMany({ select: { difficulty: true } }),
+    prisma.post.count(),
+  ]);
+
+  const totalProblems = allProblems.length;
+
+  const isEasy = (d?: string) => {
+    const s = d?.toLowerCase() || "";
+    return s === "easy" || s.includes("简");
+  };
+  const isMedium = (d?: string) => {
+    const s = d?.toLowerCase() || "";
+    return s === "medium" || s.includes("中");
+  };
+  const isHard = (d?: string) => {
+    const s = d?.toLowerCase() || "";
+    return s === "hard" || s.includes("难");
+  };
+
+  const easyCount = allProblems.filter((p) => isEasy(p.difficulty)).length;
+  const mediumCount = allProblems.filter((p) => isMedium(p.difficulty)).length;
+  const hardCount = allProblems.filter((p) => isHard(p.difficulty)).length;
 
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
@@ -107,7 +122,7 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {/* 题库大厂真题总览 */}
+        {/* 题库大厂真题总览（已修复数量统计） */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <span>📈</span> 题库大厂真题总览
