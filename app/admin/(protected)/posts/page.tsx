@@ -1,12 +1,12 @@
-// app/admin/posts/page.tsx
+// app/admin/(protected)/posts/page.tsx
 
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import DeletePostButton from "./DeletePostButton";
 
 export default async function AdminPostsPage() {
-  // 从数据库获取全部面经文章
   const posts = await prisma.post.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: { id: "desc" },
   });
 
   return (
@@ -79,6 +79,8 @@ export default async function AdminPostsPage() {
                   >
                     View →
                   </Link>
+                  {/* 🌟 增加删除按钮 */}
+                  <DeletePostButton id={post.id} />
                 </td>
               </tr>
             ))}
