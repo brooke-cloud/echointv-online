@@ -55,13 +55,23 @@ export default function Navbar() {
     user?.role === "ADMIN" ||
     (user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim()));
 
+  // 提取用户名/邮箱首字母作为头像
+  const userInitial = user?.name
+    ? user.name[0].toUpperCase()
+    : user?.email
+    ? user.email[0].toUpperCase()
+    : "U";
+
+  // 用户名展示文本
+  const displayName = user?.name || (user?.email ? user.email.split("@")[0] : "用户");
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo 与菜单 */}
+        {/* Logo 与导航菜单 */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl text-gray-900">
-            <span className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-mono text-sm">
+            <span className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-mono text-sm shadow-sm">
               &lt;/&gt;
             </span>
             <span>EchoINTV</span>
@@ -88,32 +98,43 @@ export default function Navbar() {
         {/* 用户操作区 */}
         <div className="flex items-center gap-4">
           {loading ? (
-            <div className="w-20 h-8 bg-gray-100 animate-pulse rounded-lg" />
+            <div className="w-28 h-8 bg-gray-100 animate-pulse rounded-xl" />
           ) : user ? (
             <div className="flex items-center gap-3">
               {/* 👑 管理员专属快捷按钮 */}
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="text-xs font-bold px-3 py-1.5 rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-sm transition flex items-center gap-1.5"
+                  className="text-xs font-bold px-3 py-1.5 rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-sm transition flex items-center gap-1"
                 >
                   <span>👑</span>
                   <span>管理后台</span>
                 </Link>
               )}
 
-              {/* 👤 个人中心入口 */}
+              {/* 🌟 1. 用户名信息展示区（头像 + 昵称） */}
+              <div className="flex items-center gap-2 px-1 text-sm font-medium text-gray-700">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-xs font-bold flex items-center justify-center shadow-sm flex-shrink-0">
+                  {userInitial}
+                </div>
+                <span className="text-gray-900 font-semibold max-w-[110px] sm:max-w-[140px] truncate text-xs sm:text-sm">
+                  {displayName}
+                </span>
+              </div>
+
+              {/* 🌟 2. 好看的个人中心专属按钮 */}
               <Link
                 href="/profile"
-                className="text-sm font-medium text-gray-700 hover:text-blue-600 transition flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200/80 text-xs font-bold shadow-sm transition hover:shadow active:scale-95"
               >
                 <span>👤</span>
                 <span>个人中心</span>
               </Link>
 
+              {/* 退出按钮 */}
               <button
                 onClick={handleLogout}
-                className="text-xs px-3 py-1.5 border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 rounded-lg transition"
+                className="text-xs px-3 py-1.5 rounded-xl border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50/50 transition font-medium"
               >
                 退出
               </button>

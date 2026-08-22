@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  // 并行获取统计数据与最新真题、面经
+  // 并行获取统计数据、公司列表与最新内容
   const [totalProblems, totalPosts, distinctCompanies, latestProblems, latestPosts] =
     await Promise.all([
       prisma.problem.count(),
@@ -20,10 +20,16 @@ export default async function HomePage() {
       prisma.post.findMany({ take: 3, orderBy: { createdAt: "desc" } }),
     ]);
 
+  // 获取收录的公司标签列表（若数据库为空则展示默认大厂）
+  const companyList =
+    distinctCompanies.map((c) => c.company).filter(Boolean).length > 0
+      ? distinctCompanies.map((c) => c.company).filter(Boolean)
+      : ["Google", "Meta", "Amazon", "TikTok", "Microsoft", "Apple", "ByteDance"];
+
   const stats = [
-    { value: `${totalProblems > 0 ? totalProblems : 5}+`, label: "Interview Problems" },
-    { value: `${totalPosts > 0 ? totalPosts : 6}+`, label: "Interview Articles" },
-    { value: `${distinctCompanies.length || 4}+`, label: "Companies Covered" },
+    { value: `${totalProblems > 0 ? totalProblems : 6}+`, label: "Interview Problems" },
+    { value: `${totalPosts > 0 ? totalPosts : 5}+`, label: "Interview Articles" },
+    { value: `${companyList.length || 4}+`, label: "Companies Covered" },
   ];
 
   return (
@@ -46,13 +52,14 @@ export default async function HomePage() {
           </p>
         </div>
 
+        {/* 核心行动按钮 */}
         <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
           <Link
             href="/problem"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm sm:text-base shadow-md transition"
           >
             <span>&lt;/&gt;</span>
-            <span>立即开始刷题 ({totalProblems > 0 ? `${totalProblems}道真题` : "5道真题"})</span>
+            <span>立即开始刷题 ({totalProblems > 0 ? `${totalProblems}道真题` : "6道真题"})</span>
           </Link>
           <Link
             href="/blog"
@@ -63,14 +70,34 @@ export default async function HomePage() {
           </Link>
         </div>
 
+        {/* 平台优势保障标签 */}
         <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 pt-4 text-xs sm:text-sm text-gray-500">
           <div><span className="text-emerald-500 font-bold">✓</span> 真实大厂考点还原</div>
           <div><span className="text-emerald-500 font-bold">✓</span> 代码语法高亮与复杂度分析</div>
           <div><span className="text-emerald-500 font-bold">✓</span> 1 对 1 定制辅导支持</div>
         </div>
 
-        {/* 📊 核心数据横幅 */}
-        <div className="pt-8 max-w-5xl mx-auto">
+        {/* 🏢 热门大厂 Companies 标签展示栏 */}
+        <div className="pt-4 flex flex-col items-center justify-center gap-3">
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            COMPANIES · 收录目标名企高频考题
+          </span>
+          <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto">
+            {companyList.map((company) => (
+              <Link
+                key={company}
+                href="/problem"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-600 border border-gray-200/80 text-xs font-semibold shadow-sm transition hover:border-blue-200 hover:shadow"
+              >
+                <span>🏢</span>
+                <span>{company}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* 📊 核心数据统计横幅 (6+ Problems / 5+ Articles / 4+ Companies) */}
+        <div className="pt-6 max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {stats.map((stat, idx) => (
               <div key={idx} className="bg-white rounded-2xl p-8 border border-gray-200/80 shadow-sm text-center space-y-2">
@@ -82,7 +109,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 🌟 2. WHY ECHOINTV 核心特性（4 张卡片排版） */}
+      {/* 🌟 2. WHY ECHOINTV 核心特性 */}
       <section className="py-20 bg-gray-50/60 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
           <span className="text-xs font-bold tracking-widest text-blue-600 uppercase">
@@ -95,9 +122,7 @@ export default async function HomePage() {
             把精力集中在真正考察的核心技能上，拒绝无效搜索与低效盲目刷题。
           </p>
 
-          {/* 4 列特性卡片网格 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-10 text-left">
-            {/* 卡片 1 */}
             <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-3 flex flex-col justify-between">
               <div>
                 <div className="text-2xl">🎯</div>
@@ -108,7 +133,6 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* 卡片 2 */}
             <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-3 flex flex-col justify-between">
               <div>
                 <div className="text-2xl">⚡</div>
@@ -119,7 +143,6 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* 卡片 3 */}
             <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-3 flex flex-col justify-between">
               <div>
                 <div className="text-2xl">📑</div>
@@ -130,13 +153,12 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* 🌟 卡片 4：专属求职服务 */}
             <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-3 flex flex-col justify-between hover:border-blue-300 transition">
               <div>
                 <div className="text-2xl">✨</div>
-                <h3 className="text-lg font-bold text-gray-900 mt-3">1对1面试辅导</h3>
+                <h3 className="text-lg font-bold text-gray-900 mt-3">1对1大厂导师辅导</h3>
                 <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                  北美一线大厂工程师提供 1v1 Mock、深度复盘，面试辅助，帮你在面试的过程中更自信。
+                  北美一线大厂工程师提供 1v1 Mock、简历精修与深度复盘。
                 </p>
               </div>
               <div className="pt-3 border-t border-gray-100">
