@@ -156,6 +156,8 @@ export async function updateProblem(problemId: number, formData: FormData) {
   redirect("/admin/problems?success=updated");
 }
 
+
+
 // 删除 Problem
 export async function deleteProblem(problemId: number) {
   await requireAdmin();
@@ -175,8 +177,11 @@ export async function deleteProblem(problemId: number) {
       id: problemId,
     },
   });
-
+// 🌟 清理全站相关缓存
+  revalidatePath("/"); // 👈 加上这行清理首页
   revalidatePath("/problem");
   revalidatePath(`/problem/${problem.slug}`);
   revalidatePath("/admin/problems");
 }
+
+

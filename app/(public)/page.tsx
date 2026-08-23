@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
-
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Echo INTV - 高效备战技术面试，拿下一线科技大厂 Offer",
   description: "专注收录 Google、Meta、Amazon 等顶尖大厂高频面试真题与解题复盘。",
