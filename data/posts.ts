@@ -1,3 +1,5 @@
+// data/posts.ts
+
 export type Post = {
   slug: string;
   title: string;
@@ -6,6 +8,7 @@ export type Post = {
   category: string;
   date: string;
   readingTime: string;
+  isFree?: boolean; // 🌟 是否免费（true: 免费, false: 付费）
 };
 
 export const posts: Post[] = [
@@ -17,6 +20,7 @@ export const posts: Post[] = [
     category: "Interview Experience",
     date: "Aug 13, 2026",
     readingTime: "6 min read",
+    isFree: true, // 🌟 前 5 篇免费
     content: `
 This interview consisted of multiple technical and behavioral rounds.
 
@@ -34,6 +38,7 @@ Candidates should practice explaining their thought process clearly before writi
     category: "Coding",
     date: "Aug 10, 2026",
     readingTime: "8 min read",
+    isFree: true, // 🌟 前 5 篇免费
     content: `
 Dynamic programming is one of the most important topics in coding interviews.
 
@@ -51,6 +56,7 @@ Start with simple one-dimensional DP before moving to more complex problems.
     category: "System Design",
     date: "Aug 8, 2026",
     readingTime: "7 min read",
+    isFree: true, // 🌟 前 5 篇免费
     content: `
 System design interviews evaluate how you think about scalable software systems.
 
@@ -68,6 +74,7 @@ Focus on explaining trade-offs instead of trying to design a perfect system.
     category: "Career",
     date: "Aug 5, 2026",
     readingTime: "5 min read",
+    isFree: true, // 🌟 前 5 篇免费
     content: `
 Interview preparation should not focus only on solving coding questions.
 

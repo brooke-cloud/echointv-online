@@ -1,3 +1,5 @@
+// app/(public)/problem/[slug]/page.tsx
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -21,10 +23,8 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// ⚡ 1. 开启 ISR 增量静态再生（每 60 秒后台静默刷新缓存）
 export const revalidate = 60;
 
-// ⚡ 2. 预生成静态路由参数（打包构建时预先生成所有真题的静态页面）
 export async function generateStaticParams() {
   const problems = await prisma.problem.findMany({
     select: { slug: true },
@@ -34,7 +34,6 @@ export async function generateStaticParams() {
   }));
 }
 
-// 1. 动态生成 SEO 标题与描述
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const problem = await prisma.problem.findUnique({
@@ -63,7 +62,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// 难度颜色映射工具函数
 const getDifficultyBadge = (difficulty: string) => {
   const diff = difficulty?.toLowerCase();
   if (diff === "easy") {
@@ -81,7 +79,6 @@ const getDifficultyBadge = (difficulty: string) => {
 export default async function ProblemDetailPage({ params }: Props) {
   const { slug } = await params;
 
-  // 2. 查询当前题目数据
   const problem = await prisma.problem.findUnique({
     where: { slug },
   });
@@ -90,18 +87,21 @@ export default async function ProblemDetailPage({ params }: Props) {
     notFound();
   }
 
-  // 🔒 3. 会员权限校验逻辑：前 5 道题免费，第 6 道起需要 Pro/Admin 会员
+  // 🔒 会员权限校验逻辑：前 6 道题免费，第 7 道起需要 Pro/Admin 会员
   const freeProblems = await prisma.problem.findMany({
-    take: 5,
+    take: 6,
     orderBy: { id: "asc" },
     select: { id: true },
   });
-  const isFree = freeProblems.some((p) => p.id === problem.id);
+
+  const isFree =
+    typeof (problem as any).isFree === "boolean"
+      ? (problem as any).isFree
+      : freeProblems.some((p) => p.id === problem.id);
 
   const session = await getCurrentUser();
   let isMember = false;
 
-  // 预设管理员邮箱白名单（自动放行）
   const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
   if (session) {
@@ -109,13 +109,18 @@ export default async function ProblemDetailPage({ params }: Props) {
       where: { id: session.id },
     });
 
-    const isEmailAdmin = session.email && ADMIN_EMAILS.includes(session.email.toLowerCase().trim());
-    isMember = isEmailAdmin || user?.role === "PRO" || user?.role === "ADMIN";
+    const isEmailAdmin =
+      session.email && ADMIN_EMAILS.includes(session.email.toLowerCase().trim());
+    isMember =
+      isEmailAdmin ||
+      user?.role === "PRO" ||
+      user?.role === "ADMIN" ||
+      Boolean((user as any)?.isVip);
   }
 
+  // 是否有权查看完整内容
   const canAccess = isFree || isMember;
 
-  // 4. 并行查询「上一题」、「下一题」与「相关推荐真题」
   const [prevProblem, nextProblem, relatedProblems] = await Promise.all([
     prisma.problem.findFirst({
       where: { createdAt: { lt: problem.createdAt } },
@@ -150,7 +155,7 @@ export default async function ProblemDetailPage({ params }: Props) {
         
         {/* 面包屑导航 */}
         <div className="mb-6 flex items-center gap-2 text-sm text-gray-900">
-          <Link href="/problem" className="hover:text-blue-600">
+          <Link href="/problem" className="hover:text-blue-600 transition-colors">
             面试真题
           </Link>
           <span>/</span>
@@ -169,6 +174,17 @@ export default async function ProblemDetailPage({ params }: Props) {
               <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 border border-blue-100">
                 <Building2 className="h-3.5 w-3.5" />
                 {problem.company}
+              </span>
+
+              {/* 免费 / 会员专享 胶囊徽章 */}
+              <span
+                className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                  isFree
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200"
+                }`}
+              >
+                {isFree ? "Free (免费题)" : "Paid (VIP专享)"}
               </span>
 
               {/* 难度标签 */}
@@ -192,17 +208,19 @@ export default async function ProblemDetailPage({ params }: Props) {
             </h1>
           </div>
 
-          {/* 题目描述 (所有人可见) */}
-          <div className="mt-8">
-            <h2 className="text-lg font-bold text-gray-900">Problem Description</h2>
-            <div className="mt-3 text-gray-700">
-              <MarkdownRenderer content={problem.description} />
-            </div>
-          </div>
-
-          {/* 🔒 权限控制区：前5题或会员展示核心题解，否则展示模糊遮罩与付费卡片 */}
+          {/* 🔒 权限控制区：仅当有权限（免费题或VIP会员）时才展示 Problem Description 及后续题解内容 */}
           {canAccess ? (
             <>
+              {/* 题目描述 (Problem Description) - 仅有权时展示 */}
+              {problem.description && (
+                <div className="mt-8">
+                  <h2 className="text-lg font-bold text-gray-900">Problem Description</h2>
+                  <div className="mt-3 text-gray-700">
+                    <MarkdownRenderer content={problem.description} />
+                  </div>
+                </div>
+              )}
+
               {/* 示例 (Example) */}
               {problem.example && (
                 <div className="mt-8">
@@ -258,7 +276,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 解题代码 (Solution) */}
+              {/* 最优解代码 (Solution) */}
               {problem.solution && (
                 <div className="mt-8">
                   <h2 className="text-lg font-bold text-gray-900">Solution</h2>
@@ -288,18 +306,17 @@ export default async function ProblemDetailPage({ params }: Props) {
               )}
             </>
           ) : (
+            /* 🌟 付费拦截：不显示 Description，直接显示模糊遮罩与卡片 */
             <div className="relative mt-8">
-              {/* 模糊遮罩效果 */}
-              <div className="filter blur-sm select-none pointer-events-none opacity-30 space-y-4">
-                <div className="h-20 bg-gray-100 rounded-xl" />
+              <div className="filter blur-xs select-none pointer-events-none opacity-40 space-y-4">
+                <div className="h-24 bg-gray-100 rounded-xl" />
                 <div className="h-44 bg-gray-900 rounded-xl" />
               </div>
-              {/* 付费墙引导卡片 */}
               <PaywallCard isLoggedIn={Boolean(session)} />
             </div>
           )}
 
-          {/* 🌟 1. 上一题 / 下一题 导航区域 */}
+          {/* 上一题 / 下一题 导航区域 */}
           <div className="mt-10 flex flex-col gap-4 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
             {prevProblem ? (
               <Link
@@ -336,7 +353,7 @@ export default async function ProblemDetailPage({ params }: Props) {
 
         </div>
 
-        {/* 🌟 2. 相关真题推荐 (Related Problems) */}
+        {/* 相关真题推荐 */}
         {relatedProblems.length > 0 && (
           <div className="mt-12">
             <div className="flex items-center gap-2 mb-5">

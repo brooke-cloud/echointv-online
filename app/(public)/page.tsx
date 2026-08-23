@@ -12,15 +12,16 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [totalProblems, totalPosts, distinctCompanies, latestProblems, latestPosts] =
+  const [totalProblems, totalPosts, distinctCompanies, freeProblems, freePosts] =
     await Promise.all([
       prisma.problem.count(),
       prisma.post.count(),
       prisma.problem.findMany({ select: { company: true }, distinct: ["company"] }),
-      prisma.problem.findMany({ take: 6, orderBy: { createdAt: "desc" } }),
-      prisma.post.findMany({ take: 3, orderBy: { createdAt: "desc" } }),
+      // 🌟 题目固定展示前 6 道
+      prisma.problem.findMany({ take: 6, orderBy: { id: "asc" } }),
+      // 🌟 文章固定展示前 6 篇
+      prisma.post.findMany({ take: 6, orderBy: { id: "asc" } }),
     ]);
-
   const companyList =
     distinctCompanies.map((c) => c.company).filter(Boolean).length > 0
       ? distinctCompanies.map((c) => c.company).filter(Boolean)
@@ -169,13 +170,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 🌟 3. Latest Interview Problems (已添加 OA / VO 标签) */}
+      {/* 🌟 3. Free Interview Problems (固定展示前 6 道经典题目) */}
       <section className="py-16 bg-white border-t border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Latest Interview Problems</h2>
-              <p className="text-sm text-gray-500 mt-1">Practice coding and technical interview questions.</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                Free Interview Problems
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Practice coding and technical interview questions.
+              </p>
             </div>
             <Link href="/problem" className="text-sm font-semibold text-blue-600 hover:underline">
               View All Problems →
@@ -183,11 +188,14 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {latestProblems.map((p) => {
+            {freeProblems.map((p, index) => {
               const isOA =
                 (p as any).stage?.toUpperCase() === "OA" ||
                 p.title.toUpperCase().includes("OA") ||
                 p.category.toUpperCase().includes("OA");
+
+              // 首页展示的这 6 道题全部为 Free
+              const isFree = index < 6;
 
               return (
                 <Link
@@ -196,11 +204,21 @@ export default async function HomePage() {
                   className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col justify-between"
                 >
                   <div>
-                    {/* 🌟 头部标签组：公司 + [OA/VO] + 难度 */}
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-blue-50 text-blue-600">
                         {p.company}
                       </span>
+
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                          isFree
+                            ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                            : "bg-amber-100 text-amber-800 border border-amber-200"
+                        }`}
+                      >
+                        {isFree ? "Free" : "Paid"}
+                      </span>
+
                       <span
                         className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                           isOA
@@ -210,6 +228,7 @@ export default async function HomePage() {
                       >
                         {isOA ? "OA" : "VO"}
                       </span>
+
                       <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-gray-100 text-gray-600">
                         {p.difficulty}
                       </span>
@@ -226,14 +245,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 🌟 4. Latest Articles */}
+      {/* 🌟 4. Free Articles (固定展示前 6 篇经典文章) */}
       <section className="py-16 bg-gray-50/50 border-t border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Learn</span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">Latest Articles</h2>
-              <p className="text-sm text-gray-500 mt-1">Interview experiences, guides, and software engineering advice.</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">
+                Free Articles
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Interview experiences, guides, and software engineering advice.
+              </p>
             </div>
             <Link href="/blog" className="text-sm font-semibold text-blue-600 hover:underline">
               View All Articles →
@@ -241,18 +264,34 @@ export default async function HomePage() {
           </div>
 
           <div className="space-y-4">
-            {latestPosts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/blog/${post.slug}`}
-                className="block bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition space-y-2"
-              >
-                <span className="text-xs font-semibold text-blue-600">{post.category}</span>
-                <h3 className="text-lg font-bold text-gray-900">{post.title}</h3>
-                {post.description && <p className="text-sm text-gray-500 line-clamp-2">{post.description}</p>}
-                <div className="text-xs text-gray-400 pt-2">{post.date} · {post.readingTime}</div>
-              </Link>
-            ))}
+            {freePosts.map((post, index) => {
+              const isFree = index < 6;
+
+              return (
+                <Link
+                  key={post.id}
+                  href={`/blog/${post.slug}`}
+                  className="block bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-blue-600">{post.category}</span>
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                        isFree
+                          ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                          : "bg-amber-100 text-amber-800 border border-amber-200"
+                      }`}
+                    >
+                      {isFree ? "Free" : "Paid"}
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg font-bold text-gray-900">{post.title}</h3>
+                  {post.description && <p className="text-sm text-gray-500 line-clamp-2">{post.description}</p>}
+                  <div className="text-xs text-gray-400 pt-2">{post.date} · {post.readingTime}</div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

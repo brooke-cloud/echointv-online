@@ -1,43 +1,67 @@
+// components/PaywallCard.tsx
+
 import Link from "next/link";
 
-export default function PaywallCard({ isLoggedIn }: { isLoggedIn: boolean }) {
+interface PaywallCardProps {
+  isLoggedIn?: boolean;
+}
+
+export default function PaywallCard({ isLoggedIn = false }: PaywallCardProps) {
   return (
-    <div className="relative -mt-24 pt-28 pb-6 bg-gradient-to-t from-white via-white/95 to-transparent text-center px-4">
-      <div className="max-w-md mx-auto bg-white rounded-3xl p-8 border border-blue-100 shadow-2xl space-y-5 ring-1 ring-blue-500/20">
-        <div className="w-12 h-12 bg-blue-50 text-blue-600 text-2xl rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+    <div className="relative my-8 overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-b from-amber-50/50 to-white p-8 text-center shadow-md">
+      {/* 背景装饰光晕 */}
+      <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-48 h-48 bg-amber-200/30 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 max-w-lg mx-auto space-y-4">
+        {/* 锁图标徽章 */}
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 text-2xl shadow-inner">
           🔒
         </div>
 
-        <div className="space-y-1.5">
-          <h3 className="text-xl font-bold text-gray-900">此题目为 Pro 会员专享</h3>
-          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-            免费版仅可体验前 5 道真题。升级 Pro 会员即可解锁全站 100% 大厂高频真题与详细最优题解！
+        <div>
+          <span className="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider mb-2">
+            VIP 专享内容 · Premium Only
+          </span>
+          <h3 className="text-2xl font-bold text-gray-900 tracking-tight">
+            开通 Pro 会员，解锁完整深度题解与核心代码
+          </h3>
+          <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+            该内容为大厂高频面试真题/深度求职专栏。成为 Pro 会员即可无限畅读全站所有独家题解、系统设计拆解与算法最优解。
           </p>
         </div>
 
-        <div className="pt-2">
-          {isLoggedIn ? (
+        {/* 权益亮点 */}
+        <div className="grid grid-cols-2 gap-2 text-left text-xs text-gray-600 bg-white/80 backdrop-blur-xs p-4 rounded-xl border border-amber-100">
+          <div className="flex items-center gap-1.5 font-medium">
+            <span className="text-emerald-500 font-bold">✓</span> 全站顶尖大厂高频考题
+          </div>
+          <div className="flex items-center gap-1.5 font-medium">
+            <span className="text-emerald-500 font-bold">✓</span> 详细时空复杂度与最优代码
+          </div>
+          <div className="flex items-center gap-1.5 font-medium">
+            <span className="text-emerald-500 font-bold">✓</span> 系统设计与架构复盘专栏
+          </div>
+          <div className="flex items-center gap-1.5 font-medium">
+            <span className="text-emerald-500 font-bold">✓</span> 持续更新 2026 全球真题
+          </div>
+        </div>
+
+        {/* 操作按钮 */}
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            href="/pricing"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-sm shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
+          >
+            👑 立即开通 Pro 会员
+          </Link>
+
+          {!isLoggedIn && (
             <Link
-              href="/pricing"
-              className="block w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition"
+              href="/login"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm border border-gray-200 shadow-xs transition"
             >
-              升级 Pro 会员（$9.9/月）→
+              已有会员？去登录
             </Link>
-          ) : (
-            <div className="space-y-2.5">
-              <Link
-                href="/login"
-                className="block w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition"
-              >
-                立即登录 / 注册 →
-              </Link>
-              <Link
-                href="/pricing"
-                className="block text-xs font-medium text-blue-600 hover:underline"
-              >
-                查看 Pro 会员方案详情
-              </Link>
-            </div>
           )}
         </div>
       </div>

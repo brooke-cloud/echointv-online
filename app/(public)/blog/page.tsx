@@ -13,27 +13,28 @@ export const metadata: Metadata = {
   },
 };
 
-// 开启 ISR 增量静态再生（每 60 秒后台静默刷新）
 export const revalidate = 60;
 
 export default async function BlogPage() {
-  // 从数据库查询所有面经
+  // 🌟 核心修改：改为 orderBy: { id: "asc" } 正序排列
   const rawPosts = await prisma.post.findMany({
     orderBy: {
-      id: "desc",
+      id: "asc",
     },
   });
 
-  // 格式化处理：确保 content 不为 null，完全匹配 Post 接口类型
-  const posts = rawPosts.map((post) => ({
+  // 🌟 自动规则：前 6 篇（index 0~5）自动判定为免费，第 7 篇及以后自动判定为付费
+  const posts = rawPosts.map((post, index) => ({
     ...post,
     content: post.content ?? "",
+    readingTime: post.readingTime || "5 min read",
+    readTime: post.readingTime || "5 min read",
+    isFree: index < 6,
   }));
 
   return (
     <main className="min-h-screen bg-gray-50 py-16">
       <div className="mx-auto max-w-7xl px-6">
-        {/* 页面顶部标题与介绍 */}
         <section>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900">
             面试经验
@@ -43,7 +44,6 @@ export default async function BlogPage() {
           </p>
         </section>
 
-        {/* 列表与筛选区域 */}
         <section className="mt-10">
           <BlogList posts={posts} />
         </section>

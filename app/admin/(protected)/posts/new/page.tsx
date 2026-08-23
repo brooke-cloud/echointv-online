@@ -1,24 +1,17 @@
+// app/admin/(protected)/posts/new/page.tsx
+
 import Link from "next/link";
-
-import {
-  createPost,
-} from "../actions";
-
+import { createPost } from "../actions";
 import BlogContentEditor from "@/components/BlogContentEditor";
 import AdminSubmitButton from "@/components/AdminSubmitButton";
 
-// 新增 Blog 页面
 export default function NewPostPage() {
   const inputStyle =
     "mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
 
   return (
     <main className="py-12">
-
-      {/* 页面内容 */}
       <div className="mx-auto max-w-4xl px-5 sm:px-6">
-
-        {/* 返回 */}
         <Link
           href="/admin/posts"
           className="text-sm font-medium text-blue-600 hover:text-blue-800"
@@ -26,90 +19,85 @@ export default function NewPostPage() {
           ← Back to Blog Posts
         </Link>
 
-
-        {/* 标题 */}
         <h1 className="mt-8 text-3xl font-bold text-gray-900 sm:text-4xl">
           Add Blog Post
         </h1>
 
-
-        {/* Blog 表单 */}
         <form
           action={createPost}
           className="mt-10 space-y-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8"
         >
-
           {/* Title */}
           <div>
-            <label
-              htmlFor="title"
-              className="font-medium text-gray-900"
-            >
+            <label htmlFor="title" className="font-medium text-gray-900">
               Title
             </label>
-
             <input
               id="title"
               name="title"
               required
               maxLength={200}
+              placeholder="e.g. Amazon SDE Interview Experience"
               className={inputStyle}
             />
           </div>
 
+          {/* Slug */}
+          <div>
+            <div className="flex items-center justify-between">
+              <label htmlFor="slug" className="font-medium text-gray-900">
+                Slug (URL Identifier)
+              </label>
+              <span className="text-xs text-gray-400">可选，留空将根据标题自动生成</span>
+            </div>
+            <input
+              id="slug"
+              name="slug"
+              maxLength={200}
+              placeholder="e.g. amazon-sde-interview-experience"
+              className={inputStyle}
+            />
+          </div>
 
           {/* Description */}
           <div>
-            <label
-              htmlFor="description"
-              className="font-medium text-gray-900"
-            >
+            <label htmlFor="description" className="font-medium text-gray-900">
               Description
             </label>
-
             <textarea
               id="description"
               name="description"
               required
-              rows={4}
+              rows={3}
               maxLength={500}
+              placeholder="Brief summary of the article..."
               className={inputStyle}
             />
           </div>
 
-
           {/* Markdown Content */}
           <BlogContentEditor />
 
-
           {/* Category */}
           <div>
-            <label
-              htmlFor="category"
-              className="font-medium text-gray-900"
-            >
+            <label htmlFor="category" className="font-medium text-gray-900">
               Category
             </label>
-
             <input
               id="category"
               name="category"
               required
               maxLength={100}
+              placeholder="e.g. Career, System Design, Coding"
               className={inputStyle}
             />
           </div>
 
-
           {/* Date */}
           <div>
-            <label
-              htmlFor="date"
-              className="font-medium text-gray-900"
-            >
+            <label htmlFor="date" className="font-medium text-gray-900">
               Date
             </label>
-
             <input
               id="date"
               name="date"
@@ -120,16 +108,11 @@ export default function NewPostPage() {
             />
           </div>
 
-
           {/* Reading Time */}
           <div>
-            <label
-              htmlFor="readingTime"
-              className="font-medium text-gray-900"
-            >
+            <label htmlFor="readingTime" className="font-medium text-gray-900">
               Reading Time
             </label>
-
             <input
               id="readingTime"
               name="readingTime"
@@ -140,18 +123,12 @@ export default function NewPostPage() {
             />
           </div>
 
-
           {/* Submit */}
-          <AdminSubmitButton
-            pendingText="Publishing..."
-          >
+          <AdminSubmitButton pendingText="Publishing...">
             Create Blog Post
           </AdminSubmitButton>
-
         </form>
-
       </div>
-
     </main>
   );
 }

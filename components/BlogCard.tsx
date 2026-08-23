@@ -1,3 +1,5 @@
+// components/BlogCard.tsx
+
 import Link from "next/link";
 import type { Post } from "@/types/post";
 
@@ -9,6 +11,9 @@ type BlogCardProps = {
 export default function BlogCard({
   post,
 }: BlogCardProps) {
+  // 🌟 判定文章是否免费（优先读取 post.isFree）
+  const isFree = typeof (post as any).isFree === "boolean" ? (post as any).isFree : true;
+
   return (
     <article
       className="
@@ -26,10 +31,22 @@ export default function BlogCard({
         hover:shadow-lg
       "
     >
-      {/* 文章分类 */}
-      <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
-        {post.category}
-      </p>
+      {/* 🌟 顶部：文章分类 + 免费/付费 胶囊徽章 */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+          {post.category}
+        </p>
+
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+            isFree
+              ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+              : "bg-amber-100 text-amber-800 border border-amber-200"
+          }`}
+        >
+          {isFree ? "Free" : "Paid"}
+        </span>
+      </div>
 
       {/* 文章标题 */}
       <h2 className="mt-4 text-2xl font-bold leading-8 text-gray-900">

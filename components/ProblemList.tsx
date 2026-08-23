@@ -16,6 +16,7 @@ interface Problem {
   description: string;
   topics?: string[];
   stage?: string;
+  isFree?: boolean; // 🌟 新增字段
 }
 
 export default function ProblemList({ problems }: { problems: Problem[] }) {
@@ -236,19 +237,39 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         {filteredProblems.map((problem) => {
           const isOA = isProblemOA(problem);
 
+          // 🌟 核心逻辑：获取在全局列表中的原始序号，前 6 道题（index 0~5）自动判定为免费
+          const originalIndex = problems.findIndex((p) => p.id === problem.id);
+          const isFree =
+            typeof problem.isFree === "boolean"
+              ? problem.isFree
+              : originalIndex !== -1
+              ? originalIndex < 6
+              : true;
+
           return (
             <div
               key={problem.id}
               className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col justify-between min-h-[260px]"
             >
               <div>
-                {/* 顶部：公司名 + [OA/VO 徽章] + [难度 Badge] */}
+                {/* 顶部：公司名 + [免费/付费 徽章] + [OA/VO 徽章] + [难度 Badge] */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-blue-600">
                     {problem.company}
                   </span>
 
                   <div className="flex items-center gap-1.5">
+                    {/* 🌟 免费 / 付费 胶囊徽章 */}
+                    <span
+                      className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
+                        isFree
+                          ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                          : "bg-amber-100 text-amber-800 border border-amber-200"
+                      }`}
+                    >
+                      {isFree ? "Free" : "Paid"}
+                    </span>
+
                     {/* OA / VO 徽章 */}
                     <span
                       className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${

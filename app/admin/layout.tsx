@@ -42,10 +42,12 @@ export default async function AdminLayout({
     redirect("/");
   }
 
+  // 🌟 侧边栏导航列表（已加入“用户管理”）
   const navItems = [
     { name: "数据大盘", href: "/admin", icon: "📊" },
     { name: "题库管理", href: "/admin/problems", icon: "📚" },
     { name: "面经管理", href: "/admin/posts", icon: "📝" },
+    { name: "用户管理", href: "/admin/users", icon: "👥" }, // 🌟 新增用户与会员管理菜单
   ];
 
   return (

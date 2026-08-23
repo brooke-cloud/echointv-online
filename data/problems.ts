@@ -1,3 +1,5 @@
+// data/problems.ts
+
 export type Problem = {
   id: number;
   title: string;
@@ -12,29 +14,33 @@ export type Problem = {
   timeComplexity: string;
   spaceComplexity: string;
   topics: string[];
+  stage?: string;
+  slug?: string;
+  isFree?: boolean; // 🌟 是否免费（true: 免费, false: 付费）
 };
 
 export const problems: Problem[] = [
-{
-  id: 1,
-  title: "Two Sum Variant",
-  company: "Amazon",
-  role: "Software Engineer",
-  difficulty: "Easy",
-  category: "Array / Hash Map",
-  description:
-    "Given an array of integers and a target value, find two numbers whose sum equals the target.",
-  example: `
+  {
+    id: 1,
+    title: "Two Sum Variant",
+    company: "Amazon",
+    role: "Software Engineer",
+    difficulty: "Easy",
+    category: "Array / Hash Map",
+    isFree: true, // 🌟 前 5 个免费
+    description:
+      "Given an array of integers and a target value, find two numbers whose sum equals the target.",
+    example: `
 Input:
-nums = [2, 7, 11, 15]
+nums =
 target = 9
 
 Output:
-[0, 1]
-  `,
-  approach:
-    "Use a hash map to store numbers that have already been visited. For every number, calculate target - currentNumber and check whether that value already exists in the hash map.",
-  solution: `
+
+    `,
+    approach:
+      "Use a hash map to store numbers that have already been visited. For every number, calculate target - currentNumber and check whether that value already exists in the hash map.",
+    solution: `
 def two_sum(nums, target):
     seen = {}
 
@@ -47,11 +53,11 @@ def two_sum(nums, target):
         seen[num] = i
 
     return []
-  `,
-  timeComplexity: "O(n)",
-  spaceComplexity: "O(n)",
-  topics: ["Array", "Hash Map"],
-},
+    `,
+    timeComplexity: "O(n)",
+    spaceComplexity: "O(n)",
+    topics: ["Array", "Hash Map"],
+  },
 
   {
     id: 2,
@@ -60,11 +66,12 @@ def two_sum(nums, target):
     role: "Software Engineer",
     difficulty: "Medium",
     category: "Array / Intervals",
+    isFree: true, // 🌟 前 5 个免费
     description:
       "Given two sorted interval lists with no overlapping intervals inside each list, merge them into one sorted non-overlapping list.",
     example: `
 Input:
-intervals1 = [[1,3],[6,9]]
+intervals1 =,[6,9]]
 intervals2 = [[2,5],[10,12]]
 
 Output:
@@ -92,10 +99,10 @@ def merge_intervals(intervals1, intervals2):
     result = []
 
     for interval in merged:
-        if not result or result[-1][1] < interval[0]:
+        if not result or result[-1] < interval[0]:
             result.append(interval)
         else:
-            result[-1][1] = max(result[-1][1], interval[1])
+            result[-1] = max(result[-1], interval)
 
     return result
     `,
@@ -111,6 +118,7 @@ def merge_intervals(intervals1, intervals2):
     role: "Backend Engineer",
     difficulty: "Hard",
     category: "System Design",
+    isFree: true, // 🌟 前 5 个免费
     description:
       "Design a scalable URL shortening service similar to Bitly or TinyURL.",
     example: `
@@ -144,6 +152,7 @@ Core components:
     role: "Software Engineer",
     difficulty: "Medium",
     category: "Hash Map / Linked List",
+    isFree: true, // 🌟 前 5 个免费
     description:
       "Design a data structure that supports get and put operations in O(1) time.",
     example: `

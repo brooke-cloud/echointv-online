@@ -13,4 +13,6 @@ export type Problem = {
   timeComplexity: string;
   spaceComplexity: string;
   topics: string[];
+  stage: string; // 🌟 添加 stage 字段
+  isFree?: boolean; // 🌟 新增：是否免费（true: 免费, false: 付费）
 };

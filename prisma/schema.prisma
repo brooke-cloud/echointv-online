@@ -57,6 +57,7 @@ model User {
   name      String?
   password  String   // 加密后的密码哈希
   role      String   @default("USER") // USER 或 ADMIN
+  isVip     Boolean  @default(false)  // 🌟 新增：VIP 会员状态标识（true: VIP, false: 普通用户）
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

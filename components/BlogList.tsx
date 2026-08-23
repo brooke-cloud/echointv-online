@@ -1,3 +1,5 @@
+// components/BlogList.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -66,12 +68,26 @@ export default function BlogList({
 
       {/* Blog 卡片 */}
       <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
-        {filteredPosts.map((post) => (
-          <BlogCard
-            key={post.slug}
-            post={post}
-          />
-        ))}
+        {filteredPosts.map((post) => {
+          // 🌟 核心逻辑：获取在全局列表中的原始序号，前 6 篇（index 0~5）判定为免费
+          const originalIndex = posts.findIndex((p) => p.slug === post.slug);
+          const isFree =
+            typeof post.isFree === "boolean"
+              ? post.isFree
+              : originalIndex !== -1
+              ? originalIndex < 6
+              : true;
+
+          return (
+            <BlogCard
+              key={post.slug}
+              post={{
+                ...post,
+                isFree,
+              }}
+            />
+          );
+        })}
       </div>
     </div>
   );
