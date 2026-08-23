@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { updatePost } from "../../actions";
+import { updatePost } from "../../actions";npm run build
 import BlogContentEditor from "@/components/BlogContentEditor";
 
 type EditPostPageProps = {
