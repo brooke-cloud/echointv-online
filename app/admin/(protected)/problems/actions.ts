@@ -11,7 +11,7 @@ import { getFormString } from "@/lib/validation";
 
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
-// 🌟 统一的管理员校验：读取当前登录态，支持白名单，绝不跳去旧登录页
+// 管理员权限校验
 async function requireAdmin() {
   const session = await getCurrentUser();
   if (!session) {
@@ -31,7 +31,7 @@ async function requireAdmin() {
   }
 }
 
-// 创建 Problem
+// 1. 创建 Problem（包含 stage）
 export async function createProblem(formData: FormData) {
   await requireAdmin();
 
@@ -39,6 +39,7 @@ export async function createProblem(formData: FormData) {
   const company = getFormString(formData, "company", 100);
   const role = getFormString(formData, "role", 100);
   const difficulty = getFormString(formData, "difficulty", 20);
+  const stage = getFormString(formData, "stage", 20) || "VO"; // 🌟 接收 stage
   const category = getFormString(formData, "category", 100);
   const description = getFormString(formData, "description", 5000);
   const example = getFormString(formData, "example", 10000);
@@ -55,7 +56,6 @@ export async function createProblem(formData: FormData) {
     .slice(0, 30);
 
   const validDifficulties = ["Easy", "Medium", "Hard"];
-
   if (!validDifficulties.includes(difficulty)) {
     throw new Error("Invalid difficulty.");
   }
@@ -73,6 +73,7 @@ export async function createProblem(formData: FormData) {
       company,
       role,
       difficulty,
+      stage, // 🌟 保存 stage 到数据库
       category,
       description,
       example,
@@ -84,13 +85,14 @@ export async function createProblem(formData: FormData) {
     },
   });
 
+  revalidatePath("/");
   revalidatePath("/problem");
   revalidatePath("/admin/problems");
 
   redirect("/admin/problems?success=created");
 }
 
-// 更新 Problem
+// 2. 更新 Problem（🌟 核心修复：把 stage 保存进数据库！）
 export async function updateProblem(problemId: number, formData: FormData) {
   await requireAdmin();
 
@@ -98,6 +100,7 @@ export async function updateProblem(problemId: number, formData: FormData) {
   const company = getFormString(formData, "company", 100);
   const role = getFormString(formData, "role", 100);
   const difficulty = getFormString(formData, "difficulty", 20);
+  const stage = getFormString(formData, "stage", 20) || "VO"; // 🌟 提取 stage
   const category = getFormString(formData, "category", 100);
   const description = getFormString(formData, "description", 5000);
   const example = getFormString(formData, "example", 10000);
@@ -114,30 +117,27 @@ export async function updateProblem(problemId: number, formData: FormData) {
     .slice(0, 30);
 
   const validDifficulties = ["Easy", "Medium", "Hard"];
-
   if (!validDifficulties.includes(difficulty)) {
     throw new Error("Invalid difficulty.");
   }
 
   const existingProblem = await prisma.problem.findUnique({
-    where: {
-      id: problemId,
-    },
+    where: { id: problemId },
   });
 
   if (!existingProblem) {
     throw new Error("Problem not found.");
   }
 
+  // 🌟 将 stage 真正更新入库
   await prisma.problem.update({
-    where: {
-      id: problemId,
-    },
+    where: { id: problemId },
     data: {
       title,
       company,
       role,
       difficulty,
+      stage, // 👈 这一行将 stage 真正存进数据库！
       category,
       description,
       example,
@@ -149,6 +149,7 @@ export async function updateProblem(problemId: number, formData: FormData) {
     },
   });
 
+  revalidatePath("/");
   revalidatePath("/problem");
   revalidatePath(`/problem/${existingProblem.slug}`);
   revalidatePath("/admin/problems");
@@ -156,16 +157,12 @@ export async function updateProblem(problemId: number, formData: FormData) {
   redirect("/admin/problems?success=updated");
 }
 
-
-
-// 删除 Problem
+// 3. 删除 Problem
 export async function deleteProblem(problemId: number) {
   await requireAdmin();
 
   const problem = await prisma.problem.findUnique({
-    where: {
-      id: problemId,
-    },
+    where: { id: problemId },
   });
 
   if (!problem) {
@@ -173,15 +170,11 @@ export async function deleteProblem(problemId: number) {
   }
 
   await prisma.problem.delete({
-    where: {
-      id: problemId,
-    },
+    where: { id: problemId },
   });
-// 🌟 清理全站相关缓存
-  revalidatePath("/"); // 👈 加上这行清理首页
+
+  revalidatePath("/");
   revalidatePath("/problem");
   revalidatePath(`/problem/${problem.slug}`);
   revalidatePath("/admin/problems");
 }
-
-

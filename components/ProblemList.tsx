@@ -15,14 +15,14 @@ interface Problem {
   category: string;
   description: string;
   topics?: string[];
-  stage?: string; // 支持 OA / VO 字段
+  stage?: string;
 }
 
 export default function ProblemList({ problems }: { problems: Problem[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
-  const [selectedStage, setSelectedStage] = useState("All"); // 🌟 新增 OA / VO 状态
+  const [selectedStage, setSelectedStage] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   // 提取去重后的公司列表
@@ -34,14 +34,12 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
     return ["All", ...Array.from(set)];
   }, [problems]);
 
-  // 难度选项
   const difficulties = ["All", "Easy", "Medium", "Hard"];
 
-  // 🌟 新增 OA / VO 考核阶段选项
   const stages = [
-    { label: "All", value: "All" },
-    { label: "OA (线上测评/笔试)", value: "OA" },
-    { label: "VO (技术轮面/Onsite)", value: "VO" },
+    "All",
+    "OA (线上测评/笔试)",
+    "VO (技术轮面/Onsite)",
   ];
 
   // 提取去重后的分类列表
@@ -53,10 +51,26 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
     return ["All", ...Array.from(set)];
   }, [problems]);
 
-  // 多条件过滤逻辑
+  // 🌟 判定单个题目是否为 OA
+  const isProblemOA = (prob: Problem) => {
+    const st = ((prob as any).stage || "").toUpperCase();
+    const cat = (prob.category || "").toUpperCase();
+    const title = (prob.title || "").toUpperCase();
+    const desc = (prob.description || "").toUpperCase();
+    const topics = (prob.topics || []).map((t) => t.toUpperCase());
+    return (
+      st === "OA" ||
+      st.includes("OA") ||
+      cat.includes("OA") ||
+      title.includes("OA") ||
+      desc.includes("OA") ||
+      topics.some((t) => t.includes("OA"))
+    );
+  };
+
+  // 综合过滤逻辑
   const filteredProblems = useMemo(() => {
     return problems.filter((p) => {
-      // 1. 关键词搜索
       const q = searchQuery.toLowerCase().trim();
       const matchSearch =
         !q ||
@@ -65,35 +79,25 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         p.category.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q);
 
-      // 2. 公司过滤
       const matchCompany =
         selectedCompany === "All" ||
         p.company.toLowerCase() === selectedCompany.toLowerCase();
 
-      // 3. 难度过滤
       const matchDifficulty =
         selectedDifficulty === "All" ||
         p.difficulty.toLowerCase() === selectedDifficulty.toLowerCase();
 
-      // 🌟 4. OA / VO 阶段过滤（智能匹配 stage 属性、分类、标签或标题）
-      const matchStage =
-        selectedStage === "All" ||
-        (selectedStage === "OA" &&
-          (p.stage?.toUpperCase() === "OA" ||
-            p.topics?.some((t) => t.toUpperCase().includes("OA")) ||
-            p.category?.toUpperCase().includes("OA") ||
-            p.title?.toUpperCase().includes("OA") ||
-            p.description?.toUpperCase().includes("OA"))) ||
-        (selectedStage === "VO" &&
-          (p.stage?.toUpperCase() === "VO" ||
-            p.topics?.some((t) => t.toUpperCase().includes("VO")) ||
-            p.category?.toUpperCase().includes("VO") ||
-            p.title?.toUpperCase().includes("VO") ||
-            p.description?.toUpperCase().includes("VO") ||
-            // 默认非明确标记 OA 的真题多数归为 VO 面试题
-            !p.title?.toUpperCase().includes("OA")));
+      // 🌟 修复后的核心匹配逻辑：使用 includes("OA") 兼容长按钮文本
+      const isOA = isProblemOA(p);
+      const isFilterAll = selectedStage === "All" || !selectedStage;
+      const isFilterOA = selectedStage.toUpperCase().includes("OA");
+      const isFilterVO = selectedStage.toUpperCase().includes("VO");
 
-      // 5. 分类过滤
+      const matchStage =
+        isFilterAll ||
+        (isFilterOA && isOA) ||
+        (isFilterVO && !isOA);
+
       const matchCategory =
         selectedCategory === "All" ||
         p.category.toLowerCase() === selectedCategory.toLowerCase();
@@ -102,7 +106,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
     });
   }, [problems, searchQuery, selectedCompany, selectedDifficulty, selectedStage, selectedCategory]);
 
-  // 清空所有筛选
   const handleClearFilters = () => {
     setSearchQuery("");
     setSelectedCompany("All");
@@ -142,7 +145,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition ${
                 selectedCompany.toLowerCase() === comp.toLowerCase()
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                  : "border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-600"
               }`}
             >
               {comp}
@@ -162,7 +165,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition ${
                 selectedDifficulty.toLowerCase() === diff.toLowerCase()
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                  : "border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-600"
               }`}
             >
               {diff}
@@ -171,7 +174,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         </div>
       </div>
 
-      {/* 🌟 3. Stage 考核形式筛选 (OA / VO) */}
+      {/* 3. Stage 考核形式筛选 (OA / VO) */}
       <div className="space-y-2">
         <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">
           Stage (考核形式)
@@ -179,15 +182,15 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         <div className="flex flex-wrap gap-2">
           {stages.map((st) => (
             <button
-              key={st.value}
-              onClick={() => setSelectedStage(st.value)}
+              key={st}
+              onClick={() => setSelectedStage(st)}
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition ${
-                selectedStage === st.value
+                selectedStage === st
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                  : "border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-600"
               }`}
             >
-              {st.label}
+              {st}
             </button>
           ))}
         </div>
@@ -204,7 +207,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition ${
                 selectedCategory.toLowerCase() === cat.toLowerCase()
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                  : "border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-600"
               }`}
             >
               {cat}
@@ -230,48 +233,68 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
 
       {/* 题目卡片网格 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-        {filteredProblems.map((problem) => (
-          <div
-            key={problem.id}
-            className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col justify-between min-h-[260px]"
-          >
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-blue-600">
-                  {problem.company}
-                </span>
-                <span
-                  className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                    problem.difficulty.toUpperCase() === "EASY"
-                      ? "bg-green-100 text-green-700"
-                      : problem.difficulty.toUpperCase() === "MEDIUM"
-                      ? "bg-amber-100 text-amber-800"
-                      : "bg-rose-100 text-rose-700"
-                  }`}
-                >
-                  {problem.difficulty}
-                </span>
+        {filteredProblems.map((problem) => {
+          const isOA = isProblemOA(problem);
+
+          return (
+            <div
+              key={problem.id}
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col justify-between min-h-[260px]"
+            >
+              <div>
+                {/* 顶部：公司名 + [OA/VO 徽章] + [难度 Badge] */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-blue-600">
+                    {problem.company}
+                  </span>
+
+                  <div className="flex items-center gap-1.5">
+                    {/* OA / VO 徽章 */}
+                    <span
+                      className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
+                        isOA
+                          ? "bg-purple-100 text-purple-700 border border-purple-200"
+                          : "bg-sky-100 text-sky-700 border border-sky-200"
+                      }`}
+                    >
+                      {isOA ? "OA" : "VO"}
+                    </span>
+
+                    {/* 难度 Badge */}
+                    <span
+                      className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
+                        problem.difficulty?.toUpperCase() === "EASY"
+                          ? "bg-green-100 text-green-700"
+                          : problem.difficulty?.toUpperCase() === "MEDIUM"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-rose-100 text-rose-700"
+                      }`}
+                    >
+                      {problem.difficulty}
+                    </span>
+                  </div>
+                </div>
+
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mt-4">
+                  {problem.title}
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">{problem.category}</p>
+                <p className="text-sm text-gray-600 mt-4 line-clamp-3 leading-relaxed">
+                  {problem.description}
+                </p>
               </div>
 
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mt-4">
-                {problem.title}
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">{problem.category}</p>
-              <p className="text-sm text-gray-600 mt-4 line-clamp-3 leading-relaxed">
-                {problem.description}
-              </p>
+              <div className="mt-6">
+                <Link
+                  href={`/problem/${problem.slug}`}
+                  className="text-sm font-semibold text-blue-600 hover:underline inline-block"
+                >
+                  查看题目 →
+                </Link>
+              </div>
             </div>
-
-            <div className="mt-6">
-              <Link
-                href={`/problem/${problem.slug}`}
-                className="text-sm font-semibold text-blue-600 hover:underline inline-block"
-              >
-                查看题目 →
-              </Link>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

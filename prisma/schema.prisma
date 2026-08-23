@@ -14,6 +14,7 @@ model Problem {
   company         String
   role            String
   difficulty      String
+  stage           String   @default("VO") // 🌟 必须加上这一行
   category        String
   description     String
   example         String

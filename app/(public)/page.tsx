@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
+
 export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Echo INTV - 高效备战技术面试，拿下一线科技大厂 Offer",
   description: "专注收录 Google、Meta、Amazon 等顶尖大厂高频面试真题与解题复盘。",
 };
 
 export default async function HomePage() {
-  // 并行获取统计数据、公司列表与最新内容
   const [totalProblems, totalPosts, distinctCompanies, latestProblems, latestPosts] =
     await Promise.all([
       prisma.problem.count(),
@@ -20,7 +21,6 @@ export default async function HomePage() {
       prisma.post.findMany({ take: 3, orderBy: { createdAt: "desc" } }),
     ]);
 
-  // 获取收录的公司标签列表（若数据库为空则展示默认大厂）
   const companyList =
     distinctCompanies.map((c) => c.company).filter(Boolean).length > 0
       ? distinctCompanies.map((c) => c.company).filter(Boolean)
@@ -52,7 +52,6 @@ export default async function HomePage() {
           </p>
         </div>
 
-        {/* 核心行动按钮 */}
         <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
           <Link
             href="/problem"
@@ -70,14 +69,13 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        {/* 平台优势保障标签 */}
         <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 pt-4 text-xs sm:text-sm text-gray-500">
           <div><span className="text-emerald-500 font-bold">✓</span> 真实大厂考点还原</div>
           <div><span className="text-emerald-500 font-bold">✓</span> 代码语法高亮与复杂度分析</div>
           <div><span className="text-emerald-500 font-bold">✓</span> 1 对 1 定制辅导支持</div>
         </div>
 
-        {/* 🏢 热门大厂 Companies 标签展示栏 */}
+        {/* 🏢 热门大厂 Companies 标签栏 */}
         <div className="pt-4 flex flex-col items-center justify-center gap-3">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
             COMPANIES · 收录目标名企高频考题
@@ -96,7 +94,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* 📊 核心数据统计横幅 (6+ Problems / 5+ Articles / 4+ Companies) */}
+        {/* 📊 核心数据统计横幅 */}
         <div className="pt-6 max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {stats.map((stat, idx) => (
@@ -171,7 +169,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 🌟 3. Latest Interview Problems */}
+      {/* 🌟 3. Latest Interview Problems (已添加 OA / VO 标签) */}
       <section className="py-16 bg-white border-t border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex items-center justify-between">
@@ -185,23 +183,45 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {latestProblems.map((p) => (
-              <Link
-                key={p.id}
-                href={`/problem/${p.slug}`}
-                className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-blue-50 text-blue-600">{p.company}</span>
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.difficulty}</span>
+            {latestProblems.map((p) => {
+              const isOA =
+                (p as any).stage?.toUpperCase() === "OA" ||
+                p.title.toUpperCase().includes("OA") ||
+                p.category.toUpperCase().includes("OA");
+
+              return (
+                <Link
+                  key={p.id}
+                  href={`/problem/${p.slug}`}
+                  className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col justify-between"
+                >
+                  <div>
+                    {/* 🌟 头部标签组：公司 + [OA/VO] + 难度 */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-blue-50 text-blue-600">
+                        {p.company}
+                      </span>
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          isOA
+                            ? "bg-purple-100 text-purple-700 border border-purple-200"
+                            : "bg-sky-100 text-sky-700 border border-sky-200"
+                        }`}
+                      >
+                        {isOA ? "OA" : "VO"}
+                      </span>
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                        {p.difficulty}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-gray-900">{p.title}</h3>
+                    <p className="text-sm text-gray-500 mt-2 line-clamp-2">{p.description}</p>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">{p.title}</h3>
-                  <p className="text-sm text-gray-500 mt-2 line-clamp-2">{p.description}</p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-400 font-medium">{p.category}</div>
-              </Link>
-            ))}
+                  <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-400 font-medium">{p.category}</div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

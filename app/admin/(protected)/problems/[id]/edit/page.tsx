@@ -68,15 +68,12 @@ export default async function EditProblemPage({
 
           {/* Title */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="title"
               className="font-medium text-gray-900"
             >
               Title
             </label>
-
-            {/* Title 输入框 */}
             <input
               id="title"
               name="title"
@@ -89,15 +86,12 @@ export default async function EditProblemPage({
 
           {/* Company */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="company"
               className="font-medium text-gray-900"
             >
               Company
             </label>
-
-            {/* Company 输入框 */}
             <input
               id="company"
               name="company"
@@ -110,15 +104,12 @@ export default async function EditProblemPage({
 
           {/* Role */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="role"
               className="font-medium text-gray-900"
             >
               Role
             </label>
-
-            {/* Role 输入框 */}
             <input
               id="role"
               name="role"
@@ -131,15 +122,12 @@ export default async function EditProblemPage({
 
           {/* Difficulty */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="difficulty"
               className="font-medium text-gray-900"
             >
               Difficulty
             </label>
-
-            {/* Difficulty 选择 */}
             <select
               id="difficulty"
               name="difficulty"
@@ -147,17 +135,12 @@ export default async function EditProblemPage({
               defaultValue={problem.difficulty}
               className={inputStyle}
             >
-              {/* Easy */}
               <option value="Easy">
                 Easy
               </option>
-
-              {/* Medium */}
               <option value="Medium">
                 Medium
               </option>
-
-              {/* Hard */}
               <option value="Hard">
                 Hard
               </option>
@@ -165,17 +148,39 @@ export default async function EditProblemPage({
           </div>
 
 
+          {/* 🌟 Stage (考核形式: OA / VO) */}
+          <div>
+            <label
+              htmlFor="stage"
+              className="font-medium text-gray-900"
+            >
+              Stage (考核形式)
+            </label>
+            <select
+              id="stage"
+              name="stage"
+              required
+              defaultValue={(problem as any).stage || "VO"}
+              className={inputStyle}
+            >
+              <option value="VO">
+                VO (技术面试 / Onsite)
+              </option>
+              <option value="OA">
+                OA (线上测评 / 笔试)
+              </option>
+            </select>
+          </div>
+
+
           {/* Category */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="category"
               className="font-medium text-gray-900"
             >
               Category
             </label>
-
-            {/* Category 输入 */}
             <input
               id="category"
               name="category"
@@ -188,15 +193,12 @@ export default async function EditProblemPage({
 
           {/* Description */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="description"
               className="font-medium text-gray-900"
             >
               Description
             </label>
-
-            {/* Description 编辑 */}
             <textarea
               id="description"
               name="description"
@@ -210,15 +212,12 @@ export default async function EditProblemPage({
 
           {/* Example */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="example"
               className="font-medium text-gray-900"
             >
               Example
             </label>
-
-            {/* Example 编辑 */}
             <textarea
               id="example"
               name="example"
@@ -231,15 +230,12 @@ export default async function EditProblemPage({
 
           {/* Approach */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="approach"
               className="font-medium text-gray-900"
             >
               Approach
             </label>
-
-            {/* Approach 编辑 */}
             <textarea
               id="approach"
               name="approach"
@@ -252,15 +248,12 @@ export default async function EditProblemPage({
 
           {/* Solution */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="solution"
               className="font-medium text-gray-900"
             >
               Solution
             </label>
-
-            {/* Solution 编辑 */}
             <textarea
               id="solution"
               name="solution"
@@ -273,15 +266,12 @@ export default async function EditProblemPage({
 
           {/* Time Complexity */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="timeComplexity"
               className="font-medium text-gray-900"
             >
               Time Complexity
             </label>
-
-            {/* Time Complexity 输入 */}
             <input
               id="timeComplexity"
               name="timeComplexity"
@@ -293,15 +283,12 @@ export default async function EditProblemPage({
 
           {/* Space Complexity */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="spaceComplexity"
               className="font-medium text-gray-900"
             >
               Space Complexity
             </label>
-
-            {/* Space Complexity 输入 */}
             <input
               id="spaceComplexity"
               name="spaceComplexity"
@@ -313,23 +300,18 @@ export default async function EditProblemPage({
 
           {/* Topics */}
           <div>
-            {/* 字段名称 */}
             <label
               htmlFor="topics"
               className="font-medium text-gray-900"
             >
               Topics
             </label>
-
-            {/* Topics 输入 */}
             <input
               id="topics"
               name="topics"
               defaultValue={problem.topics.join(", ")}
               className={inputStyle}
             />
-
-            {/* Topics 提示 */}
             <p className="mt-2 text-sm text-gray-500">
               Separate topics with commas.
             </p>
