@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/user-auth";
 
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
+// 🔒 1. 统一管理员权限校验
 async function verifyAdmin() {
   const session = await getCurrentUser();
   if (!session) {
@@ -30,7 +31,7 @@ async function verifyAdmin() {
   return user;
 }
 
-// 1. 创建文章
+// 🌟 2. 导出创建文章 Action（解决 new/page.tsx 报错）
 export async function createPost(formData: FormData) {
   await verifyAdmin();
 
@@ -52,6 +53,7 @@ export async function createPost(formData: FormData) {
     throw new Error("文章标题不能为空");
   }
 
+  // 自动根据标题生成 Slug
   if (!slug) {
     const generatedSlug = title
       .toLowerCase()
@@ -69,6 +71,7 @@ export async function createPost(formData: FormData) {
     finalSlug = `${slug}-${Date.now().toString().slice(-4)}`;
   }
 
+  // 写入数据库
   await prisma.post.create({
     data: {
       title,
@@ -88,7 +91,7 @@ export async function createPost(formData: FormData) {
   redirect("/admin/posts");
 }
 
-// 2. 更新文章
+// 🌟 3. 导出更新文章 Action（解决 [id]/edit/page.tsx 报错）
 export async function updatePost(postId: number, formData: FormData) {
   await verifyAdmin();
 
@@ -107,6 +110,7 @@ export async function updatePost(postId: number, formData: FormData) {
     throw new Error("文章标题不能为空");
   }
 
+  // 更新文章数据
   await prisma.post.update({
     where: { id: postId },
     data: {
@@ -133,7 +137,7 @@ export async function updatePost(postId: number, formData: FormData) {
   redirect("/admin/posts");
 }
 
-// 3. 删除文章
+// 🌟 4. 导出删除文章 Action
 export async function deletePost(postId: number) {
   await verifyAdmin();
 
