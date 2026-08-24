@@ -182,8 +182,11 @@ export default async function HomePage() {
                 Practice coding and technical interview questions.
               </p>
             </div>
-            <Link href="/problem" className="text-sm font-semibold text-blue-600 hover:underline">
-              View All Problems →
+            <Link
+              href="/blog"
+              className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200/90 text-xs sm:text-sm font-bold text-gray-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/40 shadow-2xs transition-all duration-200"
+            >
+              <span>View All Articles</span>
             </Link>
           </div>
 
@@ -258,8 +261,11 @@ export default async function HomePage() {
                 Interview experiences, guides, and software engineering advice.
               </p>
             </div>
-            <Link href="/blog" className="text-sm font-semibold text-blue-600 hover:underline">
-              View All Articles →
+            <Link
+              href="/blog"
+              className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200/90 text-xs sm:text-sm font-bold text-gray-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/40 shadow-2xs transition-all duration-200"
+            >
+              <span>View All Articles</span>
             </Link>
           </div>
 

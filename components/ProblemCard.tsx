@@ -88,12 +88,19 @@ export default function ProblemCard({ problem, index }: ProblemCardProps) {
       </div>
 
       {/* 查看题目链接 */}
-      <div className="mt-6">
+      <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-gray-400 truncate max-w-[130px]">
+          {Array.isArray(problem.topics) && problem.topics.length > 0
+            ? problem.topics[0]
+            : problem.category}
+        </span>
+
         <Link
           href={`/problem/${problem.slug}`}
-          className="text-sm font-semibold text-blue-600 transition hover:underline inline-block"
+          className="group/btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white text-xs font-bold transition-all duration-200 shadow-2xs"
         >
-          查看题目 →
+          <span>查看题目</span>
+          
         </Link>
       </div>
     </div>

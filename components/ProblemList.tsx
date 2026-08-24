@@ -16,7 +16,7 @@ interface Problem {
   description: string;
   topics?: string[];
   stage?: string;
-  isFree?: boolean; // 🌟 新增字段
+  isFree?: boolean;
 }
 
 export default function ProblemList({ problems }: { problems: Problem[] }) {
@@ -52,7 +52,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
     return ["All", ...Array.from(set)];
   }, [problems]);
 
-  // 🌟 判定单个题目是否为 OA
+  // 判定单个题目是否为 OA
   const isProblemOA = (prob: Problem) => {
     const st = ((prob as any).stage || "").toUpperCase();
     const cat = (prob.category || "").toUpperCase();
@@ -88,7 +88,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         selectedDifficulty === "All" ||
         p.difficulty.toLowerCase() === selectedDifficulty.toLowerCase();
 
-      // 🌟 修复后的核心匹配逻辑：使用 includes("OA") 兼容长按钮文本
       const isOA = isProblemOA(p);
       const isFilterAll = selectedStage === "All" || !selectedStage;
       const isFilterOA = selectedStage.toUpperCase().includes("OA");
@@ -175,7 +174,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         </div>
       </div>
 
-      {/* 3. Stage 考核形式筛选 (OA / VO) */}
+      {/* 3. Stage 考核形式筛选 */}
       <div className="space-y-2">
         <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">
           Stage (考核形式)
@@ -232,12 +231,11 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         )}
       </div>
 
-      {/* 题目卡片网格 */}
+      {/* 题目卡片网格（整张卡片可点击） */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
         {filteredProblems.map((problem) => {
           const isOA = isProblemOA(problem);
 
-          // 🌟 核心逻辑：获取在全局列表中的原始序号，前 6 道题（index 0~5）自动判定为免费
           const originalIndex = problems.findIndex((p) => p.id === problem.id);
           const isFree =
             typeof problem.isFree === "boolean"
@@ -247,24 +245,25 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
               : true;
 
           return (
-            <div
+            <Link
               key={problem.id}
-              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col justify-between min-h-[260px]"
+              href={`/problem/${problem.slug}`}
+              className="group bg-white rounded-3xl p-6 sm:p-7 border border-gray-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between min-h-[250px] cursor-pointer"
             >
               <div>
                 {/* 顶部：公司名 + [免费/付费 徽章] + [OA/VO 徽章] + [难度 Badge] */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-blue-600">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-extrabold text-blue-600 tracking-tight">
                     {problem.company}
                   </span>
 
                   <div className="flex items-center gap-1.5">
-                    {/* 🌟 免费 / 付费 胶囊徽章 */}
+                    {/* 免费 / 付费 徽章 */}
                     <span
-                      className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
+                      className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${
                         isFree
-                          ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
-                          : "bg-amber-100 text-amber-800 border border-amber-200"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80"
+                          : "bg-amber-50 text-amber-800 border border-amber-200/80"
                       }`}
                     >
                       {isFree ? "Free" : "Paid"}
@@ -274,8 +273,8 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
                     <span
                       className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
                         isOA
-                          ? "bg-purple-100 text-purple-700 border border-purple-200"
-                          : "bg-sky-100 text-sky-700 border border-sky-200"
+                          ? "bg-purple-50 text-purple-700 border border-purple-200/80"
+                          : "bg-sky-50 text-sky-700 border border-sky-200/80"
                       }`}
                     >
                       {isOA ? "OA" : "VO"}
@@ -285,10 +284,10 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
                     <span
                       className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
                         problem.difficulty?.toUpperCase() === "EASY"
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-green-50 text-green-700 border border-green-200/80"
                           : problem.difficulty?.toUpperCase() === "MEDIUM"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-rose-100 text-rose-700"
+                          ? "bg-amber-50 text-amber-800 border border-amber-200/80"
+                          : "bg-rose-50 text-rose-700 border border-rose-200/80"
                       }`}
                     >
                       {problem.difficulty}
@@ -296,24 +295,27 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
                   </div>
                 </div>
 
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mt-4">
+                <h3 className="text-lg font-bold text-gray-900 mt-4 leading-snug group-hover:text-blue-600 transition-colors">
                   {problem.title}
                 </h3>
-                <p className="text-xs text-gray-400 mt-1">{problem.category}</p>
-                <p className="text-sm text-gray-600 mt-4 line-clamp-3 leading-relaxed">
+                <p className="text-xs font-semibold text-gray-400 mt-1.5">{problem.category}</p>
+                <p className="text-sm text-gray-600 mt-3.5 line-clamp-3 leading-relaxed">
                   {problem.description}
                 </p>
               </div>
 
-              <div className="mt-6">
-                <Link
-                  href={`/problem/${problem.slug}`}
-                  className="text-sm font-semibold text-blue-600 hover:underline inline-block"
-                >
-                  查看题目 →
-                </Link>
+              {/* 🌟 底部：只保留考点标签，移除了单独按钮 */}
+              <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-medium">
+                <span className="truncate">
+                  {Array.isArray(problem.topics) && problem.topics.length > 0
+                    ? problem.topics.join(" · ")
+                    : problem.category}
+                </span>
+                <span className="text-blue-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                  查看解析 →
+                </span>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
