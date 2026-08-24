@@ -96,3 +96,14 @@ model Favorite {
   @@index([userId])
   @@index([problemId])
 }
+
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}

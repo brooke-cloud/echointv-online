@@ -1,13 +1,15 @@
+// app/api/auth/register/route.ts
+
 import { prisma } from "@/lib/prisma";
 import { hashPassword, setUserSession } from "@/lib/user-auth";
 
 // 预设管理员邮箱列表（注册时自动分配 ADMIN 角色并拥有全部会员权限）
-const ADMIN_EMAILS = [ "shihaoy74@gmail.com"];
+const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, name } = body;
+    const { email, password, name, code } = body;
 
     // 参数校验
     if (!email || !email.includes("@")) {
@@ -24,6 +26,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // 🌟 1. 验证码参数校验
+    if (!code || code.trim().length !== 6) {
+      return Response.json(
+        { error: "请输入 6 位邮箱验证码" },
+        { status: 400 }
+      );
+    }
+
     const normalizedEmail = email.toLowerCase().trim();
 
     // 检查邮箱是否已被注册
@@ -34,6 +44,24 @@ export async function POST(request: Request) {
     if (existingUser) {
       return Response.json(
         { error: "该邮箱已被注册，请直接登录" },
+        { status: 400 }
+      );
+    }
+
+    // 🌟 2. 校验验证码是否正确且未过期
+    const validCodeRecord = await prisma.verificationCode.findFirst({
+      where: {
+        email: normalizedEmail,
+        code: code.trim(),
+        expiresAt: {
+          gt: new Date(), // 有效期需大于当前时间
+        },
+      },
+    });
+
+    if (!validCodeRecord) {
+      return Response.json(
+        { error: "验证码错误或已过期，请重新获取" },
         { status: 400 }
       );
     }
@@ -56,6 +84,11 @@ export async function POST(request: Request) {
         name: true,
         role: true,
       },
+    });
+
+    // 🌟 3. 注册成功后清理该邮箱已使用的验证码记录
+    await prisma.verificationCode.deleteMany({
+      where: { email: normalizedEmail },
     });
 
     // 设置登录状态 Cookie
