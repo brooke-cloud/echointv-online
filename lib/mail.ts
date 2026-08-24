@@ -9,9 +9,7 @@ export function getMailTransporter() {
   const port = Number(process.env.SMTP_PORT) || 465;
 
   if (!user || !pass) {
-    throw new Error(
-      `发信配置缺失：未能读取到 .env 中的 SMTP_USER 或 SMTP_PASS。请确认 .env 已保存并重启了 npm run dev`
-    );
+    throw new Error("发信配置缺失：未能读取到 SMTP_USER 或 SMTP_PASS。");
   }
 
   return nodemailer.createTransport({
@@ -27,12 +25,15 @@ export function getMailTransporter() {
 
 export async function sendVerificationEmail(email: string, code: string) {
   const transporter = getMailTransporter();
-  const mailUser = process.env.SMTP_USER?.trim();
-  const from = process.env.SMTP_FROM || `"EchoINTV" <${mailUser}>`;
+  const user = process.env.SMTP_USER?.trim() as string;
 
+  // 🌟 核心修复：使用结构化对象，确保 QQ 邮箱 100% 校验通过
   const mailOptions = {
-    from,
-    to: email,
+    from: {
+      name: "EchoINTV",
+      address: user,
+    },
+    to: email.trim(),
     subject: `【EchoINTV】您的注册验证码是：${code}`,
     html: `
       <div style="max-width: 560px; margin: 0 auto; padding: 32px 24px; font-family: sans-serif; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px;">
