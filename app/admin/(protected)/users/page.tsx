@@ -30,7 +30,7 @@ export default async function AdminUsersPage() {
             </span>
           </div>
           <p className="mt-1 text-sm text-gray-500">
-            管理全站注册用户，支持一键开通 VIP 或取消 VIP 会员资格。
+            管理全站注册用户，支持一键开通/取消 VIP 会员资格，以及彻底清理与删除用户账号。
           </p>
         </div>
       </div>
@@ -49,12 +49,11 @@ export default async function AdminUsersPage() {
                   <th className="px-6 py-4">User / Email</th>
                   <th className="px-6 py-4">Current Status (当前身份)</th>
                   <th className="px-6 py-4">Registered Date</th>
-                  <th className="px-6 py-4 text-right">Action (会员操作)</th>
+                  <th className="px-6 py-4 text-right">Action (操作管理)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700">
                 {users.map((user) => {
-                  // 🌟 自动识别 PRO 或 isVip
                   const isVip = user.role === "PRO" || Boolean((user as any).isVip);
 
                   return (
@@ -96,12 +95,13 @@ export default async function AdminUsersPage() {
                           : "-"}
                       </td>
 
-                      {/* 🌟 一键开通 / 取消 VIP */}
+                      {/* 🌟 操作列：包含 VIP 操作与删除按钮 */}
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <UserVipToggle
                           userId={user.id}
                           isVip={isVip}
                           role={user.role}
+                          email={user.email}
                         />
                       </td>
                     </tr>
