@@ -31,7 +31,7 @@ async function requireAdmin() {
   }
 }
 
-// 1. 创建 Problem（包含 stage）
+// 1. 创建 Problem（包含 stage 与 similarProblems 相似题）
 export async function createProblem(formData: FormData) {
   await requireAdmin();
 
@@ -39,15 +39,18 @@ export async function createProblem(formData: FormData) {
   const company = getFormString(formData, "company", 100);
   const role = getFormString(formData, "role", 100);
   const difficulty = getFormString(formData, "difficulty", 20);
-  const stage = getFormString(formData, "stage", 20) || "VO"; // 🌟 接收 stage
+  const stage = getFormString(formData, "stage", 20) || "VO";
   const category = getFormString(formData, "category", 100);
   const description = getFormString(formData, "description", 5000);
   const example = getFormString(formData, "example", 10000);
-  const approach = getFormString(formData, "approach", 10000);
+  const approach = getFormString(formData, "approach", 20000); // 🌟 扩大 Markdown 思路字符容量
   const solution = getFormString(formData, "solution", 30000);
   const timeComplexity = getFormString(formData, "timeComplexity", 100);
   const spaceComplexity = getFormString(formData, "spaceComplexity", 100);
   const topicsValue = getFormString(formData, "topics", 1000);
+  
+  // 🌟 提取 LeetCode 相似题目推荐
+  const similarProblems = getFormString(formData, "similarProblems", 2000) || "";
 
   const topics = topicsValue
     .split(",")
@@ -73,7 +76,7 @@ export async function createProblem(formData: FormData) {
       company,
       role,
       difficulty,
-      stage, // 🌟 保存 stage 到数据库
+      stage,
       category,
       description,
       example,
@@ -82,6 +85,7 @@ export async function createProblem(formData: FormData) {
       timeComplexity,
       spaceComplexity,
       topics,
+      similarProblems, // 🌟 保存 LeetCode 相似题到数据库
     },
   });
 
@@ -92,7 +96,7 @@ export async function createProblem(formData: FormData) {
   redirect("/admin/problems?success=created");
 }
 
-// 2. 更新 Problem（🌟 核心修复：把 stage 保存进数据库！）
+// 2. 更新 Problem（🌟 保存 stage 与 similarProblems 相似题）
 export async function updateProblem(problemId: number, formData: FormData) {
   await requireAdmin();
 
@@ -100,15 +104,18 @@ export async function updateProblem(problemId: number, formData: FormData) {
   const company = getFormString(formData, "company", 100);
   const role = getFormString(formData, "role", 100);
   const difficulty = getFormString(formData, "difficulty", 20);
-  const stage = getFormString(formData, "stage", 20) || "VO"; // 🌟 提取 stage
+  const stage = getFormString(formData, "stage", 20) || "VO";
   const category = getFormString(formData, "category", 100);
   const description = getFormString(formData, "description", 5000);
   const example = getFormString(formData, "example", 10000);
-  const approach = getFormString(formData, "approach", 10000);
+  const approach = getFormString(formData, "approach", 20000); // 🌟 扩大 Markdown 思路字符容量
   const solution = getFormString(formData, "solution", 30000);
   const timeComplexity = getFormString(formData, "timeComplexity", 100);
   const spaceComplexity = getFormString(formData, "spaceComplexity", 100);
   const topicsValue = getFormString(formData, "topics", 1000);
+
+  // 🌟 提取 LeetCode 相似题目推荐
+  const similarProblems = getFormString(formData, "similarProblems", 2000) || "";
 
   const topics = topicsValue
     .split(",")
@@ -129,7 +136,7 @@ export async function updateProblem(problemId: number, formData: FormData) {
     throw new Error("Problem not found.");
   }
 
-  // 🌟 将 stage 真正更新入库
+  // 🌟 更新数据库
   await prisma.problem.update({
     where: { id: problemId },
     data: {
@@ -137,7 +144,7 @@ export async function updateProblem(problemId: number, formData: FormData) {
       company,
       role,
       difficulty,
-      stage, // 👈 这一行将 stage 真正存进数据库！
+      stage,
       category,
       description,
       example,
@@ -146,6 +153,7 @@ export async function updateProblem(problemId: number, formData: FormData) {
       timeComplexity,
       spaceComplexity,
       topics,
+      similarProblems, // 🌟 同步更新相似题入库
     },
   });
 

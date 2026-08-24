@@ -20,6 +20,7 @@ model Problem {
   example         String
   approach        String
   solution        String
+  similarProblems String?  // 🌟 新增：LeetCode 相似题目（如: "373. 查找和最小的 K 对数字, 378. 有序矩阵中第 K 小的元素"）
   timeComplexity  String
   spaceComplexity String
   topics          String[]

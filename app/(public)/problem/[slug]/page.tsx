@@ -17,14 +17,17 @@ import {
   Clock,
   HardDrive,
   Sparkles,
+  Code2,
 } from "lucide-react";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
+// ⚡ 1. 开启 ISR 增量静态再生（每 60 秒后台静默刷新缓存）
 export const revalidate = 60;
 
+// ⚡ 2. 预生成静态路由参数（打包构建时预先生成所有真题的静态页面）
 export async function generateStaticParams() {
   const problems = await prisma.problem.findMany({
     select: { slug: true },
@@ -34,6 +37,7 @@ export async function generateStaticParams() {
   }));
 }
 
+// 1. 动态生成 SEO 标题与描述
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const problem = await prisma.problem.findUnique({
@@ -62,6 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// 难度颜色映射工具函数
 const getDifficultyBadge = (difficulty: string) => {
   const diff = difficulty?.toLowerCase();
   if (diff === "easy") {
@@ -79,6 +84,7 @@ const getDifficultyBadge = (difficulty: string) => {
 export default async function ProblemDetailPage({ params }: Props) {
   const { slug } = await params;
 
+  // 2. 查询当前题目数据
   const problem = await prisma.problem.findUnique({
     where: { slug },
   });
@@ -87,7 +93,7 @@ export default async function ProblemDetailPage({ params }: Props) {
     notFound();
   }
 
-  // 🔒 会员权限校验逻辑：前 6 道题免费，第 7 道起需要 Pro/Admin 会员
+  // 🔒 3. 会员权限校验逻辑：前 6 道题免费，第 7 道起需要 Pro/Admin 会员
   const freeProblems = await prisma.problem.findMany({
     take: 6,
     orderBy: { id: "asc" },
@@ -102,6 +108,7 @@ export default async function ProblemDetailPage({ params }: Props) {
   const session = await getCurrentUser();
   let isMember = false;
 
+  // 预设管理员邮箱白名单（自动放行）
   const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
   if (session) {
@@ -121,6 +128,7 @@ export default async function ProblemDetailPage({ params }: Props) {
   // 是否有权查看完整内容
   const canAccess = isFree || isMember;
 
+  // 4. 并行查询「上一题」、「下一题」与「相关推荐真题」
   const [prevProblem, nextProblem, relatedProblems] = await Promise.all([
     prisma.problem.findFirst({
       where: { createdAt: { lt: problem.createdAt } },
@@ -208,14 +216,14 @@ export default async function ProblemDetailPage({ params }: Props) {
             </h1>
           </div>
 
-          {/* 🔒 权限控制区：仅当有权限（免费题或VIP会员）时才展示 Problem Description 及后续题解内容 */}
+          {/* 🔒 权限控制区：只有免费题或VIP会员才展示题目描述与核心题解 */}
           {canAccess ? (
             <>
               {/* 题目描述 (Problem Description) - 仅有权时展示 */}
               {problem.description && (
                 <div className="mt-8">
                   <h2 className="text-lg font-bold text-gray-900">Problem Description</h2>
-                  <div className="mt-3 text-gray-700">
+                  <div className="mt-3 text-gray-700 leading-relaxed">
                     <MarkdownRenderer content={problem.description} />
                   </div>
                 </div>
@@ -231,11 +239,14 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 解题思路 (Approach) */}
+              {/* 💡 解题思路 (Approach - Markdown 格式排版渲染) */}
               {problem.approach && (
                 <div className="mt-8">
-                  <h2 className="text-lg font-bold text-gray-900">Approach</h2>
-                  <div className="mt-3 text-gray-700">
+                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <span>💡</span>
+                    <span>Approach (解题思路)</span>
+                  </h2>
+                  <div className="mt-3 text-gray-700 leading-relaxed prose prose-blue max-w-none">
                     <MarkdownRenderer content={problem.approach} />
                   </div>
                 </div>
@@ -279,12 +290,17 @@ export default async function ProblemDetailPage({ params }: Props) {
               {/* 最优解代码 (Solution) */}
               {problem.solution && (
                 <div className="mt-8">
-                  <h2 className="text-lg font-bold text-gray-900">Solution</h2>
-                  <CodeBlock
-                    code={problem.solution}
-                    language="python"
-                    title="Python 3 Solution"
-                  />
+                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <Code2 className="h-5 w-5 text-blue-600" />
+                    <span>Solution</span>
+                  </h2>
+                  <div className="mt-3">
+                    <CodeBlock
+                      code={problem.solution}
+                      language="python"
+                      title="Python 3 Solution"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -301,6 +317,38 @@ export default async function ProblemDetailPage({ params }: Props) {
                         {topic}
                       </span>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 🌟 🎯 LeetCode 相似题目推荐模块 */}
+              {(problem as any).similarProblems && (
+                <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50/40 p-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500 text-white font-bold text-xs shadow-2xs">
+                      LC
+                    </span>
+                    <h3 className="text-base font-bold text-gray-900">
+                      LeetCode 相似题目推荐与延伸练习
+                    </h3>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-4">
+                    掌握同类考点的变体套路与最优解模板，举一反三快速拿下技术面试：
+                  </p>
+                  <div className="flex flex-wrap gap-2.5">
+                    {((problem as any).similarProblems as string)
+                      .split(/[,，]/)
+                      .map((item) => item.trim())
+                      .filter(Boolean)
+                      .map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-gray-200/80 text-xs font-semibold text-gray-800 shadow-2xs hover:border-blue-300 hover:text-blue-600 transition"
+                        >
+                          <span className="text-amber-500">⚡</span>
+                          <span>{item}</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}
