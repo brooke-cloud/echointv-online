@@ -71,7 +71,7 @@ export default async function BlogDetailPage({ params }: Props) {
     notFound();
   }
 
-  // 🔒 🌟 修改处：前 6 篇文章免费（由 take: 5 改为 take: 6）
+  // 🔒 会员权限校验逻辑：前 6 篇文章免费，第 7 篇起需要 Pro/Admin 会员
   const freePosts = await prisma.post.findMany({
     take: 6,
     orderBy: { id: "asc" },
@@ -136,15 +136,15 @@ export default async function BlogDetailPage({ params }: Props) {
     <div className="min-h-screen bg-gray-50/50 py-10 sm:py-12">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         
-        {/* 面包屑导航 */}
-        <div className="mb-6 flex items-center gap-2 text-sm text-gray-900">
-          <Link href="/blog" className="hover:text-blue-600 transition-colors">
-            面试经验
+        {/* 🌟 修改处：顶部退出/返回博客列表按钮 */}
+        <div className="mb-6">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 shadow-2xs hover:bg-gray-50 hover:text-blue-600 hover:border-gray-300 transition"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>返回面试经验</span>
           </Link>
-          <span>/</span>
-          <span className="text-gray-900 font-medium truncate">
-            {post.title}
-          </span>
         </div>
 
         {/* 文章主卡片 */}
@@ -209,7 +209,7 @@ export default async function BlogDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* 上一篇 / 下一篇 导航区域 */}
+          {/* 上一篇 / 下一篇 导航 */}
           <div className="mt-10 flex flex-col gap-4 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
             {prevPost ? (
               <Link

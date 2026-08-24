@@ -108,7 +108,6 @@ export default async function ProblemDetailPage({ params }: Props) {
   const session = await getCurrentUser();
   let isMember = false;
 
-  // 预设管理员邮箱白名单（自动放行）
   const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
   if (session) {
@@ -161,32 +160,32 @@ export default async function ProblemDetailPage({ params }: Props) {
     <div className="min-h-screen bg-gray-50/50 py-10 sm:py-12">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         
-        {/* 面包屑导航 */}
-        <div className="mb-6 flex items-center gap-2 text-sm text-gray-900">
-          <Link href="/problem" className="hover:text-blue-600 transition-colors">
-            面试真题
+        {/* 🌟 退出/返回题库按钮 */}
+        <div className="mb-6">
+          <Link
+            href="/problem"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 shadow-2xs hover:bg-gray-50 hover:text-blue-600 hover:border-gray-300 transition"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>返回题库列表</span>
           </Link>
-          <span>/</span>
-          <span className="text-gray-900 font-medium truncate">
-            {problem.title}
-          </span>
         </div>
 
         {/* 题目主卡片 */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
+        <div className="rounded-3xl border border-gray-200/90 bg-white p-6 sm:p-10 shadow-sm relative overflow-hidden space-y-8">
           
           {/* 题目头部信息 */}
           <div className="border-b border-gray-100 pb-6">
             <div className="flex flex-wrap items-center gap-3">
               {/* 目标公司标签 */}
-              <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 border border-blue-100">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-100">
                 <Building2 className="h-3.5 w-3.5" />
                 {problem.company}
               </span>
 
               {/* 免费 / 会员专享 胶囊徽章 */}
               <span
-                className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                className={`rounded-lg border px-3 py-1 text-xs font-bold ${
                   isFree
                     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                     : "bg-amber-50 text-amber-700 border-amber-200"
@@ -197,7 +196,7 @@ export default async function ProblemDetailPage({ params }: Props) {
 
               {/* 难度标签 */}
               <span
-                className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${getDifficultyBadge(
+                className={`rounded-lg border px-3 py-1 text-xs font-bold ${getDifficultyBadge(
                   problem.difficulty
                 )}`}
               >
@@ -205,48 +204,76 @@ export default async function ProblemDetailPage({ params }: Props) {
               </span>
 
               {/* 类别标签 */}
-              <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-                <Tag className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+                <Tag className="h-3.5 w-3.5" />
                 {problem.category}
               </span>
             </div>
 
-            <h1 className="mt-4 text-2xl font-bold text-gray-900 sm:text-3xl">
+            <h1 className="mt-5 text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-snug">
               {problem.title}
             </h1>
           </div>
 
-          {/* 🔒 权限控制区：只有免费题或VIP会员才展示题目描述与核心题解 */}
+          {/* 🔒 权限控制区 */}
           {canAccess ? (
-            <>
-              {/* 题目描述 (Problem Description) - 仅有权时展示 */}
+            <div className="space-y-8">
+              
+              {/* 🌟 1. UI 优化：Problem Description (题目描述) */}
               {problem.description && (
-                <div className="mt-8">
-                  <h2 className="text-lg font-bold text-gray-900">Problem Description</h2>
-                  <div className="mt-3 text-gray-700 leading-relaxed">
+                <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:p-7">
+                  <div className="flex items-center gap-2 mb-3.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-700 text-sm shadow-2xs font-bold">
+                      📝
+                    </span>
+                    <h2 className="text-base sm:text-lg font-bold text-gray-900">
+                      Problem Description (题目描述)
+                    </h2>
+                  </div>
+                  <div className="text-gray-700 leading-relaxed text-sm sm:text-base prose prose-blue max-w-none">
                     <MarkdownRenderer content={problem.description} />
                   </div>
                 </div>
               )}
 
-              {/* 示例 (Example) */}
+              {/* 🌟 2. UI 优化：Example (输入输出示例) */}
               {problem.example && (
-                <div className="mt-8">
-                  <h2 className="text-lg font-bold text-gray-900">Example</h2>
-                  <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 p-4 font-mono text-sm text-gray-800">
-                    <pre className="whitespace-pre-wrap">{problem.example}</pre>
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-6 sm:p-7">
+                  <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-100 text-purple-700 text-sm shadow-2xs font-bold">
+                        🔍
+                      </span>
+                      <h2 className="text-base sm:text-lg font-bold text-gray-900">
+                        Example (输入输出示例)
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="rounded-xl font-semibold border border-slate-200 bg-white p-5 font-mono text-sm text-slate-900 shadow-2xs leading-relaxed whitespace-pre-wrap">
+                    {/* 清理重复的开头 Example 字样 */}
+                    {problem.example.replace(/^Example\s*/i, "").trim()}
                   </div>
                 </div>
               )}
 
-              {/* 💡 解题思路 (Approach - Markdown 格式排版渲染) */}
+              {/* 🌟 3. UI 优化：Approach (解题思路 - 现代技术专栏风格) */}
               {problem.approach && (
-                <div className="mt-8">
-                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <span>💡</span>
-                    <span>Approach (解题思路)</span>
-                  </h2>
-                  <div className="mt-3 text-gray-700 leading-relaxed prose prose-blue max-w-none">
+                <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-b from-amber-50/30 via-white to-white p-6 sm:p-8 shadow-xs">
+                  <div className="flex items-center justify-between mb-5 pb-3.5 border-b border-amber-100">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-700 text-base shadow-2xs">
+                        💡
+                      </span>
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
+                        Approach (核心思维推导与最优策略)
+                      </h2>
+                    </div>
+                    <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200/60 shadow-2xs">
+                      Optimal Strategy
+                    </span>
+                  </div>
+
+                  <div className="text-gray-800 leading-relaxed prose prose-blue max-w-none text-sm sm:text-base">
                     <MarkdownRenderer content={problem.approach} />
                   </div>
                 </div>
@@ -254,65 +281,66 @@ export default async function ProblemDetailPage({ params }: Props) {
 
               {/* 复杂度卡片 (Complexity) */}
               {(problem.timeComplexity || problem.spaceComplexity) && (
-                <div className="mt-8">
-                  <h2 className="text-lg font-bold text-gray-900">Complexity</h2>
-                  <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {problem.timeComplexity && (
-                      <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/40 p-4">
-                        <Clock className="h-5 w-5 text-blue-600" />
-                        <div>
-                          <span className="block text-xs font-medium text-gray-500">
-                            Time Complexity
-                          </span>
-                          <span className="font-mono text-sm font-semibold text-gray-900">
-                            {problem.timeComplexity}
-                          </span>
-                        </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {problem.timeComplexity && (
+                    <div className="flex items-center gap-3.5 rounded-2xl border border-blue-100 bg-blue-50/40 p-5">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                        <Clock className="h-5 w-5" />
                       </div>
-                    )}
-                    {problem.spaceComplexity && (
-                      <div className="flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50/40 p-4">
-                        <HardDrive className="h-5 w-5 text-purple-600" />
-                        <div>
-                          <span className="block text-xs font-medium text-gray-500">
-                            Space Complexity
-                          </span>
-                          <span className="font-mono text-sm font-semibold text-gray-900">
-                            {problem.spaceComplexity}
-                          </span>
-                        </div>
+                      <div>
+                        <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Time Complexity
+                        </span>
+                        <span className="font-mono text-sm font-bold text-gray-900 mt-0.5 block">
+                          {problem.timeComplexity}
+                        </span>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  {problem.spaceComplexity && (
+                    <div className="flex items-center gap-3.5 rounded-2xl border border-purple-100 bg-purple-50/40 p-5">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
+                        <HardDrive className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Space Complexity
+                        </span>
+                        <span className="font-mono text-sm font-bold text-gray-900 mt-0.5 block">
+                          {problem.spaceComplexity}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* 最优解代码 (Solution) */}
               {problem.solution && (
-                <div className="mt-8">
-                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3">
                     <Code2 className="h-5 w-5 text-blue-600" />
-                    <span>Solution</span>
+                    <span>Solution (Python 3 最优解)</span>
                   </h2>
-                  <div className="mt-3">
-                    <CodeBlock
-                      code={problem.solution}
-                      language="python"
-                      title="Python 3 Solution"
-                    />
-                  </div>
+                  <CodeBlock
+                    code={problem.solution}
+                    language="python"
+                    title="Python 3 Solution"
+                  />
                 </div>
               )}
 
               {/* 相关考点标签 (Topics) */}
               {problem.topics && problem.topics.length > 0 && (
-                <div className="mt-8 border-t border-gray-100 pt-6">
-                  <h3 className="text-sm font-semibold text-gray-500">Related Topics</h3>
+                <div className="border-t border-gray-100 pt-6">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                    Related Topics · 核心算法考点
+                  </h3>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {problem.topics.map((topic, index) => (
                       <span
                         key={index}
-                        className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
+                        className="rounded-xl bg-gray-100 px-3.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 transition"
                       >
                         {topic}
                       </span>
@@ -321,10 +349,10 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 🌟 🎯 LeetCode 相似题目推荐模块 */}
+              {/* 🎯 LeetCode 相似题目推荐模块 */}
               {(problem as any).similarProblems && (
-                <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50/40 p-6">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-6 sm:p-7">
+                  <div className="flex items-center gap-2.5 mb-2">
                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500 text-white font-bold text-xs shadow-2xs">
                       LC
                     </span>
@@ -352,7 +380,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                   </div>
                 </div>
               )}
-            </>
+            </div>
           ) : (
             /* 🌟 付费拦截：不显示 Description，直接显示模糊遮罩与卡片 */
             <div className="relative mt-8">
@@ -364,17 +392,17 @@ export default async function ProblemDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* 上一题 / 下一题 导航区域 */}
+          {/* 上一题 / 下一题 导航 */}
           <div className="mt-10 flex flex-col gap-4 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
             {prevProblem ? (
               <Link
                 href={`/problem/${prevProblem.slug}`}
-                className="group flex flex-1 items-center gap-3 rounded-xl border border-gray-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/30"
+                className="group flex flex-1 items-center gap-3 rounded-2xl border border-gray-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/30 shadow-2xs"
               >
                 <ChevronLeft className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition" />
                 <div className="text-left">
                   <span className="block text-xs text-gray-400">上一题</span>
-                  <span className="line-clamp-1 text-sm font-medium text-gray-800 group-hover:text-blue-600">
+                  <span className="line-clamp-1 text-sm font-semibold text-gray-800 group-hover:text-blue-600">
                     {prevProblem.title}
                   </span>
                 </div>
@@ -386,11 +414,11 @@ export default async function ProblemDetailPage({ params }: Props) {
             {nextProblem && (
               <Link
                 href={`/problem/${nextProblem.slug}`}
-                className="group flex flex-1 items-center justify-end gap-3 rounded-xl border border-gray-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/30 text-right"
+                className="group flex flex-1 items-center justify-end gap-3 rounded-2xl border border-gray-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/30 text-right shadow-2xs"
               >
                 <div>
                   <span className="block text-xs text-gray-400">下一题</span>
-                  <span className="line-clamp-1 text-sm font-medium text-gray-800 group-hover:text-blue-600">
+                  <span className="line-clamp-1 text-sm font-semibold text-gray-800 group-hover:text-blue-600">
                     {nextProblem.title}
                   </span>
                 </div>
@@ -416,15 +444,15 @@ export default async function ProblemDetailPage({ params }: Props) {
                 <Link
                   key={item.id}
                   href={`/problem/${item.slug}`}
-                  className="group flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-400 hover:shadow-md"
+                  className="group flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-400 hover:shadow-md"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-blue-600">
+                      <span className="text-xs font-bold text-blue-600">
                         {item.company}
                       </span>
                       <span
-                        className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${getDifficultyBadge(
+                        className={`rounded-lg px-2 py-0.5 text-[10px] font-bold ${getDifficultyBadge(
                           item.difficulty
                         )}`}
                       >
@@ -439,7 +467,7 @@ export default async function ProblemDetailPage({ params }: Props) {
 
                   <div className="mt-4 flex items-center justify-between border-t border-gray-50 pt-3 text-xs text-gray-400">
                     <span>{item.category}</span>
-                    <span className="inline-flex items-center gap-1 font-medium text-blue-600 group-hover:underline">
+                    <span className="inline-flex items-center gap-1 font-semibold text-blue-600 group-hover:underline">
                       做题 <ArrowRight className="h-3 w-3" />
                     </span>
                   </div>
