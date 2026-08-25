@@ -43,11 +43,15 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
     "VO (技术轮面/Onsite)",
   ];
 
-  // 提取去重后的分类列表
+  // 🌟 核心优化：只提取第一个斜杠 / 前面的主分类内容并去重
   const categories = useMemo(() => {
     const set = new Set<string>();
     problems.forEach((p) => {
-      if (p.category) set.add(p.category);
+      if (p.category) {
+        // 截取第一个 / 前面的主分类（例如 "Algorithms / Greedy" -> "Algorithms"）
+        const mainCat = p.category.split("/")[0].trim();
+        if (mainCat) set.add(mainCat);
+      }
     });
     return ["All", ...Array.from(set)];
   }, [problems]);
@@ -98,9 +102,12 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         (isFilterOA && isOA) ||
         (isFilterVO && !isOA);
 
+      // 🌟 智能匹配：判断题目的主分类是否等于选中大类，或包含该关键词
+      const pMainCat = p.category ? p.category.split("/")[0].trim() : "";
       const matchCategory =
         selectedCategory === "All" ||
-        p.category.toLowerCase() === selectedCategory.toLowerCase();
+        pMainCat.toLowerCase() === selectedCategory.toLowerCase() ||
+        p.category.toLowerCase().includes(selectedCategory.toLowerCase());
 
       return matchSearch && matchCompany && matchDifficulty && matchStage && matchCategory;
     });
@@ -196,7 +203,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         </div>
       </div>
 
-      {/* 4. Category 分类筛选 */}
+      {/* 🌟 4. Category 分类筛选（只展示精简的第一主分类） */}
       <div className="space-y-2">
         <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">Category</div>
         <div className="flex flex-wrap gap-2">
@@ -231,7 +238,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         )}
       </div>
 
-      {/* 题目卡片网格（整张卡片可点击） */}
+      {/* 题目卡片网格 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
         {filteredProblems.map((problem) => {
           const isOA = isProblemOA(problem);
@@ -298,13 +305,15 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
                 <h3 className="text-lg font-bold text-gray-900 mt-4 leading-snug group-hover:text-blue-600 transition-colors">
                   {problem.title}
                 </h3>
-                <p className="text-xs font-semibold text-gray-400 mt-1.5">{problem.category}</p>
+                <p className="text-xs font-semibold text-gray-400 mt-1.5">
+                  {problem.category.split("/")[0].trim()}
+                </p>
                 <p className="text-sm text-gray-600 mt-3.5 line-clamp-3 leading-relaxed">
                   {problem.description}
                 </p>
               </div>
 
-              {/* 🌟 底部：只保留考点标签，移除了单独按钮 */}
+              {/* 底部考点标签 */}
               <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-medium">
                 <span className="truncate">
                   {Array.isArray(problem.topics) && problem.topics.length > 0

@@ -86,7 +86,7 @@ const getDifficultyBadge = (difficulty: string) => {
   return "bg-gray-50 text-gray-700 border-gray-200";
 };
 
-// 🌟 纯净复杂度卡片（直接由 MarkdownRenderer 渲染出第二张图效果）
+// 复杂度卡片
 function ComplexityCard({
   title,
   icon,
@@ -127,7 +127,6 @@ function ComplexityCard({
         </h3>
       </div>
 
-      {/* 🌟 直接通过 Markdown 渲染标准列表 */}
       <div className="text-sm text-gray-800 leading-relaxed pl-1">
         <MarkdownRenderer content={content} />
       </div>
@@ -294,10 +293,10 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 2. Example 示例 */}
+              {/* 🌟 2. 核心修复：Example 示例（全面调用 MarkdownRenderer 渲染） */}
               {problem.example && (
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-6 sm:p-7 space-y-3.5">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-100 text-purple-700 text-sm shadow-2xs font-bold">
                       🔍
                     </span>
@@ -306,13 +305,14 @@ export default async function ProblemDetailPage({ params }: Props) {
                     </h2>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 font-mono text-base font-semibold text-slate-900 shadow-2xs leading-relaxed whitespace-pre-wrap">
-                    {problem.example.replace(/^Example\s*/i, "").trim()}
+                  {/* 🌟 通过 MarkdownRenderer 渲染，反引号 ` 自动转化为高亮代码胶囊 */}
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 text-sm sm:text-base text-gray-800 shadow-2xs leading-relaxed prose prose-purple max-w-none font-medium">
+                    <MarkdownRenderer content={problem.example} />
                   </div>
                 </div>
               )}
 
-              {/* 3. 解题思路 (Approach) */}
+              {/* 3. Approach */}
               {problem.approach && (
                 <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-b from-amber-50/30 via-white to-white p-6 sm:p-8 shadow-xs">
                   <div className="flex items-center justify-between mb-5 pb-3.5 border-b border-amber-100">
@@ -335,7 +335,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 🌟 4. 复杂度卡片 (与第二张图 100% 完全一致) */}
+              {/* 4. 复杂度卡片 */}
               {(problem.timeComplexity || problem.spaceComplexity) && (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   {problem.timeComplexity && (
@@ -363,12 +363,12 @@ export default async function ProblemDetailPage({ params }: Props) {
                 <div>
                   <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3">
                     <Code2 className="h-5 w-5 text-blue-600" />
-                    <span>Solution (核心代码)</span>
+                    <span>Solution (Python 3 最优解)</span>
                   </h2>
                   <CodeBlock
                     code={problem.solution}
                     language="python"
-                    title="Solution"
+                    title="Python 3 Solution"
                   />
                 </div>
               )}
