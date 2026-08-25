@@ -130,17 +130,23 @@ export default function NewProblemPage() {
     if (collected.spaceComplexity) setSpaceComplexity(collected.spaceComplexity.join("\n").trim());
     if (collected.topics) setTopics(collected.topics.join("\n").trim());
     if (collected.similarProblems) setSimilarProblems(collected.similarProblems.join("\n").trim());
+    
+    // 🌟 修复关键点：使用 codeMatch.trim()
     if (collected.solution) {
       const rawSol = collected.solution.join("\n").trim();
       const codeMatch = rawSol.match(/```(?:python|py)?\s*([\s\S]*?)```/i);
-      setSolution(codeMatch ? codeMatch.trim() : rawSol);
+      if (codeMatch) {
+        setSolution(codeMatch[1].trim());
+      } else {
+        setSolution(rawSol);
+      }
     }
 
     setParseSuccess(true);
     setTimeout(() => setParseSuccess(false), 4000);
   };
 
-  // 🌟 表单提交处理函数（带加载状态与实时错误展示）
+  // 表单提交处理函数
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitError("");
@@ -150,7 +156,6 @@ export default function NewProblemPage() {
       const formData = new FormData(e.currentTarget);
       await createProblem(formData);
     } catch (err: any) {
-      // Next.js 的 redirect 内部会抛出 NEXT_REDIRECT，属于正常跳转，不视为错误
       if (err?.message?.includes("NEXT_REDIRECT")) {
         return;
       }
@@ -185,7 +190,7 @@ export default function NewProblemPage() {
           </p>
         </div>
 
-        {/* 🌟 1. 核心智能解析专区 */}
+        {/* 1. 核心智能解析专区 */}
         <div className="rounded-3xl border-2 border-blue-200 bg-gradient-to-b from-blue-50/50 via-white to-white p-6 sm:p-8 shadow-sm space-y-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
@@ -229,7 +234,7 @@ export default function NewProblemPage() {
           </div>
         </div>
 
-        {/* 🌟 2. 表单明细 */}
+        {/* 2. 表单明细 */}
         <form
           onSubmit={handleSubmit}
           className="space-y-8 rounded-3xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm"
@@ -405,7 +410,7 @@ export default function NewProblemPage() {
           {/* Solution Code */}
           <div>
             <label htmlFor="solution" className="font-semibold text-gray-900 text-sm">
-              Solution (Python / 核心代码)
+              Solution (核心代码)
             </label>
             <textarea
               id="solution"
@@ -492,7 +497,7 @@ export default function NewProblemPage() {
             />
           </div>
 
-          {/* 提交按钮（带加载动画） */}
+          {/* 提交按钮 */}
           <button
             type="submit"
             disabled={submitting}

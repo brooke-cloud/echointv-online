@@ -190,7 +190,7 @@ export default async function EditProblemPage({ params }: Props) {
           {/* Solution Code */}
           <div>
             <label htmlFor="solution" className="font-semibold text-gray-900 text-sm">
-              Solution (Python / 核心代码)
+              Solution (核心代码)
             </label>
             <textarea
               id="solution"

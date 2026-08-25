@@ -363,12 +363,12 @@ export default async function ProblemDetailPage({ params }: Props) {
                 <div>
                   <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3">
                     <Code2 className="h-5 w-5 text-blue-600" />
-                    <span>Solution (Python 3 最优解)</span>
+                    <span>Solution (核心代码)</span>
                   </h2>
                   <CodeBlock
                     code={problem.solution}
                     language="python"
-                    title="Python 3 Solution"
+                    title="Solution"
                   />
                 </div>
               )}

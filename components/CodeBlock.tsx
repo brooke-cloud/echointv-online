@@ -14,7 +14,7 @@ type CodeBlockProps = {
 export default function CodeBlock({
   code,
   language = "python",
-  title = "Python Solution",
+  title = "Solution",
 }: CodeBlockProps) {
   const [highlightedHtml, setHighlightedHtml] = useState<string>("");
 

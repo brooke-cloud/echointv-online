@@ -37,35 +37,34 @@ export async function createProblem(formData: FormData) {
 
   const title = getFormString(formData, "title", 200);
   const company = getFormString(formData, "company", 100);
-  const role = getFormString(formData, "role", 100);
-  const difficulty = getFormString(formData, "difficulty", 20);
+  const role = getFormString(formData, "role", 100) || "Software Engineer"; // 🌟 选填
+  const difficulty = getFormString(formData, "difficulty", 20) || "Medium";
   const stage = getFormString(formData, "stage", 20) || "VO";
   const category = getFormString(formData, "category", 100);
   const description = getFormString(formData, "description", 10000);
   const example = getFormString(formData, "example", 10000);
   const approach = getFormString(formData, "approach", 20000);
   const solution = getFormString(formData, "solution", 30000);
-  
-  // 🌟 核心修改：将复杂度限制扩大至 5000 字符，支持长篇详细分析
   const timeComplexity = getFormString(formData, "timeComplexity", 5000);
   const spaceComplexity = getFormString(formData, "spaceComplexity", 5000);
-  
   const topicsValue = getFormString(formData, "topics", 1000);
   const similarProblems = getFormString(formData, "similarProblems", 2000) || "";
 
   const topics = topicsValue
-    .split(",")
-    .map((topic) => topic.trim())
-    .filter(Boolean)
-    .slice(0, 30);
+    ? topicsValue.split(",").map((topic) => topic.trim()).filter(Boolean).slice(0, 30)
+    : [];
 
-  const validDifficulties = ["Easy", "Medium", "Hard"];
-  if (!validDifficulties.includes(difficulty)) {
-    throw new Error("Invalid difficulty.");
+  if (!title) {
+    throw new Error("请填写题目标题 (Title)");
   }
-
-  if (!title || !company || !role || !category || !description) {
-    throw new Error("Required problem fields are missing.");
+  if (!company) {
+    throw new Error("请填写目标公司 (Company)");
+  }
+  if (!category) {
+    throw new Error("请填写题目分类 (Category)");
+  }
+  if (!description) {
+    throw new Error("请填写题目描述 (Problem Description)");
   }
 
   const slug = await createUniqueProblemSlug(title);
@@ -103,39 +102,34 @@ export async function updateProblem(problemId: number, formData: FormData) {
 
   const title = getFormString(formData, "title", 200);
   const company = getFormString(formData, "company", 100);
-  const role = getFormString(formData, "role", 100);
-  const difficulty = getFormString(formData, "difficulty", 20);
+  const role = getFormString(formData, "role", 100) || "Software Engineer";
+  const difficulty = getFormString(formData, "difficulty", 20) || "Medium";
   const stage = getFormString(formData, "stage", 20) || "VO";
   const category = getFormString(formData, "category", 100);
   const description = getFormString(formData, "description", 10000);
   const example = getFormString(formData, "example", 10000);
   const approach = getFormString(formData, "approach", 20000);
   const solution = getFormString(formData, "solution", 30000);
-
-  // 🌟 核心修改：将复杂度限制扩大至 5000 字符，支持长篇详细分析
   const timeComplexity = getFormString(formData, "timeComplexity", 5000);
   const spaceComplexity = getFormString(formData, "spaceComplexity", 5000);
-
   const topicsValue = getFormString(formData, "topics", 1000);
   const similarProblems = getFormString(formData, "similarProblems", 2000) || "";
 
   const topics = topicsValue
-    .split(",")
-    .map((topic) => topic.trim())
-    .filter(Boolean)
-    .slice(0, 30);
+    ? topicsValue.split(",").map((topic) => topic.trim()).filter(Boolean).slice(0, 30)
+    : [];
 
-  const validDifficulties = ["Easy", "Medium", "Hard"];
-  if (!validDifficulties.includes(difficulty)) {
-    throw new Error("Invalid difficulty.");
-  }
+  if (!title) throw new Error("请填写题目标题");
+  if (!company) throw new Error("请填写目标公司");
+  if (!category) throw new Error("请填写分类");
+  if (!description) throw new Error("请填写题目描述");
 
   const existingProblem = await prisma.problem.findUnique({
     where: { id: problemId },
   });
 
   if (!existingProblem) {
-    throw new Error("Problem not found.");
+    throw new Error("题目不存在");
   }
 
   await prisma.problem.update({
@@ -175,7 +169,7 @@ export async function deleteProblem(problemId: number) {
   });
 
   if (!problem) {
-    throw new Error("Problem not found.");
+    throw new Error("题目不存在");
   }
 
   await prisma.problem.delete({
