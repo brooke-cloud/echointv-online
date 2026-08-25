@@ -4,13 +4,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Script from "next/script";
+
+declare global {
+  interface Window {
+    Paddle?: any;
+  }
+}
 
 export default function CheckoutPage() {
-  const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState<"paypal" | "wechat" | "alipay">("wechat");
-  const [paypalLoading, setPaypalLoading] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<"paddle" | "wechat" | "alipay">("paddle");
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [paddleReady, setPaddleReady] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -18,23 +23,71 @@ export default function CheckoutPage() {
       .then((data) => setUser(data.user));
   }, []);
 
-  const handlePaypal = () => {
-    setPaypalLoading(true);
-    router.push("/api/checkout");
-  };
+  // 初始化 Paddle.js
+  const handlePaddleInit = () => {
+  if (typeof window !== "undefined" && window.Paddle) {
+    const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "";
+    
+    // 🌟 根据 token 自动精准匹配环境（以 test_ 开头自动设为 sandbox）
+    const env = token.startsWith("test_") ? "sandbox" : "production";
 
-  // 生成携带当前用户 ID 的爱发电专属付款链接
+    window.Paddle.Environment.set(env);
+    window.Paddle.Initialize({
+      token,
+      eventCallback: function (data: any) {
+        console.log("Paddle Event:", data);
+      },
+    });
+    setPaddleReady(true);
+  }
+};
+
+const openPaddleCheckout = () => {
+  const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+  const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID;
+
+  if (!token || !priceId) {
+    alert("Paddle 配置缺失，请检查环境变量 NEXT_PUBLIC_PADDLE_CLIENT_TOKEN 和 NEXT_PUBLIC_PADDLE_PRICE_ID");
+    return;
+  }
+
+  if (!window.Paddle || !user) return;
+
+  window.Paddle.Checkout.open({
+    items: [
+      {
+        priceId: priceId,
+        quantity: 1,
+      },
+    ],
+    customer: {
+      email: user.email,
+    },
+    customData: {
+      userId: user.id,
+    },
+    settings: {
+      successUrl: `${window.location.origin}/checkout/success`,
+    },
+  });
+};
   const afdianBaseUrl = process.env.NEXT_PUBLIC_AFDIAN_URL || "https://afdian.com";
   const afdianCheckoutUrl = `${afdianBaseUrl}?remark=${encodeURIComponent(user?.email || "")}&custom_order_id=${user?.id || ""}`;
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
+      {/* 异步加载 Paddle 官方 SDK */}
+      <Script
+        src="https://cdn.paddle.com/paddle/v2/paddle.js"
+        onLoad={handlePaddleInit}
+      />
+
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
           <Link href="/pricing" className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1 mb-2">
             ← 返回方案列表
           </Link>
-          <h1 className="text-3xl font-extrabold text-gray-900">收银台与支付方式</h1>
+          <h1 className="text-3xl font-extrabold text-gray-900">收银台与支付通道</h1>
           <p className="text-sm text-gray-500 mt-1">选择最适合您的支付方式，付款后全自动秒开 Pro 会员</p>
         </div>
 
@@ -73,9 +126,21 @@ export default function CheckoutPage() {
 
           {/* 右侧：支付方式选择 */}
           <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-sm space-y-6">
-            <h2 className="text-lg font-bold text-gray-900">选择支付通道</h2>
+            <h2 className="text-lg font-bold text-gray-900">选择支付方式</h2>
 
             <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => setSelectedMethod("paddle")}
+                className={`p-3 rounded-2xl border text-center transition ${
+                  selectedMethod === "paddle"
+                    ? "border-blue-600 bg-blue-50/40 text-blue-700 font-bold ring-1 ring-blue-600"
+                    : "border-gray-200 hover:border-gray-300 text-gray-700"
+                }`}
+              >
+                <div className="text-xl mb-1">💳</div>
+                <div className="text-xs">信用卡 / Apple Pay</div>
+              </button>
+
               <button
                 onClick={() => setSelectedMethod("wechat")}
                 className={`p-3 rounded-2xl border text-center transition ${
@@ -92,46 +157,34 @@ export default function CheckoutPage() {
                 onClick={() => setSelectedMethod("alipay")}
                 className={`p-3 rounded-2xl border text-center transition ${
                   selectedMethod === "alipay"
-                    ? "border-blue-600 bg-blue-50/40 text-blue-700 font-bold ring-1 ring-blue-600"
+                    ? "border-sky-600 bg-sky-50/40 text-sky-700 font-bold ring-1 ring-sky-600"
                     : "border-gray-200 hover:border-gray-300 text-gray-700"
                 }`}
               >
                 <div className="text-xl mb-1">🟦</div>
                 <div className="text-xs">支付宝</div>
               </button>
-
-              <button
-                onClick={() => setSelectedMethod("paypal")}
-                className={`p-3 rounded-2xl border text-center transition ${
-                  selectedMethod === "paypal"
-                    ? "border-indigo-600 bg-indigo-50/40 text-indigo-700 font-bold ring-1 ring-indigo-600"
-                    : "border-gray-200 hover:border-gray-300 text-gray-700"
-                }`}
-              >
-                <div className="text-xl mb-1">💳</div>
-                <div className="text-xs">PayPal / 外币卡</div>
-              </button>
             </div>
 
             <div className="pt-2">
-              {/* PayPal */}
-              {selectedMethod === "paypal" ? (
+              {/* 🌟 1. Paddle 国际信用卡 / Apple Pay 收银台 */}
+              {selectedMethod === "paddle" ? (
                 <div className="p-6 rounded-2xl bg-gray-50 border border-gray-200 text-center space-y-4">
                   <div className="space-y-1">
-                    <h3 className="font-bold text-gray-900">PayPal 国际安全收银台</h3>
-                    <p className="text-xs text-gray-500">支持全球 Visa / MasterCard 信用卡与 PayPal 账户</p>
+                    <h3 className="font-bold text-gray-900">Paddle 国际安全收银台</h3>
+                    <p className="text-xs text-gray-500">支持 Visa、MasterCard、Apple Pay、Google Pay 与 PayPal</p>
                   </div>
 
                   <button
-                    onClick={handlePaypal}
-                    disabled={paypalLoading}
+                    onClick={openPaddleCheckout}
+                    disabled={!paddleReady}
                     className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 text-sm"
                   >
-                    {paypalLoading ? "正在连接 PayPal..." : "前往 PayPal 付款 ($9.90 USD) →"}
+                    {!paddleReady ? "正在加载收银台..." : "立即结账 ($9.90 USD) →"}
                   </button>
                 </div>
               ) : (
-                /* 微信 / 支付宝 自动收银台 */
+                /* 2. 微信 / 支付宝 自动收银台 */
                 <div className="p-6 rounded-2xl bg-gray-50 border border-gray-200 text-center space-y-4">
                   <div className="space-y-1">
                     <h3 className="font-bold text-gray-900">
