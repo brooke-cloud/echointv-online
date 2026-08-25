@@ -1,302 +1,262 @@
+// app/admin/(protected)/problems/new/page.tsx
+
 import Link from "next/link";
+import { createProblem } from "../actions";
 
-import {
-  createProblem,
-} from "../actions";
-
-import AdminSubmitButton from "@/components/AdminSubmitButton";
-
-// 新增 Problem 页面
 export default function NewProblemPage() {
   const inputStyle =
-    "mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
+    "mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
 
   return (
     <main className="py-12">
-
-      {/* 页面内容 */}
-      <div className="mx-auto max-w-4xl px-5 sm:px-6">
-
+      <div className="mx-auto max-w-4xl px-6">
         {/* 返回 */}
         <Link
           href="/admin/problems"
-          className="text-sm font-medium text-blue-600 hover:text-blue-800"
+          className="text-sm font-medium text-blue-600 transition hover:text-blue-800"
         >
           ← Back to Problems
         </Link>
 
-
         {/* 标题 */}
-        <h1 className="mt-8 text-3xl font-bold text-gray-900 sm:text-4xl">
-          Add Problem
+        <h1 className="mt-8 text-3xl font-bold text-gray-900">
+          Add Interview Problem
         </h1>
 
-
-        {/* 创建表单 */}
+        {/* 表单 */}
         <form
           action={createProblem}
-          className="mt-10 space-y-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8"
+          className="mt-10 space-y-8 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm"
         >
-
           {/* Title */}
           <div>
-            <label
-              htmlFor="title"
-              className="font-medium text-gray-900"
-            >
+            <label htmlFor="title" className="font-semibold text-gray-900 text-sm">
               Title
             </label>
-
             <input
               id="title"
               name="title"
               required
-              maxLength={200}
+              placeholder="e.g. 第K大元素 (Kth Largest Element in an Array)"
               className={inputStyle}
             />
           </div>
 
-
-          {/* Company */}
-          <div>
-            <label
-              htmlFor="company"
-              className="font-medium text-gray-900"
-            >
-              Company
-            </label>
-
-            <input
-              id="company"
-              name="company"
-              required
-              maxLength={100}
-              className={inputStyle}
-            />
+          {/* Company & Role (双列排布) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="company" className="font-semibold text-gray-900 text-sm">
+                Company
+              </label>
+              <input
+                id="company"
+                name="company"
+                required
+                placeholder="e.g. Meta, Google, Amazon"
+                className={inputStyle}
+              />
+            </div>
+            <div>
+              <label htmlFor="role" className="font-semibold text-gray-900 text-sm">
+                Role (e.g. Software Engineer)
+              </label>
+              <input
+                id="role"
+                name="role"
+                placeholder="e.g. SDE, Software Engineer"
+                className={inputStyle}
+              />
+            </div>
           </div>
 
+          {/* Difficulty & Stage & Category (三列排布) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div>
+              <label htmlFor="difficulty" className="font-semibold text-gray-900 text-sm">
+                Difficulty
+              </label>
+              <select
+                id="difficulty"
+                name="difficulty"
+                defaultValue="Medium"
+                className={inputStyle}
+              >
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
 
-          {/* Role */}
-          <div>
-            <label
-              htmlFor="role"
-              className="font-medium text-gray-900"
-            >
-              Role
-            </label>
+            <div>
+              <label htmlFor="stage" className="font-semibold text-gray-900 text-sm">
+                Stage (考核形式)
+              </label>
+              <select
+                id="stage"
+                name="stage"
+                defaultValue="VO"
+                className={inputStyle}
+              >
+                <option value="OA">OA (线上测评/笔试)</option>
+                <option value="VO">VO (技术轮面/Onsite)</option>
+              </select>
+            </div>
 
-            <input
-              id="role"
-              name="role"
-              required
-              maxLength={100}
-              className={inputStyle}
-            />
+            <div>
+              <label htmlFor="category" className="font-semibold text-gray-900 text-sm">
+                Category
+              </label>
+              <input
+                id="category"
+                name="category"
+                required
+                placeholder="e.g. Algorithms, System Design"
+                className={inputStyle}
+              />
+            </div>
           </div>
 
-
-          {/* Difficulty */}
+          {/* Problem Description */}
           <div>
-            <label
-              htmlFor="difficulty"
-              className="font-medium text-gray-900"
-            >
-              Difficulty
+            <label htmlFor="description" className="font-semibold text-gray-900 text-sm">
+              Problem Description
             </label>
-
-            <select
-              id="difficulty"
-              name="difficulty"
-              required
-              className={inputStyle}
-            >
-              <option value="">
-                Select Difficulty
-              </option>
-
-              <option value="Easy">
-                Easy
-              </option>
-
-              <option value="Medium">
-                Medium
-              </option>
-
-              <option value="Hard">
-                Hard
-              </option>
-            </select>
-          </div>
-
-
-          {/* Category */}
-          <div>
-            <label
-              htmlFor="category"
-              className="font-medium text-gray-900"
-            >
-              Category
-            </label>
-
-            <input
-              id="category"
-              name="category"
-              required
-              maxLength={100}
-              className={inputStyle}
-            />
-          </div>
-
-
-          {/* Description */}
-          <div>
-            <label
-              htmlFor="description"
-              className="font-medium text-gray-900"
-            >
-              Description
-            </label>
-
             <textarea
               id="description"
               name="description"
               required
-              rows={5}
-              maxLength={5000}
+              rows={4}
+              placeholder="题目描述内容..."
               className={inputStyle}
             />
           </div>
 
-
-          {/* Example */}
+          {/* Example (支持 Markdown) */}
           <div>
-            <label
-              htmlFor="example"
-              className="font-medium text-gray-900"
-            >
-              Example
-            </label>
-
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="example" className="font-semibold text-gray-900 text-sm">
+                Example (输入输出示例 - 支持 Markdown 格式)
+              </label>
+              <span className="text-xs text-blue-600">Markdown Format Supported</span>
+            </div>
             <textarea
               id="example"
               name="example"
-              rows={7}
-              maxLength={10000}
+              rows={6}
+              placeholder={`示例 1:\n输入: \`nums =\`, \`k = 2\`\n输出: \`5\`\n解释: 排序后第 2 大元素为 5。`}
               className={inputStyle}
             />
           </div>
 
-
-          {/* Approach */}
+          {/* Approach (支持 Markdown) */}
           <div>
-            <label
-              htmlFor="approach"
-              className="font-medium text-gray-900"
-            >
-              Approach
-            </label>
-
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="approach" className="font-semibold text-gray-900 text-sm">
+                Approach (解题思路 - 支持 Markdown)
+              </label>
+              <span className="text-xs text-blue-600">Markdown Format Supported</span>
+            </div>
             <textarea
               id="approach"
               name="approach"
-              rows={7}
-              maxLength={10000}
+              rows={8}
+              placeholder="解题思路分析、算法推导与追问总结..."
               className={inputStyle}
             />
           </div>
 
-
-          {/* Solution */}
+          {/* Solution Code */}
           <div>
-            <label
-              htmlFor="solution"
-              className="font-medium text-gray-900"
-            >
-              Solution
+            <label htmlFor="solution" className="font-semibold text-gray-900 text-sm">
+              Solution (Python / 核心代码)
             </label>
-
             <textarea
               id="solution"
               name="solution"
-              rows={12}
-              maxLength={30000}
-              className={inputStyle}
+              rows={8}
+              placeholder="def solution(...):"
+              className={`${inputStyle} font-mono`}
             />
           </div>
 
+          {/* Time Complexity & Space Complexity (多行输入) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center justify-between">
+                <label htmlFor="timeComplexity" className="font-semibold text-gray-900 text-sm">
+                  Time Complexity (支持换行与 Markdown)
+                </label>
+                <span className="text-xs text-gray-400">支持列表</span>
+              </div>
+              <textarea
+                id="timeComplexity"
+                name="timeComplexity"
+                rows={4}
+                placeholder={`例如：\n- \`access / peek\` : \`O(1)\`\n- \`get_recent_list(k)\` : \`O(k)\`\n- 多用户管理 : \`O(1)\` 平均`}
+                className={`${inputStyle} font-mono`}
+              />
+            </div>
 
-          {/* Time Complexity */}
-          <div>
-            <label
-              htmlFor="timeComplexity"
-              className="font-medium text-gray-900"
-            >
-              Time Complexity
-            </label>
-
-            <input
-              id="timeComplexity"
-              name="timeComplexity"
-              maxLength={100}
-              className={inputStyle}
-              placeholder="O(n)"
-            />
+            <div>
+              <div className="flex items-center justify-between">
+                <label htmlFor="spaceComplexity" className="font-semibold text-gray-900 text-sm">
+                  Space Complexity (支持换行与 Markdown)
+                </label>
+                <span className="text-xs text-gray-400">支持列表</span>
+              </div>
+              <textarea
+                id="spaceComplexity"
+                name="spaceComplexity"
+                rows={4}
+                placeholder={`例如：\n- 单用户: \`O(capacity)\`\n- 多用户: \`O(total_capacity)\`，可通过懒加载优化`}
+                className={`${inputStyle} font-mono`}
+              />
+            </div>
           </div>
-
-
-          {/* Space Complexity */}
-          <div>
-            <label
-              htmlFor="spaceComplexity"
-              className="font-medium text-gray-900"
-            >
-              Space Complexity
-            </label>
-
-            <input
-              id="spaceComplexity"
-              name="spaceComplexity"
-              maxLength={100}
-              className={inputStyle}
-              placeholder="O(n)"
-            />
-          </div>
-
 
           {/* Topics */}
           <div>
-            <label
-              htmlFor="topics"
-              className="font-medium text-gray-900"
-            >
-              Topics
+            <label htmlFor="topics" className="font-semibold text-gray-900 text-sm">
+              Topics (标签)
             </label>
-
             <input
               id="topics"
               name="topics"
-              maxLength={1000}
+              placeholder="e.g. Array, Heap (Priority Queue), Two Pointers"
               className={inputStyle}
-              placeholder="Array, Hash Map, Two Pointers"
             />
+            <p className="mt-1 text-xs text-gray-400">Separate topics with commas.</p>
+          </div>
 
-            <p className="mt-2 text-sm text-gray-500">
-              Separate topics with commas.
+          {/* LeetCode 相似题目推荐 */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="similarProblems" className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                <span>🎯</span>
+                <span>LeetCode 相似题目推荐 (Similar LeetCode Problems)</span>
+              </label>
+              <span className="text-xs text-gray-400">多个题目用逗号隔开</span>
+            </div>
+            <input
+              id="similarProblems"
+              name="similarProblems"
+              placeholder="例如：373. 查找和最小的 K 对数字, 378. 有序矩阵中第 K 小的元素"
+              className={inputStyle}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              填写相关的 LeetCode 题号与题目名称，将在前台详情页底部作为刷题延伸推荐展示。
             </p>
           </div>
 
-
-          {/* Submit */}
-          <AdminSubmitButton
-            pendingText="Creating..."
+          {/* 提交按钮 */}
+          <button
+            type="submit"
+            className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 shadow-sm"
           >
             Create Problem
-          </AdminSubmitButton>
-
+          </button>
         </form>
-
       </div>
-
     </main>
   );
 }
