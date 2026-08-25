@@ -4,7 +4,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { updateProblem } from "../../actions";
-import BlogContentEditor from "@/components/BlogContentEditor";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -154,19 +153,23 @@ export default async function EditProblemPage({ params }: Props) {
 
           {/* Example */}
           <div>
-            <label htmlFor="example" className="font-semibold text-gray-900 text-sm">
-              Example
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="example" className="font-semibold text-gray-900 text-sm">
+                Example (输入输出示例 - 支持 Markdown 格式)
+              </label>
+              <span className="text-xs text-blue-600">Markdown Format Supported</span>
+            </div>
             <textarea
               id="example"
               name="example"
-              rows={5}
+              rows={6}
               defaultValue={problem.example || ""}
-              className={`${inputStyle} font-mono`}
+              placeholder={`**输入：** \`nums1 =\`, \`nums2 =\`, \`k = 3\`\n\n**输出：** \`,,]\`\n\n**解释：** 所有可能的和依次为...`}
+              className={inputStyle}
             />
           </div>
 
-          {/* 🌟 1. Approach (升级为 Markdown 编辑器) */}
+          {/* Approach */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label htmlFor="approach" className="font-semibold text-gray-900 text-sm">
@@ -198,30 +201,39 @@ export default async function EditProblemPage({ params }: Props) {
             />
           </div>
 
-          {/* Time & Space Complexity */}
+          {/* 🌟 核心升级：Time Complexity 与 Space Complexity 改为多行 Textarea */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="timeComplexity" className="font-semibold text-gray-900 text-sm">
-                Time Complexity
-              </label>
-              <input
+              <div className="flex items-center justify-between">
+                <label htmlFor="timeComplexity" className="font-semibold text-gray-900 text-sm">
+                  Time Complexity (支持换行与 Markdown)
+                </label>
+                <span className="text-xs text-gray-400">支持列表</span>
+              </div>
+              <textarea
                 id="timeComplexity"
                 name="timeComplexity"
+                rows={4}
                 defaultValue={problem.timeComplexity || ""}
-                placeholder="e.g. O(k log n)"
-                className={inputStyle}
+                placeholder={`例如：\n• \`access / peek\` : \`O(1)\`\n• \`get_recent_list(k)\` : \`O(k)\`\n• 多用户管理 : \`O(1)\` 平均`}
+                className={`${inputStyle} font-mono`}
               />
             </div>
+
             <div>
-              <label htmlFor="spaceComplexity" className="font-semibold text-gray-900 text-sm">
-                Space Complexity
-              </label>
-              <input
+              <div className="flex items-center justify-between">
+                <label htmlFor="spaceComplexity" className="font-semibold text-gray-900 text-sm">
+                  Space Complexity (支持换行与 Markdown)
+                </label>
+                <span className="text-xs text-gray-400">支持列表</span>
+              </div>
+              <textarea
                 id="spaceComplexity"
                 name="spaceComplexity"
+                rows={4}
                 defaultValue={problem.spaceComplexity || ""}
-                placeholder="e.g. O(k)"
-                className={inputStyle}
+                placeholder={`例如：\n• 单用户: \`O(capacity)\`\n• 多用户: \`O(total_capacity)\`，可通过懒加载优化`}
+                className={`${inputStyle} font-mono`}
               />
             </div>
           </div>
@@ -241,25 +253,22 @@ export default async function EditProblemPage({ params }: Props) {
             <p className="mt-1 text-xs text-gray-400">Separate topics with commas.</p>
           </div>
 
-          {/* 🌟 2. 新增：LeetCode 相似题目推荐 */}
+          {/* LeetCode 相似题目推荐 */}
           <div>
             <div className="flex items-center justify-between mb-1">
               <label htmlFor="similarProblems" className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
                 <span>🎯</span>
                 <span>LeetCode 相似题目推荐 (Similar LeetCode Problems)</span>
               </label>
-              <span className="text-xs text-gray-400">多个题目用中文逗号或英文逗号隔开</span>
+              <span className="text-xs text-gray-400">多个题目用逗号隔开</span>
             </div>
             <input
               id="similarProblems"
               name="similarProblems"
               defaultValue={(problem as any).similarProblems || ""}
-              placeholder="例如：373. 查找和最小的 K 对数字, 378. 有序矩阵中第 K 小的元素, 23. 合并 K 个升序链表"
+              placeholder="例如：373. 查找和最小的 K 对数字, 378. 有序矩阵中第 K 小的元素"
               className={inputStyle}
             />
-            <p className="mt-1 text-xs text-gray-400">
-              填写相关的 LeetCode 题号与题目名称，将在前台详情页底部作为刷题延伸推荐展示。
-            </p>
           </div>
 
           {/* 提交按钮 */}

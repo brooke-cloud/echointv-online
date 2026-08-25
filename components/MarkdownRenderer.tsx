@@ -1,3 +1,5 @@
+// components/MarkdownRenderer.tsx
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -141,6 +143,42 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
               <blockquote className="my-4 rounded-r-lg border-l-4 border-blue-500 bg-blue-50/50 py-2.5 pl-4 text-sm italic text-gray-700">
                 {children}
               </blockquote>
+            );
+          },
+
+          // 🌟 6. 核心修复：有序列表 (1. 2. 3. 4.) 显式设置 list-decimal 与左缩进
+          ol({ children }) {
+            return (
+              <ol className="my-3 list-decimal space-y-1.5 pl-6 text-gray-800 font-medium">
+                {children}
+              </ol>
+            );
+          },
+
+          // 🌟 7. 无序列表 (•) 显式设置 list-disc 与左缩进
+          ul({ children }) {
+            return (
+              <ul className="my-3 list-disc space-y-1.5 pl-6 text-gray-800 font-medium">
+                {children}
+              </ul>
+            );
+          },
+
+          // 🌟 8. 列表项
+          li({ children }) {
+            return (
+              <li className="leading-relaxed pl-1 text-gray-700">
+                {children}
+              </li>
+            );
+          },
+
+          // 🌟 9. 段落排版
+          p({ children }) {
+            return (
+              <p className="my-2.5 leading-relaxed text-gray-700">
+                {children}
+              </p>
             );
           },
         }}

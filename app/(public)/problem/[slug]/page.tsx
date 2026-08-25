@@ -24,10 +24,10 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// ⚡ 1. 开启 ISR 增量静态再生（每 60 秒后台静默刷新缓存）
+// ⚡ 1. 开启 ISR 增量静态再生
 export const revalidate = 60;
 
-// ⚡ 2. 预生成静态路由参数（打包构建时预先生成所有真题的静态页面）
+// ⚡ 2. 预生成静态路由参数
 export async function generateStaticParams() {
   const problems = await prisma.problem.findMany({
     select: { slug: true },
@@ -160,7 +160,7 @@ export default async function ProblemDetailPage({ params }: Props) {
     <div className="min-h-screen bg-gray-50/50 py-10 sm:py-12">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         
-        {/* 🌟 退出/返回题库按钮 */}
+        {/* 退出/返回题库按钮 */}
         <div className="mb-6">
           <Link
             href="/problem"
@@ -177,13 +177,11 @@ export default async function ProblemDetailPage({ params }: Props) {
           {/* 题目头部信息 */}
           <div className="border-b border-gray-100 pb-6">
             <div className="flex flex-wrap items-center gap-3">
-              {/* 目标公司标签 */}
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-100">
                 <Building2 className="h-3.5 w-3.5" />
                 {problem.company}
               </span>
 
-              {/* 免费 / 会员专享 胶囊徽章 */}
               <span
                 className={`rounded-lg border px-3 py-1 text-xs font-bold ${
                   isFree
@@ -194,7 +192,6 @@ export default async function ProblemDetailPage({ params }: Props) {
                 {isFree ? "Free (免费题)" : "Paid (VIP专享)"}
               </span>
 
-              {/* 难度标签 */}
               <span
                 className={`rounded-lg border px-3 py-1 text-xs font-bold ${getDifficultyBadge(
                   problem.difficulty
@@ -203,7 +200,6 @@ export default async function ProblemDetailPage({ params }: Props) {
                 {problem.difficulty}
               </span>
 
-              {/* 类别标签 */}
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
                 <Tag className="h-3.5 w-3.5" />
                 {problem.category}
@@ -219,44 +215,48 @@ export default async function ProblemDetailPage({ params }: Props) {
           {canAccess ? (
             <div className="space-y-8">
               
-              {/* 🌟 1. UI 优化：Problem Description (题目描述) */}
+              {/* 1. Problem Description (题目描述) */}
               {problem.description && (
-                <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:p-7">
-                  <div className="flex items-center gap-2 mb-3.5">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-700 text-sm shadow-2xs font-bold">
-                      📝
+                <div className="rounded-2xl border border-blue-100/90 bg-gradient-to-b from-blue-50/30 via-white to-white p-6 sm:p-8 shadow-xs">
+                  <div className="flex items-center justify-between mb-5 pb-3.5 border-b border-blue-100/70">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 text-blue-700 text-base shadow-2xs">
+                        📝
+                      </span>
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
+                        Problem Description (题目描述)
+                      </h2>
+                    </div>
+                    <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60 shadow-2xs">
+                      Question Details
                     </span>
-                    <h2 className="text-base sm:text-lg font-bold text-gray-900">
-                      Problem Description (题目描述)
-                    </h2>
                   </div>
-                  <div className="text-gray-700 leading-relaxed text-sm sm:text-base prose prose-blue max-w-none">
+
+                  <div className="text-gray-800 leading-relaxed text-sm sm:text-base prose prose-blue max-w-none font-normal">
                     <MarkdownRenderer content={problem.description} />
                   </div>
                 </div>
               )}
 
-              {/* 🌟 2. UI 优化：Example (输入输出示例) */}
+              {/* 🌟 2. Example 示例卡片 (已按要求仅此处加入 MarkdownRenderer) */}
               {problem.example && (
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-6 sm:p-7">
-                  <div className="flex items-center justify-between mb-3.5">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-100 text-purple-700 text-sm shadow-2xs font-bold">
-                        🔍
-                      </span>
-                      <h2 className="text-base sm:text-lg font-bold text-gray-900">
-                        Example (输入输出示例)
-                      </h2>
-                    </div>
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-6 sm:p-7 space-y-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-100 text-purple-700 text-sm shadow-2xs font-bold">
+                      🔍
+                    </span>
+                    <h2 className="text-base sm:text-lg font-bold text-gray-900">
+                      Example (输入输出示例)
+                    </h2>
                   </div>
-                  <div className="rounded-xl font-semibold border border-slate-200 bg-white p-5 font-mono text-sm text-slate-900 shadow-2xs leading-relaxed whitespace-pre-wrap">
-                    {/* 清理重复的开头 Example 字样 */}
-                    {problem.example.replace(/^Example\s*/i, "").trim()}
+
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 text-sm sm:text-base text-gray-800 shadow-2xs leading-relaxed prose prose-purple max-w-none font-medium">
+                    <MarkdownRenderer content={problem.example} />
                   </div>
                 </div>
               )}
 
-              {/* 🌟 3. UI 优化：Approach (解题思路 - 现代技术专栏风格) */}
+              {/* 3. 解题思路 (Approach) */}
               {problem.approach && (
                 <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-b from-amber-50/30 via-white to-white p-6 sm:p-8 shadow-xs">
                   <div className="flex items-center justify-between mb-5 pb-3.5 border-b border-amber-100">
@@ -279,43 +279,46 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 复杂度卡片 (Complexity) */}
+              {/* 4. 复杂度卡片 (Time & Space Complexity) */}
               {(problem.timeComplexity || problem.spaceComplexity) && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {/* 时间复杂度 */}
                   {problem.timeComplexity && (
-                    <div className="flex items-center gap-3.5 rounded-2xl border border-blue-100 bg-blue-50/40 p-5">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                        <Clock className="h-5 w-5" />
+                    <div className="rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50/30 to-white p-6 space-y-3.5 shadow-2xs">
+                      <div className="flex items-center gap-2.5 pb-2.5 border-b border-blue-100/60">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 shadow-2xs">
+                          <Clock className="h-4.5 w-4.5" />
+                        </div>
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+                          Time Complexity (时间复杂度)
+                        </h3>
                       </div>
-                      <div>
-                        <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                          Time Complexity
-                        </span>
-                        <span className="font-mono text-sm font-bold text-gray-900 mt-0.5 block">
-                          {problem.timeComplexity}
-                        </span>
+                      <div className="text-sm text-gray-700 leading-relaxed pl-1 prose prose-blue max-w-none">
+                        <MarkdownRenderer content={problem.timeComplexity} />
                       </div>
                     </div>
                   )}
+
+                  {/* 空间复杂度 */}
                   {problem.spaceComplexity && (
-                    <div className="flex items-center gap-3.5 rounded-2xl border border-purple-100 bg-purple-50/40 p-5">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
-                        <HardDrive className="h-5 w-5" />
+                    <div className="rounded-2xl border border-purple-100 bg-gradient-to-b from-purple-50/30 to-white p-6 space-y-3.5 shadow-2xs">
+                      <div className="flex items-center gap-2.5 pb-2.5 border-b border-purple-100/60">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 shadow-2xs">
+                          <HardDrive className="h-4.5 w-4.5" />
+                        </div>
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+                          Space Complexity (空间复杂度)
+                        </h3>
                       </div>
-                      <div>
-                        <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                          Space Complexity
-                        </span>
-                        <span className="font-mono text-sm font-bold text-gray-900 mt-0.5 block">
-                          {problem.spaceComplexity}
-                        </span>
+                      <div className="text-sm text-gray-700 leading-relaxed pl-1 prose prose-purple max-w-none">
+                        <MarkdownRenderer content={problem.spaceComplexity} />
                       </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* 最优解代码 (Solution) */}
+              {/* 5. 最优解代码 (Solution) */}
               {problem.solution && (
                 <div>
                   <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3">
@@ -330,7 +333,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 相关考点标签 (Topics) */}
+              {/* 6. 核心考点标签 (Topics) */}
               {problem.topics && problem.topics.length > 0 && (
                 <div className="border-t border-gray-100 pt-6">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
@@ -349,7 +352,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 🎯 LeetCode 相似题目推荐模块 */}
+              {/* 7. LeetCode 相似题目推荐模块 */}
               {(problem as any).similarProblems && (
                 <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-6 sm:p-7">
                   <div className="flex items-center gap-2.5 mb-2">
@@ -382,7 +385,7 @@ export default async function ProblemDetailPage({ params }: Props) {
               )}
             </div>
           ) : (
-            /* 🌟 付费拦截：不显示 Description，直接显示模糊遮罩与卡片 */
+            /* 付费拦截 */
             <div className="relative mt-8">
               <div className="filter blur-xs select-none pointer-events-none opacity-40 space-y-4">
                 <div className="h-24 bg-gray-100 rounded-xl" />
