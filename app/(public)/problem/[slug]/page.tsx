@@ -24,7 +24,7 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// ⚡ 1. 开启 ISR 增量静态再生
+// ⚡ 1. 开启 ISR 增量静态再生与动态路由放行
 export const revalidate = 60;
 export const dynamicParams = true;
 
@@ -127,7 +127,7 @@ function ComplexityCard({
         </h3>
       </div>
 
-      <div className="text-sm text-gray-800 leading-relaxed pl-1">
+      <div className="text-sm text-gray-800 leading-relaxed pl-1 font-normal">
         <MarkdownRenderer content={content} />
       </div>
     </div>
@@ -293,7 +293,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 🌟 2. 核心修复：Example 示例（全面调用 MarkdownRenderer 渲染） */}
+              {/* 🌟 2. 核心：Example 示例卡片（支持 Markdown 渲染 + 常规字重 font-normal，不全局粗体） */}
               {problem.example && (
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-6 sm:p-7 space-y-3.5">
                   <div className="flex items-center gap-2 mb-2">
@@ -305,8 +305,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                     </h2>
                   </div>
 
-                  {/* 🌟 通过 MarkdownRenderer 渲染，反引号 ` 自动转化为高亮代码胶囊 */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 text-sm sm:text-base text-gray-800 shadow-2xs leading-relaxed prose prose-purple max-w-none font-medium">
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 text-sm sm:text-[15px] text-gray-800 font-normal leading-relaxed shadow-2xs whitespace-pre-wrap">
                     <MarkdownRenderer content={problem.example} />
                   </div>
                 </div>
@@ -329,7 +328,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                     </span>
                   </div>
 
-                  <div className="text-gray-800 leading-relaxed prose prose-blue max-w-none text-sm sm:text-base">
+                  <div className="text-gray-800 leading-relaxed prose prose-blue max-w-none text-sm sm:text-base font-normal">
                     <MarkdownRenderer content={problem.approach} />
                   </div>
                 </div>
