@@ -26,6 +26,7 @@ type Props = {
 
 // ⚡ 1. 开启 ISR 增量静态再生
 export const revalidate = 60;
+export const dynamicParams = true;
 
 // ⚡ 2. 预生成静态路由参数
 export async function generateStaticParams() {
@@ -40,8 +41,12 @@ export async function generateStaticParams() {
 // 1. 动态生成 SEO 标题与描述
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const problem = await prisma.problem.findUnique({
-    where: { slug },
+  const decodedSlug = decodeURIComponent(slug);
+
+  const problem = await prisma.problem.findFirst({
+    where: {
+      OR: [{ slug }, { slug: decodedSlug }],
+    },
   });
 
   if (!problem) {
@@ -81,19 +86,70 @@ const getDifficultyBadge = (difficulty: string) => {
   return "bg-gray-50 text-gray-700 border-gray-200";
 };
 
+// 🌟 纯净复杂度卡片（直接由 MarkdownRenderer 渲染出第二张图效果）
+function ComplexityCard({
+  title,
+  icon,
+  content,
+  theme,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  content: string;
+  theme: "blue" | "purple";
+}) {
+  const isBlue = theme === "blue";
+
+  return (
+    <div
+      className={`rounded-2xl border p-6 space-y-3.5 shadow-2xs ${
+        isBlue
+          ? "border-blue-100 bg-gradient-to-b from-blue-50/20 to-white"
+          : "border-purple-100 bg-gradient-to-b from-purple-50/20 to-white"
+      }`}
+    >
+      <div
+        className={`flex items-center gap-2.5 pb-3 border-b ${
+          isBlue ? "border-blue-100/80" : "border-purple-100/80"
+        }`}
+      >
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-base shadow-2xs ${
+            isBlue
+              ? "bg-blue-100 text-blue-600"
+              : "bg-purple-100 text-purple-600"
+          }`}
+        >
+          {icon}
+        </div>
+        <h3 className="text-xs sm:text-sm font-bold text-gray-900 uppercase tracking-wider">
+          {title}
+        </h3>
+      </div>
+
+      {/* 🌟 直接通过 Markdown 渲染标准列表 */}
+      <div className="text-sm text-gray-800 leading-relaxed pl-1">
+        <MarkdownRenderer content={content} />
+      </div>
+    </div>
+  );
+}
+
 export default async function ProblemDetailPage({ params }: Props) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
 
-  // 2. 查询当前题目数据
-  const problem = await prisma.problem.findUnique({
-    where: { slug },
+  const problem = await prisma.problem.findFirst({
+    where: {
+      OR: [{ slug }, { slug: decodedSlug }],
+    },
   });
 
   if (!problem) {
     notFound();
   }
 
-  // 🔒 3. 会员权限校验逻辑：前 6 道题免费，第 7 道起需要 Pro/Admin 会员
+  // 前 6 道题免费
   const freeProblems = await prisma.problem.findMany({
     take: 6,
     orderBy: { id: "asc" },
@@ -160,7 +216,7 @@ export default async function ProblemDetailPage({ params }: Props) {
     <div className="min-h-screen bg-gray-50/50 py-10 sm:py-12">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         
-        {/* 退出/返回题库按钮 */}
+        {/* 返回按钮 */}
         <div className="mb-6">
           <Link
             href="/problem"
@@ -215,7 +271,7 @@ export default async function ProblemDetailPage({ params }: Props) {
           {canAccess ? (
             <div className="space-y-8">
               
-              {/* 1. Problem Description (题目描述) */}
+              {/* 1. Problem Description */}
               {problem.description && (
                 <div className="rounded-2xl border border-blue-100/90 bg-gradient-to-b from-blue-50/30 via-white to-white p-6 sm:p-8 shadow-xs">
                   <div className="flex items-center justify-between mb-5 pb-3.5 border-b border-blue-100/70">
@@ -238,7 +294,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 🌟 2. Example 示例卡片 (已按要求仅此处加入 MarkdownRenderer) */}
+              {/* 2. Example 示例 */}
               {problem.example && (
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-6 sm:p-7 space-y-3.5">
                   <div className="flex items-center gap-2">
@@ -250,8 +306,8 @@ export default async function ProblemDetailPage({ params }: Props) {
                     </h2>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 text-sm sm:text-base text-gray-800 shadow-2xs leading-relaxed prose prose-purple max-w-none font-medium">
-                    <MarkdownRenderer content={problem.example} />
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 font-mono text-base font-semibold text-slate-900 shadow-2xs leading-relaxed whitespace-pre-wrap">
+                    {problem.example.replace(/^Example\s*/i, "").trim()}
                   </div>
                 </div>
               )}
@@ -279,46 +335,30 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 4. 复杂度卡片 (Time & Space Complexity) */}
+              {/* 🌟 4. 复杂度卡片 (与第二张图 100% 完全一致) */}
               {(problem.timeComplexity || problem.spaceComplexity) && (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  {/* 时间复杂度 */}
                   {problem.timeComplexity && (
-                    <div className="rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50/30 to-white p-6 space-y-3.5 shadow-2xs">
-                      <div className="flex items-center gap-2.5 pb-2.5 border-b border-blue-100/60">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 shadow-2xs">
-                          <Clock className="h-4.5 w-4.5" />
-                        </div>
-                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
-                          Time Complexity (时间复杂度)
-                        </h3>
-                      </div>
-                      <div className="text-sm text-gray-700 leading-relaxed pl-1 prose prose-blue max-w-none">
-                        <MarkdownRenderer content={problem.timeComplexity} />
-                      </div>
-                    </div>
+                    <ComplexityCard
+                      title="Time Complexity (时间复杂度)"
+                      icon={<Clock className="h-4.5 w-4.5" />}
+                      content={problem.timeComplexity}
+                      theme="blue"
+                    />
                   )}
 
-                  {/* 空间复杂度 */}
                   {problem.spaceComplexity && (
-                    <div className="rounded-2xl border border-purple-100 bg-gradient-to-b from-purple-50/30 to-white p-6 space-y-3.5 shadow-2xs">
-                      <div className="flex items-center gap-2.5 pb-2.5 border-b border-purple-100/60">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 shadow-2xs">
-                          <HardDrive className="h-4.5 w-4.5" />
-                        </div>
-                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
-                          Space Complexity (空间复杂度)
-                        </h3>
-                      </div>
-                      <div className="text-sm text-gray-700 leading-relaxed pl-1 prose prose-purple max-w-none">
-                        <MarkdownRenderer content={problem.spaceComplexity} />
-                      </div>
-                    </div>
+                    <ComplexityCard
+                      title="Space Complexity (空间复杂度)"
+                      icon={<HardDrive className="h-4.5 w-4.5" />}
+                      content={problem.spaceComplexity}
+                      theme="purple"
+                    />
                   )}
                 </div>
               )}
 
-              {/* 5. 最优解代码 (Solution) */}
+              {/* 5. 最优解代码 */}
               {problem.solution && (
                 <div>
                   <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3">
@@ -333,7 +373,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 6. 核心考点标签 (Topics) */}
+              {/* 6. 核心考点标签 */}
               {problem.topics && problem.topics.length > 0 && (
                 <div className="border-t border-gray-100 pt-6">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
@@ -352,7 +392,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 7. LeetCode 相似题目推荐模块 */}
+              {/* 7. LeetCode 相似题目推荐 */}
               {(problem as any).similarProblems && (
                 <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-6 sm:p-7">
                   <div className="flex items-center gap-2.5 mb-2">

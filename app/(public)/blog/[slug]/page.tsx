@@ -21,7 +21,9 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+// ⚡ 1. 开启 ISR 增量静态刷新与动态路由放行
 export const revalidate = 60;
+export const dynamicParams = true; // 🌟 核心：允许动态访问后台新创建的文章
 
 export async function generateStaticParams() {
   const posts = await prisma.post.findMany({
@@ -34,8 +36,12 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await prisma.post.findUnique({
-    where: { slug },
+  const decodedSlug = decodeURIComponent(slug);
+
+  const post = await prisma.post.findFirst({
+    where: {
+      OR: [{ slug }, { slug: decodedSlug }],
+    },
   });
 
   if (!post) {
@@ -62,16 +68,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogDetailPage({ params }: Props) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
 
-  const post = await prisma.post.findUnique({
-    where: { slug },
+  // 🌟 核心修复：支持解码后的 Slug 查询
+  const post = await prisma.post.findFirst({
+    where: {
+      OR: [{ slug }, { slug: decodedSlug }],
+    },
   });
 
   if (!post) {
     notFound();
   }
 
-  // 🔒 会员权限校验逻辑：前 6 篇文章免费，第 7 篇起需要 Pro/Admin 会员
+  // 前 6 篇文章免费
   const freePosts = await prisma.post.findMany({
     take: 6,
     orderBy: { id: "asc" },
@@ -136,7 +146,7 @@ export default async function BlogDetailPage({ params }: Props) {
     <div className="min-h-screen bg-gray-50/50 py-10 sm:py-12">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         
-        {/* 🌟 修改处：顶部退出/返回博客列表按钮 */}
+        {/* 返回按钮 */}
         <div className="mb-6">
           <Link
             href="/blog"
@@ -148,7 +158,7 @@ export default async function BlogDetailPage({ params }: Props) {
         </div>
 
         {/* 文章主卡片 */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
+        <div className="rounded-3xl border border-gray-200/90 bg-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
           
           {/* 文章头部信息 */}
           <div className="border-b border-gray-100 pb-6">
