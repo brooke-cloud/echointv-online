@@ -11,14 +11,31 @@ type MarkdownRendererProps = {
   content: string;
 };
 
+// 🌟 精准清洗：修复反引号符号，合并多余空行
+function normalizeMarkdown(text: string): string {
+  if (!text) return "";
+
+  let cleaned = text.replace(/\r\n/g, "\n");
+  cleaned = cleaned.replace(/｀/g, "`");
+  cleaned = cleaned.replace(/`([^`\n]+?)[''’](?=[\s,，.。;；:\n]|$)/g, "`$1`");
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
+
+  return cleaned.trim();
+}
+
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  if (!content) return null;
+
+  const formattedContent = normalizeMarkdown(content);
+
   return (
-    <div className="markdown-content text-gray-800 leading-relaxed">
+    // 🌟 移除全局暴力 pre-wrap，使用精准的 prose 排版流
+    <div className="markdown-content text-gray-800 font-normal leading-relaxed break-words font-mono-friendly">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
         components={{
-          // 1. 代码块渲染 (语法高亮 + 仿终端三色圆点 + 复制按钮)
+          // 1. 代码块
           pre({ children, ...props }) {
             let rawCode = "";
             if (
@@ -32,8 +49,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
             }
 
             return (
-              <div className="group relative my-5 overflow-hidden rounded-xl border border-gray-800 bg-[#0d1117] shadow-lg">
-                {/* 顶部工具栏 (仿 Mac 窗口控制点 + 复制按钮) */}
+              <div className="group relative my-4 overflow-hidden rounded-xl border border-gray-800 bg-[#0d1117] shadow-lg">
                 <div className="flex items-center justify-between border-b border-gray-800/80 bg-[#161b22] px-4 py-2 text-xs text-gray-400">
                   <div className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-red-500/80"></span>
@@ -43,10 +59,9 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
                   {rawCode && <CopyButton text={rawCode} />}
                 </div>
 
-                {/* 语法着色后的代码正文 */}
                 <pre
                   {...props}
-                  className="overflow-x-auto p-4 font-mono text-sm leading-6 text-gray-100"
+                  className="overflow-x-auto p-4 font-mono text-sm leading-6 text-gray-100 whitespace-pre"
                 >
                   {children}
                 </pre>
@@ -54,7 +69,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
             );
           },
 
-          // 2. 行内代码 `inline code`
+          // 2. 行内代码
           code({ className, children, ...props }) {
             const isBlock = Boolean(className);
             if (isBlock) {
@@ -74,10 +89,10 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
             );
           },
 
-          // 3. 表格样式增强
+          // 3. 表格
           table({ children }) {
             return (
-              <div className="my-6 overflow-x-auto rounded-xl border border-gray-200">
+              <div className="my-4 overflow-x-auto rounded-xl border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   {children}
                 </table>
@@ -92,40 +107,40 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
             );
           },
           th({ children }) {
-            return <th className="px-4 py-3 text-left">{children}</th>;
+            return <th className="px-4 py-2.5 text-left">{children}</th>;
           },
           td({ children }) {
             return (
-              <td className="border-t border-gray-100 px-4 py-2.5 text-gray-600">
+              <td className="border-t border-gray-100 px-4 py-2 text-gray-600">
                 {children}
               </td>
             );
           },
 
-          // 4. 标题排版
+          // 4. 标题
           h1({ children }) {
             return (
-              <h1 className="mt-8 mb-4 text-2xl font-bold text-gray-900 sm:text-3xl">
+              <h1 className="mt-6 mb-3 text-2xl font-bold text-gray-900 sm:text-3xl">
                 {children}
               </h1>
             );
           },
           h2({ children }) {
             return (
-              <h2 className="mt-6 mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+              <h2 className="mt-5 mb-2.5 text-xl font-bold text-gray-900 sm:text-2xl">
                 {children}
               </h2>
             );
           },
           h3({ children }) {
             return (
-              <h3 className="mt-4 mb-2 text-lg font-semibold text-gray-800 sm:text-xl">
+              <h3 className="mt-3.5 mb-2 text-lg font-semibold text-gray-800 sm:text-xl">
                 {children}
               </h3>
             );
           },
 
-          // 5. 链接与引用块
+          // 5. 链接与引用
           a({ href, children }) {
             return (
               <a
@@ -140,50 +155,50 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
           },
           blockquote({ children }) {
             return (
-              <blockquote className="my-4 rounded-r-lg border-l-4 border-blue-500 bg-blue-50/50 py-2.5 pl-4 text-sm italic text-gray-700">
+              <blockquote className="my-3 rounded-r-lg border-l-4 border-blue-500 bg-blue-50/50 py-2 pl-4 text-sm italic text-gray-700">
                 {children}
               </blockquote>
             );
           },
 
-          // 🌟 6. 核心修复：有序列表 (1. 2. 3. 4.) 显式设置 list-decimal 与左缩进
+          // 🌟 6. 有序列表（数字 1. 与标题严格同行，间距舒适）
           ol({ children }) {
             return (
-              <ol className="my-3 list-decimal space-y-1.5 pl-6 text-gray-800 font-medium">
+              <ol className="my-3 list-decimal space-y-3 pl-6 text-gray-900 font-medium">
                 {children}
               </ol>
             );
           },
 
-          // 🌟 7. 无序列表 (•) 显式设置 list-disc 与左缩进
+          // 🌟 7. 无序列表（紧凑贴合子级列表项）
           ul({ children }) {
             return (
-              <ul className="my-3 list-disc space-y-1.5 pl-6 text-gray-800 font-medium">
+              <ul className="my-2 list-disc space-y-1.5 pl-5 text-gray-800 font-normal">
                 {children}
               </ul>
             );
           },
 
-          // 🌟 8. 列表项
+          // 🌟 8. 列表项（保证 1. 2. 3. 序号与文字不换行断裂）
           li({ children }) {
             return (
-              <li className="leading-relaxed pl-1 text-gray-700">
+              <li className="leading-relaxed text-gray-800 font-normal [&>p]:inline [&>p]:my-0">
                 {children}
               </li>
             );
           },
 
-          // 🌟 9. 段落排版
+          // 🌟 9. 段落（支持自然换行，同时不制造多余空洞）
           p({ children }) {
             return (
-              <p className="my-2.5 leading-relaxed text-gray-700">
+              <p className="my-1.5 leading-relaxed text-gray-700 font-normal whitespace-pre-line">
                 {children}
               </p>
             );
           },
         }}
       >
-        {content}
+        {formattedContent}
       </ReactMarkdown>
     </div>
   );

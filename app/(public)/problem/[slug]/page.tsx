@@ -270,10 +270,10 @@ export default async function ProblemDetailPage({ params }: Props) {
           {canAccess ? (
             <div className="space-y-8">
               
-              {/* 1. Problem Description */}
+              {/* 1. Problem Description (题目描述 - 蓝色专栏卡片) */}
               {problem.description && (
-                <div className="rounded-2xl border border-blue-100/90 bg-gradient-to-b from-blue-50/30 via-white to-white p-6 sm:p-8 shadow-xs">
-                  <div className="flex items-center justify-between mb-5 pb-3.5 border-b border-blue-100/70">
+                <div className="rounded-2xl border border-blue-200/70 bg-gradient-to-b from-blue-50/30 via-white to-white p-6 sm:p-8 shadow-xs">
+                  <div className="flex items-center justify-between mb-5 pb-3.5 border-b border-blue-100">
                     <div className="flex items-center gap-2.5">
                       <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 text-blue-700 text-base shadow-2xs">
                         📝
@@ -282,7 +282,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                         Problem Description (题目描述)
                       </h2>
                     </div>
-                    <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60 shadow-2xs">
+                    <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200/60 shadow-2xs">
                       Question Details
                     </span>
                   </div>
@@ -293,25 +293,31 @@ export default async function ProblemDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 🌟 2. 核心：Example 示例卡片（支持 Markdown 渲染 + 常规字重 font-normal，不全局粗体） */}
+              {/* 🌟 2. 核心修改：Example (输入输出示例 - 与 Approach 完全一致的紫色专栏卡片，无内层多余白框) */}
               {problem.example && (
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-6 sm:p-7 space-y-3.5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-100 text-purple-700 text-sm shadow-2xs font-bold">
-                      🔍
+                <div className="rounded-2xl border border-purple-200/70 bg-gradient-to-b from-purple-50/30 via-white to-white p-6 sm:p-8 shadow-xs">
+                  <div className="flex items-center justify-between mb-5 pb-3.5 border-b border-purple-100">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-100 text-purple-700 text-base shadow-2xs">
+                        🔍
+                      </span>
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
+                        Example (输入输出示例)
+                      </h2>
+                    </div>
+                    <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200/60 shadow-2xs">
+                      Test Cases
                     </span>
-                    <h2 className="text-base sm:text-lg font-bold text-gray-900">
-                      Example (输入输出示例)
-                    </h2>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 text-sm sm:text-[15px] text-gray-800 font-normal leading-relaxed shadow-2xs whitespace-pre-wrap">
+                  {/* 🌟 与 Approach 结构 100% 相同 */}
+                  <div className="text-gray-800 leading-relaxed text-sm sm:text-base prose prose-blue max-w-none font-normal">
                     <MarkdownRenderer content={problem.example} />
                   </div>
                 </div>
               )}
 
-              {/* 3. Approach */}
+              {/* 3. Approach (核心思维推导与最优策略 - 琥珀金专栏卡片) */}
               {problem.approach && (
                 <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-b from-amber-50/30 via-white to-white p-6 sm:p-8 shadow-xs">
                   <div className="flex items-center justify-between mb-5 pb-3.5 border-b border-amber-100">
@@ -328,7 +334,7 @@ export default async function ProblemDetailPage({ params }: Props) {
                     </span>
                   </div>
 
-                  <div className="text-gray-800 leading-relaxed prose prose-blue max-w-none text-sm sm:text-base font-normal">
+                  <div className="text-gray-800 leading-relaxed text-sm sm:text-base prose prose-blue max-w-none font-normal">
                     <MarkdownRenderer content={problem.approach} />
                   </div>
                 </div>
