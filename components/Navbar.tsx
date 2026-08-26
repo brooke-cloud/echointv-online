@@ -5,6 +5,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
+
 
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
@@ -67,15 +69,25 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo 与导航菜单 */}
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-gray-900">
-            <span className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-mono text-sm shadow-sm">
-              &lt;/&gt;
-            </span>
-            <span>EchoINTV</span>
-          </Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
+    
+    {/* 🌟 2. 大尺寸 Logo 展示区 */}
+    <div className="flex items-center gap-8">
+      <Link href="/" className="flex items-center gap-3.5 group">
+        <Image
+          src="/logo2.png"
+          alt="EchoINTV Logo"
+          width={300}
+          height={300}
+          quality={100}
+          priority
+          className="h-25 sm:h-25 w-auto object-contain mix-blend-multiply transition group-hover:scale-105" // 👈 高度提升至 56px~64px 醒目大尺寸
+        />
+        <span className="font-extrabold text-2xl tracking-tight text-gray-900">
+          Echo<span className="text-blue-600">INTV</span>
+        </span>
+      </Link>
+            
 
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => {

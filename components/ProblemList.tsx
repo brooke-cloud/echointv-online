@@ -26,51 +26,42 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
   const [selectedStage, setSelectedStage] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  // 提取去重后的公司列表
+  // 1. 公司列表去重
   const companies = useMemo(() => {
     const set = new Set<string>();
     problems.forEach((p) => {
-      if (p.company) set.add(p.company);
+      if (p.company) set.add(p.company.trim());
     });
     return ["All", ...Array.from(set)];
   }, [problems]);
 
   const difficulties = ["All", "Easy", "Medium", "Hard"];
+  const stages = ["All", "OA (线上测评/笔试)", "VO (技术轮面/Onsite)"];
 
-  const stages = [
-    "All",
-    "OA (线上测评/笔试)",
-    "VO (技术轮面/Onsite)",
-  ];
-
-  // 🌟 核心优化：只提取第一个斜杠 / 前面的主分类内容并去重
+  // 2. 提取一级主分类并去重
   const categories = useMemo(() => {
     const set = new Set<string>();
     problems.forEach((p) => {
       if (p.category) {
-        // 截取第一个 / 前面的主分类（例如 "Algorithms / Greedy" -> "Algorithms"）
-        const mainCat = p.category.split("/")[0].trim();
+        let mainCat = p.category.split(/[,，/]/)[0].trim();
+        mainCat = mainCat.replace(/\(.*?\)/g, "").trim();
+        mainCat = mainCat.replace(/MathAlgorithms.*/i, "Math");
+        mainCat = mainCat.replace(/SimulationAlgorithms.*/i, "Simulation");
+
         if (mainCat) set.add(mainCat);
       }
     });
-    return ["All", ...Array.from(set)];
+    return ["All", ...Array.from(set).sort()];
   }, [problems]);
 
-  // 判定单个题目是否为 OA
+  // 🌟 3. 精准判定 OA / VO（严格以数据库 stage 为准，绝不再误伤 board/load/loan 等英文单词）
   const isProblemOA = (prob: Problem) => {
-    const st = ((prob as any).stage || "").toUpperCase();
-    const cat = (prob.category || "").toUpperCase();
-    const title = (prob.title || "").toUpperCase();
-    const desc = (prob.description || "").toUpperCase();
-    const topics = (prob.topics || []).map((t) => t.toUpperCase());
-    return (
-      st === "OA" ||
-      st.includes("OA") ||
-      cat.includes("OA") ||
-      title.includes("OA") ||
-      desc.includes("OA") ||
-      topics.some((t) => t.includes("OA"))
-    );
+    const st = ((prob as any).stage || "").trim().toUpperCase();
+    if (st === "OA") return true;
+    if (st === "VO") return false;
+
+    // 只有在未显式设置 stage 时，才使用独立单词正则边界匹配 (\bOA\b)
+    return /\bOA\b/i.test(prob.title || "");
   };
 
   // 综合过滤逻辑
@@ -102,11 +93,13 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         (isFilterOA && isOA) ||
         (isFilterVO && !isOA);
 
-      // 🌟 智能匹配：判断题目的主分类是否等于选中大类，或包含该关键词
-      const pMainCat = p.category ? p.category.split("/")[0].trim() : "";
+      const pMainCat = p.category
+        ? p.category.split(/[,，/]/)[0].replace(/\(.*?\)/g, "").trim().toLowerCase()
+        : "";
+
       const matchCategory =
         selectedCategory === "All" ||
-        pMainCat.toLowerCase() === selectedCategory.toLowerCase() ||
+        pMainCat === selectedCategory.toLowerCase() ||
         p.category.toLowerCase().includes(selectedCategory.toLowerCase());
 
       return matchSearch && matchCompany && matchDifficulty && matchStage && matchCategory;
@@ -203,7 +196,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         </div>
       </div>
 
-      {/* 🌟 4. Category 分类筛选（只展示精简的第一主分类） */}
+      {/* 4. Category 分类筛选 */}
       <div className="space-y-2">
         <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">Category</div>
         <div className="flex flex-wrap gap-2">
@@ -276,7 +269,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
                       {isFree ? "Free" : "Paid"}
                     </span>
 
-                    {/* OA / VO 徽章 */}
+                    {/* 🌟 精准的 OA / VO 徽章 */}
                     <span
                       className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
                         isOA
@@ -306,7 +299,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
                   {problem.title}
                 </h3>
                 <p className="text-xs font-semibold text-gray-400 mt-1.5">
-                  {problem.category.split("/")[0].trim()}
+                  {problem.category.split(/[,，/]/)[0].replace(/\(.*?\)/g, "").trim()}
                 </p>
                 <p className="text-sm text-gray-600 mt-3.5 line-clamp-3 leading-relaxed">
                   {problem.description}

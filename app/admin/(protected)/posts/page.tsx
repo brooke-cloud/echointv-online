@@ -1,13 +1,36 @@
-// app/admin/(protected)/posts/page.tsx
-
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import DeletePostButton from "./DeletePostButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPostsPage() {
+type AdminPostsPageProps = {
+  searchParams: Promise<{
+    search?: string;
+  }>;
+};
+
+export default async function AdminPostsPage({
+  searchParams,
+}: AdminPostsPageProps) {
+  const { search } = (await searchParams) || {};
+  const trimmedSearch = search?.trim();
+
+  // 🌟 支持按文章标题、分类、简介、Slug 或 ID 搜索
   const posts = await prisma.post.findMany({
+    where: trimmedSearch
+      ? {
+          OR: [
+            { title: { contains: trimmedSearch, mode: "insensitive" } },
+            { category: { contains: trimmedSearch, mode: "insensitive" } },
+            { description: { contains: trimmedSearch, mode: "insensitive" } },
+            { slug: { contains: trimmedSearch, mode: "insensitive" } },
+            ...(!isNaN(Number(trimmedSearch))
+              ? [{ id: Number(trimmedSearch) }]
+              : []),
+          ],
+        }
+      : undefined,
     orderBy: {
       id: "desc",
     },
@@ -22,6 +45,7 @@ export default async function AdminPostsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Blog Posts</h1>
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 border border-blue-100">
               共 {posts.length} 篇
+              {trimmedSearch && ` (匹配结果)`}
             </span>
           </div>
           <p className="mt-1 text-sm text-gray-500">
@@ -40,11 +64,55 @@ export default async function AdminPostsPage() {
         </div>
       </div>
 
+      {/* 🌟 搜索栏区域 */}
+      <section className="mt-8">
+        <form method="GET" className="flex gap-3">
+          <input
+            type="text"
+            name="search"
+            defaultValue={search || ""}
+            placeholder="Search articles by title, category, description, slug or ID..."
+            className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+          />
+          <button
+            type="submit"
+            className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700"
+          >
+            Search
+          </button>
+          {search && (
+            <Link
+              href="/admin/posts"
+              className="flex items-center rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            >
+              Clear
+            </Link>
+          )}
+        </form>
+      </section>
+
       {/* 文章列表表格 */}
       <div className="mt-8 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {posts.length === 0 ? (
           <div className="py-16 text-center">
-            <p className="text-gray-400 text-sm">暂无文章，点击上方按钮添加第一篇博客吧！</p>
+            <p className="text-gray-500 text-sm font-medium">
+              {search ? "No articles matched your search." : "暂无文章，点击上方按钮添加第一篇博客吧！"}
+            </p>
+            {search ? (
+              <Link
+                href="/admin/posts"
+                className="mt-4 inline-block font-medium text-blue-600 hover:text-blue-800 text-sm"
+              >
+                Clear search filter →
+              </Link>
+            ) : (
+              <Link
+                href="/admin/posts/new"
+                className="mt-4 inline-block font-medium text-blue-600 hover:text-blue-800 text-sm"
+              >
+                Add Blog Post →
+              </Link>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -112,7 +180,7 @@ export default async function AdminPostsPage() {
                             View
                           </Link>
 
-                          {/* 🌟 1. 编辑按钮：跳转到编辑页 */}
+                          {/* 编辑按钮 */}
                           <Link
                             href={`/admin/posts/${post.id}/edit`}
                             className="font-semibold text-blue-600 hover:text-blue-800 transition"
@@ -120,7 +188,7 @@ export default async function AdminPostsPage() {
                             Edit
                           </Link>
 
-                          {/* 🌟 2. 您的原有删除按钮组件 */}
+                          {/* 删除按钮 */}
                           <DeletePostButton id={post.id} />
                         </div>
                       </td>
