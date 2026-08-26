@@ -1,5 +1,4 @@
 // app/(public)/checkout/page.tsx
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,7 +17,7 @@ export default function CheckoutPage() {
       .then((data) => setUser(data.user));
   }, []);
 
-  // PayPal 支付处理（动态提取 approve 链接，自动适配沙箱/生产）
+  // PayPal 支付处理（使用新价格 $6.90）
   const handlePayPalPayment = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -29,7 +28,8 @@ export default function CheckoutPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ price: "9.90", currency: "USD" }),
+        // ✅ 价格改为 6.90
+        body: JSON.stringify({ price: "6.90", currency: "USD" }),
       });
 
       const order = await response.json();
@@ -43,8 +43,6 @@ export default function CheckoutPage() {
       if (approveLink) {
         window.location.href = approveLink.href;
       } else {
-        // 保险起见，尝试用构造方式（但 links 方式更标准）
-        // 根据环境变量决定基础 URL
         const isSandbox = process.env.NEXT_PUBLIC_PAYPAL_SANDBOX === "true";
         const baseUrl = isSandbox
           ? "https://www.sandbox.paypal.com"
@@ -88,8 +86,9 @@ export default function CheckoutPage() {
                   <div className="text-xs text-gray-500 mt-0.5">月度全功能订阅</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xl font-extrabold text-gray-900">$9.90</div>
-                  <div className="text-xs text-gray-400">约 ¥69.00</div>
+                  {/* ✅ 价格改为 $6.90，人民币参考价可调整（约¥46） */}
+                  <div className="text-xl font-extrabold text-gray-900">$6.90</div>
+                  <div className="text-xs text-gray-400">约 ¥46.00</div>
                 </div>
               </div>
 
@@ -103,7 +102,8 @@ export default function CheckoutPage() {
 
             <div className="border-t border-gray-100 pt-4 flex justify-between items-center text-sm">
               <span className="font-medium text-gray-500">实付总额：</span>
-              <span className="text-2xl font-extrabold text-blue-600">$9.90 / ¥69</span>
+              {/* ✅ 价格改为 $6.90 / ¥50 */}
+              <span className="text-2xl font-extrabold text-blue-600">$6.90 / ¥46</span>
             </div>
           </div>
 
@@ -111,7 +111,6 @@ export default function CheckoutPage() {
           <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-sm space-y-6">
             <h2 className="text-lg font-bold text-gray-900">选择支付方式</h2>
 
-            {/* 三个选项卡：PayPal / 微信支付 / 支付宝 */}
             <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setSelectedMethod("paypal")}
@@ -151,7 +150,6 @@ export default function CheckoutPage() {
             </div>
 
             <div className="pt-2">
-              {/* PayPal 支付区域 */}
               {selectedMethod === "paypal" ? (
                 <div className="p-6 rounded-2xl bg-gray-50 border border-gray-200 text-center space-y-4">
                   <div className="space-y-1">
@@ -164,15 +162,15 @@ export default function CheckoutPage() {
                     disabled={isProcessing}
                     className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 text-sm"
                   >
-                    {isProcessing ? "正在跳转 PayPal..." : "💳 使用 PayPal 支付 ($9.90 USD) →"}
+                    {/* ✅ 按钮文案改为 $6.90 USD */}
+                    {isProcessing ? "正在跳转 PayPal..." : "💳 使用 PayPal 支付 ($6.90 USD) →"}
                   </button>
                 </div>
               ) : (
-                /* 微信 / 支付宝 收银台（保留原有逻辑） */
                 <div className="p-6 rounded-2xl bg-gray-50 border border-gray-200 text-center space-y-4">
                   <div className="space-y-1">
                     <h3 className="font-bold text-gray-900">
-                      {selectedMethod === "wechat" ? "💬 微信扫码支付 (¥69.00)" : "🟦 支付宝扫码支付 (¥69.00)"}
+                      {selectedMethod === "wechat" ? "💬 微信扫码支付 (¥46.00)" : "🟦 支付宝扫码支付 (¥46.00)"}
                     </h3>
                     <p className="text-xs text-emerald-600 font-semibold">⚡ 支持扫码自动识别，付款后 1 秒全自动开通</p>
                   </div>
@@ -184,7 +182,7 @@ export default function CheckoutPage() {
                       rel="noopener noreferrer"
                       className="block w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-md transition text-sm text-center"
                     >
-                      前往收银台扫码付款 (¥69) →
+                      前往收银台扫码付款 (¥46) →
                     </a>
                   </div>
 

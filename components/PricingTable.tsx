@@ -21,8 +21,8 @@ export default function PricingTable() {
             <div className="space-y-3.5 pt-6 border-t border-gray-100">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">权益包含</p>
               <div className="space-y-2.5 text-sm text-gray-700">
-                <div className="flex items-center gap-2"><span className="text-blue-600 font-bold">✓</span> 可免费查看前 6 道大厂面试真题</div>
-                <div className="flex items-center gap-2"><span className="text-blue-600 font-bold">✓</span> 可免费查看前 6 篇深度求职面经</div>
+                <div className="flex items-center gap-2"><span className="text-blue-600 font-bold">✓</span> 可免费查看前 5 道大厂面试真题</div>
+                <div className="flex items-center gap-2"><span className="text-blue-600 font-bold">✓</span> 可免费查看前 5 篇深度求职面经</div>
                 <div className="flex items-center gap-2"><span className="text-blue-600 font-bold">✓</span> 基础代码高亮与题目要求</div>
                 <div className="flex items-center gap-2"><span className="text-blue-600 font-bold">✓</span> 随时随地在线阅读体验</div>
               </div>
@@ -36,7 +36,7 @@ export default function PricingTable() {
           </Link>
         </div>
 
-        {/* Pro 会员版 */}
+        {/* Pro 会员版（修改价格） */}
         <div className="bg-white rounded-3xl p-8 sm:p-10 border border-blue-600 shadow-xl ring-2 ring-blue-600 flex flex-col justify-between relative">
           <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow">
             🔥 最受求职者推荐
@@ -46,8 +46,9 @@ export default function PricingTable() {
             <p className="text-sm text-gray-500 mt-2 min-h-[40px] leading-relaxed">
               专为全力冲刺秋招、春招与社招大厂面试的工程师打造，全面扫清考点盲区。
             </p>
+            {/* ✅ 价格改为 $6.90 / 月 */}
             <div className="my-6">
-              <span className="text-4xl sm:text-5xl font-extrabold text-gray-900">$9.99</span>
+              <span className="text-4xl sm:text-5xl font-extrabold text-gray-900">$6.90</span>
               <span className="text-sm text-gray-500 ml-2">/ 月</span>
             </div>
             <div className="space-y-3.5 pt-6 border-t border-gray-100">
@@ -61,13 +62,12 @@ export default function PricingTable() {
               </div>
             </div>
           </div>
-
-          {/* ✅ 改用 Link 跳转到 /checkout */}
           <Link
             href="/checkout"
+            // ✅ 按钮文案里的价格也改为 $6.90/月
             className="mt-10 w-full py-3.5 px-4 text-center rounded-xl font-bold text-sm transition bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md flex items-center justify-center gap-2"
           >
-            <span>💳 立即开通 Pro（$9.99/月） →</span>
+            <span>💳 立即开通 Pro（$6.90/月） →</span>
           </Link>
         </div>
       </div>
