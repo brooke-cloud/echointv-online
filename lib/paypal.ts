@@ -1,9 +1,12 @@
 // lib/paypal.ts
 
-const PAYPAL_BASE_URL =
-  process.env.PAYPAL_MODE === "live"
-    ? "https://api-m.paypal.com"
-    : "https://api-m.sandbox.paypal.com";
+const isProduction =
+  process.env.PAYPAL_MODE === "live" ||
+  process.env.PAYPAL_MODE === "production";
+
+const PAYPAL_BASE_URL = isProduction
+  ? "https://api-m.paypal.com"
+  : "https://api-m.sandbox.paypal.com";
 
 // 1. 获取 PayPal 授权 Token
 export async function getPayPalAccessToken(): Promise<string> {
@@ -26,10 +29,14 @@ export async function getPayPalAccessToken(): Promise<string> {
   });
 
   const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error_description || "获取 PayPal Token 失败");
+  }
+
   return data.access_token;
 }
 
-// 2. 创建 $9.90 美元订单
+// 2. 创建 $9.90 美元订单（显式注入 EchoINTV 品牌名）
 export async function createPayPalOrder(userId: string): Promise<string> {
   const token = await getPayPalAccessToken();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -52,11 +59,24 @@ export async function createPayPalOrder(userId: string): Promise<string> {
           custom_id: userId, // 携带当前用户 ID
         },
       ],
+      // 🌟 双重注入品牌名：彻底替换收银台底部的个人真实姓名展示
       application_context: {
         brand_name: "EchoINTV",
+        landing_page: "NO_PREFERENCE",
         user_action: "PAY_NOW",
         return_url: `${siteUrl}/checkout/success`,
         cancel_url: `${siteUrl}/pricing`,
+      },
+      payment_source: {
+        paypal: {
+          experience_context: {
+            brand_name: "EchoINTV",
+            landing_page: "NO_PREFERENCE",
+            user_action: "PAY_NOW",
+            return_url: `${siteUrl}/checkout/success`,
+            cancel_url: `${siteUrl}/pricing`,
+          },
+        },
       },
     }),
   });
@@ -86,5 +106,10 @@ export async function capturePayPalOrder(orderId: string) {
     }
   );
 
-  return await res.json();
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || "PayPal 扣款捕获失败");
+  }
+
+  return data;
 }
