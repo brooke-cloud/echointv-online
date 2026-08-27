@@ -3,7 +3,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import BlogCard from "./BlogCard";
+import Link from "next/link";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 interface Post {
   id: number;
@@ -11,16 +12,29 @@ interface Post {
   title: string;
   category: string;
   description: string;
+  content?: string;
   date: string;
   readingTime: string;
   company?: string;
+  isFree?: boolean;
 }
 
+// 常见大厂关键词检测池
 const TECH_COMPANIES = [
-  "Meta", "Google", "Amazon", "TikTok", "ByteDance",
-  "Microsoft", "Apple", "Tencent", "Alibaba", "Stripe", "Netflix"
+  "Meta",
+  "Google",
+  "Amazon",
+  "TikTok",
+  "ByteDance",
+  "Microsoft",
+  "Apple",
+  "Tencent",
+  "Alibaba",
+  "Stripe",
+  "Netflix",
 ];
 
+// 智能识别文章所属大厂
 function detectCompany(post: Post): string {
   if (post.company) return post.company;
   const fullText = `${post.title} ${post.category} ${post.description || ""}`;
@@ -33,7 +47,7 @@ function detectCompany(post: Post): string {
 }
 
 export default function BlogList({
-  posts = [], // 🌟 默认空数组，彻底防止 undefined
+  posts = [],
 }: {
   posts?: Post[];
 }) {
@@ -41,10 +55,10 @@ export default function BlogList({
   const [selectedCompany, setSelectedCompany] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  // 安全获取文章数组
+  // 确保文章数组安全可用
   const safePosts = useMemo(() => (Array.isArray(posts) ? posts : []), [posts]);
 
-  // 1. 公司列表
+  // 1. 动态提取所有公司列表并去重
   const companies = useMemo(() => {
     const set = new Set<string>();
     safePosts.forEach((p) => {
@@ -54,25 +68,28 @@ export default function BlogList({
     return ["All", ...Array.from(set).sort()];
   }, [safePosts]);
 
-  // 2. 分类列表
+  // 2. 提取一级核心分类并去重
   const categories = useMemo(() => {
     const set = new Set<string>();
     safePosts.forEach((p) => {
       if (p.category) {
         let cat = p.category.split(/[,，/]/)[0].trim();
         cat = cat.replace(/\(.*?\)/g, "").trim();
+        cat = cat.replace(/MathAlgorithms.*/i, "Math");
+        cat = cat.replace(/SimulationAlgorithms.*/i, "Simulation");
         if (cat && cat !== "1") set.add(cat);
       }
     });
     return ["All", ...Array.from(set).sort()];
   }, [safePosts]);
 
-  // 3. 多条件搜索过滤
+  // 3. 多条件综合过滤（搜索 + 公司 + 分类）
   const filteredPosts = useMemo(() => {
     return safePosts.filter((p) => {
       const q = searchQuery.toLowerCase().trim();
       const pCompany = detectCompany(p);
 
+      // 搜索匹配：标题、描述、分类、公司、Slug
       const matchSearch =
         !q ||
         p.title.toLowerCase().includes(q) ||
@@ -81,12 +98,14 @@ export default function BlogList({
         pCompany.toLowerCase().includes(q) ||
         p.slug.toLowerCase().includes(q);
 
+      // 公司匹配
       const matchCompany =
         selectedCompany === "All" ||
         pCompany.toLowerCase() === selectedCompany.toLowerCase() ||
         p.title.toLowerCase().includes(selectedCompany.toLowerCase());
 
-      const pCat = p.category.split(/[,，/]/)[0].trim().toLowerCase();
+      // 分类匹配
+      const pCat = p.category.split(/[,，/]/)[0].replace(/\(.*?\)/g, "").trim().toLowerCase();
       const matchCategory =
         selectedCategory === "All" ||
         pCat === selectedCategory.toLowerCase() ||
@@ -107,7 +126,7 @@ export default function BlogList({
 
   return (
     <div className="space-y-8">
-      {/* 搜索框 */}
+      {/* 🌟 1. 搜索框 */}
       <div className="relative">
         <input
           type="text"
@@ -126,7 +145,7 @@ export default function BlogList({
         )}
       </div>
 
-      {/* 公司筛选 */}
+      {/* 🌟 2. Company 大厂筛选 */}
       {companies.length > 1 && (
         <div className="space-y-2.5">
           <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -150,7 +169,7 @@ export default function BlogList({
         </div>
       )}
 
-      {/* 分类筛选 */}
+      {/* 🌟 3. Category 一级分类筛选 */}
       <div className="space-y-2.5">
         <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">
           Category (分类领域)
@@ -172,7 +191,7 @@ export default function BlogList({
         </div>
       </div>
 
-      {/* 统计栏 */}
+      {/* 统计栏与清除筛选按钮 */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <span className="text-sm text-gray-500 font-medium">
           {filteredPosts.length} articles found
@@ -187,7 +206,7 @@ export default function BlogList({
         )}
       </div>
 
-      {/* 文章卡片列表 */}
+      {/* 🌟 4. 面经文章列表卡片 */}
       <div className="space-y-4">
         {filteredPosts.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 border border-gray-200 text-center text-gray-400 space-y-2">
@@ -195,9 +214,64 @@ export default function BlogList({
             <p className="text-xs text-gray-400">尝试更换搜索词或清空筛选条件</p>
           </div>
         ) : (
-          filteredPosts.map((post, index) => (
-            <BlogCard key={post.id} post={post} index={index} />
-          ))
+          filteredPosts.map((post, index) => {
+            const isFree = typeof post.isFree === "boolean" ? post.isFree : index < 5;
+            const comp = detectCompany(post);
+
+            return (
+              <Link
+                key={post.id}
+                href={`/blog/${post.slug}`}
+                className="group block bg-white p-6 sm:p-7 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition space-y-3"
+              >
+                {/* 顶部标签：公司 + 一级分类 + 免费/付费 */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {comp && (
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                      🏢 {comp}
+                    </span>
+                  )}
+
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-gray-100 text-gray-700">
+                    {post.category.split(/[,，/]/)[0].replace(/\(.*?\)/g, "").trim()}
+                  </span>
+
+                  {isFree ? (
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Free
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-0.5">
+                      <span>🔒</span>
+                      <span>Pro</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* 标题 */}
+                <h2 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition leading-snug">
+                  {post.title}
+                </h2>
+
+                {/* 🌟 摘要（通过 MarkdownRenderer 支持解析数学公式与行内代码） */}
+                {post.description && (
+                  <div className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                    <MarkdownRenderer content={post.description} />
+                  </div>
+                )}
+
+                {/* 底部时间与链接 */}
+                <div className="pt-2 flex items-center justify-between text-xs text-gray-400 border-t border-gray-50">
+                  <div>
+                    {post.date} · 预计阅读 {post.readingTime}
+                  </div>
+                  <span className="text-blue-600 font-semibold group-hover:underline flex items-center gap-1">
+                    阅读全文 →
+                  </span>
+                </div>
+              </Link>
+            );
+          })
         )}
       </div>
     </div>
