@@ -1,78 +1,92 @@
 // components/BlogCard.tsx
 
 import Link from "next/link";
-import type { Post } from "@/types/post";
 
-type BlogCardProps = {
+interface Post {
+  id: number;
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  date: string;
+  readingTime: string;
+  company?: string;
+  isFree?: boolean;
+}
+
+const TECH_COMPANIES = [
+  "Meta", "Google", "Amazon", "TikTok", "ByteDance",
+  "Microsoft", "Apple", "Tencent", "Alibaba", "Stripe", "Netflix"
+];
+
+function detectCompany(post: Post): string {
+  if (post.company) return post.company;
+  const fullText = `${post.title} ${post.category} ${post.description || ""}`;
+  for (const comp of TECH_COMPANIES) {
+    if (new RegExp(`\\b${comp}\\b|${comp}`, "i").test(fullText)) {
+      return comp;
+    }
+  }
+  return "";
+}
+
+export default function BlogCard({
+  post,
+  index = 0,
+}: {
   post: Post;
-};
-
-export default function BlogCard({ post }: BlogCardProps) {
-  const isFree = typeof (post as any).isFree === "boolean" ? (post as any).isFree : true;
-
-  const getCategoryBadgeStyle = (cat: string) => {
-    const c = cat?.toUpperCase() || "";
-    if (c.includes("INTERVIEW") || c.includes("面经")) {
-      return "bg-purple-50 text-purple-700 border-purple-200/80";
-    }
-    if (c.includes("SYSTEM") || c.includes("系统设计")) {
-      return "bg-indigo-50 text-indigo-700 border-indigo-200/80";
-    }
-    if (c.includes("CODING") || c.includes("算法") || c.includes("LEETCODE")) {
-      return "bg-sky-50 text-sky-700 border-sky-200/80";
-    }
-    return "bg-blue-50 text-blue-700 border-blue-200/80";
-  };
+  index?: number;
+}) {
+  const isFree = typeof post.isFree === "boolean" ? post.isFree : index < 5;
+  const comp = detectCompany(post);
 
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex h-full flex-col justify-between rounded-3xl border border-gray-200/90 bg-white p-7 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl min-h-[250px] cursor-pointer"
+      className="group block bg-white p-6 sm:p-7 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition space-y-3"
     >
-      <div>
-        {/* 顶部：文章类型徽章 + 免费/付费徽章 */}
-        <div className="flex items-center justify-between gap-2 mb-3.5">
-          <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border uppercase tracking-wider ${getCategoryBadgeStyle(
-              post.category
-            )}`}
-          >
-            <span>📑</span>
-            <span>{post.category}</span>
+      {/* 顶部标签：公司 + 分类 + 免费/付费 */}
+      <div className="flex flex-wrap items-center gap-2">
+        {comp && (
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+            🏢 {comp}
           </span>
+        )}
 
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-              isFree
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80"
-                : "bg-amber-50 text-amber-800 border border-amber-200/80"
-            }`}
-          >
-            {isFree ? "Free" : "Paid"}
+        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-gray-100 text-gray-700">
+          {post.category}
+        </span>
+
+        {isFree ? (
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Free
           </span>
-        </div>
-
-        {/* 文章标题 */}
-        <h2 className="mt-3 text-xl font-bold leading-snug text-gray-900 group-hover:text-blue-600 transition-colors">
-          {post.title}
-        </h2>
-
-        {/* 文章简介 */}
-        {post.description && (
-          <p className="mt-3 leading-relaxed text-sm text-gray-600 line-clamp-3">
-            {post.description}
-          </p>
+        ) : (
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-0.5">
+            <span>🔒</span>
+            <span>Pro</span>
+          </span>
         )}
       </div>
 
-      {/* 🌟 底部：发布时间与阅读时长，整张卡片直接点击进入 */}
-      <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-medium">
+      {/* 标题 */}
+      <h2 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition leading-snug">
+        {post.title}
+      </h2>
+
+      {/* 描述摘要 */}
+      {post.description && (
+        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+          {post.description}
+        </p>
+      )}
+
+      {/* 底部时间与链接 */}
+      <div className="pt-2 flex items-center justify-between text-xs text-gray-400 border-t border-gray-50">
         <div>
-          <span>{post.date}</span>
-          <span className="mx-1.5">·</span>
-          <span>{post.readingTime || (post as any).readTime || "5 min read"}</span>
+          {post.date} · 预计阅读 {post.readingTime}
         </div>
-        <span className="text-blue-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-blue-600 font-semibold group-hover:underline flex items-center gap-1">
           阅读全文 →
         </span>
       </div>

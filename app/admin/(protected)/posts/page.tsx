@@ -1,6 +1,9 @@
+// app/admin/(protected)/posts/page.tsx
+
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import DeletePostButton from "./DeletePostButton";
+import ImportPostsButton from "./ImportPostsButton"; // 👈 1. 引入组件
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +19,6 @@ export default async function AdminPostsPage({
   const { search } = (await searchParams) || {};
   const trimmedSearch = search?.trim();
 
-  // 🌟 支持按文章标题、分类、简介、Slug 或 ID 搜索
   const posts = await prisma.post.findMany({
     where: trimmedSearch
       ? {
@@ -53,10 +55,13 @@ export default async function AdminPostsPage({
           </p>
         </div>
 
-        <div>
+        {/* 🌟 2. 右侧操作区：一键导入 + 新建文章 */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <ImportPostsButton />
+
           <Link
             href="/admin/posts/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
           >
             <span>+</span>
             <span>Add Blog Post</span>
@@ -64,7 +69,7 @@ export default async function AdminPostsPage({
         </div>
       </div>
 
-      {/* 🌟 搜索栏区域 */}
+      {/* 搜索栏 */}
       <section className="mt-8">
         <form method="GET" className="flex gap-3">
           <input
@@ -91,27 +96,17 @@ export default async function AdminPostsPage({
         </form>
       </section>
 
-      {/* 文章列表表格 */}
+      {/* 文章表格 */}
       <div className="mt-8 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {posts.length === 0 ? (
-          <div className="py-16 text-center">
+          <div className="py-16 text-center space-y-4">
             <p className="text-gray-500 text-sm font-medium">
-              {search ? "No articles matched your search." : "暂无文章，点击上方按钮添加第一篇博客吧！"}
+              {search ? "No articles matched your search." : "暂无文章，可点击上方按钮一键导入精选大厂面经！"}
             </p>
-            {search ? (
-              <Link
-                href="/admin/posts"
-                className="mt-4 inline-block font-medium text-blue-600 hover:text-blue-800 text-sm"
-              >
-                Clear search filter →
-              </Link>
-            ) : (
-              <Link
-                href="/admin/posts/new"
-                className="mt-4 inline-block font-medium text-blue-600 hover:text-blue-800 text-sm"
-              >
-                Add Blog Post →
-              </Link>
+            {!search && (
+              <div className="flex justify-center gap-3">
+                <ImportPostsButton />
+              </div>
             )}
           </div>
         ) : (
@@ -179,16 +174,12 @@ export default async function AdminPostsPage({
                           >
                             View
                           </Link>
-
-                          {/* 编辑按钮 */}
                           <Link
                             href={`/admin/posts/${post.id}/edit`}
                             className="font-semibold text-blue-600 hover:text-blue-800 transition"
                           >
                             Edit
                           </Link>
-
-                          {/* 删除按钮 */}
                           <DeletePostButton id={post.id} />
                         </div>
                       </td>
