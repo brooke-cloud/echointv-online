@@ -21,22 +21,62 @@ interface Post {
 
 // 常见大厂关键词检测池
 const TECH_COMPANIES = [
+  "IBM",
   "Meta",
   "Google",
   "Amazon",
+  "Apple",
+  "Microsoft",
   "TikTok",
   "ByteDance",
-  "Microsoft",
-  "Apple",
-  "Tencent",
-  "Alibaba",
+  "Tesla",
+  "Nvidia",
+  "OpenAI",
+  "Uber",
+  "Airbnb",
   "Stripe",
   "Netflix",
+  "Salesforce",
+  "Oracle",
+  "Bloomberg",
+  "Snowflake",
+  "Databricks",
+  "Palantir",
+  "Coinbase",
+  "Robinhood",
+  "Sofi",
+  "LinkedIn",
+  "Pinterest",
+  "Snapchat",
+  "Snap",
+  "Spotify",
+  "Twitter",
+  "DoorDash",
+  "Instacart",
+  "Lyft",
+  "eBay",
+  "PayPal",
+  "Square",
+  "Block",
+  "Shopify",
+  "Atlassian",
+  "Zoom",
+  "Cisco",
+  "Intel",
+  "AMD",
+  "Qualcomm",
+  "Tencent",
+  "Alibaba",
+  "Jane Street",
+  "Citadel",
+  "Two Sigma",
+  "Hudson River Trading",
+  "Jump Trading",
 ];
 
-// 智能识别文章所属大厂
+// 智能识别所属公司
 function detectCompany(post: Post): string {
-  if (post.company) return post.company;
+  if (post.company && post.company.trim()) return post.company.trim();
   const fullText = `${post.title} ${post.category} ${post.description || ""}`;
   for (const comp of TECH_COMPANIES) {
     if (new RegExp(`\\b${comp}\\b|${comp}`, "i").test(fullText)) {
@@ -44,6 +84,15 @@ function detectCompany(post: Post): string {
     }
   }
   return "";
+}
+
+// 🌟 将 Category 字符串拆解为多标签数组
+function extractAllTags(rawCategory?: string): string[] {
+  if (!rawCategory) return [];
+  return rawCategory
+    .split(/[,，/]/)
+    .map((t) => t.replace(/\(.*?\)/g, "").trim())
+    .filter((t) => t && t !== "1");
 }
 
 export default function BlogList({
@@ -55,10 +104,9 @@ export default function BlogList({
   const [selectedCompany, setSelectedCompany] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  // 确保文章数组安全可用
   const safePosts = useMemo(() => (Array.isArray(posts) ? posts : []), [posts]);
 
-  // 1. 动态提取所有公司列表并去重
+  // 1. 公司列表
   const companies = useMemo(() => {
     const set = new Set<string>();
     safePosts.forEach((p) => {
@@ -68,28 +116,24 @@ export default function BlogList({
     return ["All", ...Array.from(set).sort()];
   }, [safePosts]);
 
-  // 2. 提取一级核心分类并去重
+  // 2. 分类栏提取：拆分所有文章的每一个独立标签并去重
   const categories = useMemo(() => {
     const set = new Set<string>();
     safePosts.forEach((p) => {
-      if (p.category) {
-        let cat = p.category.split(/[,，/]/)[0].trim();
-        cat = cat.replace(/\(.*?\)/g, "").trim();
-        cat = cat.replace(/MathAlgorithms.*/i, "Math");
-        cat = cat.replace(/SimulationAlgorithms.*/i, "Simulation");
-        if (cat && cat !== "1") set.add(cat);
-      }
+      const tags = extractAllTags(p.category);
+      tags.forEach((tag) => set.add(tag));
     });
     return ["All", ...Array.from(set).sort()];
   }, [safePosts]);
 
-  // 3. 多条件综合过滤（搜索 + 公司 + 分类）
+  // 3. 多条件综合过滤（搜索 + 公司 + 多标签匹配）
   const filteredPosts = useMemo(() => {
     return safePosts.filter((p) => {
       const q = searchQuery.toLowerCase().trim();
       const pCompany = detectCompany(p);
+      const postTags = extractAllTags(p.category).map((t) => t.toLowerCase());
 
-      // 搜索匹配：标题、描述、分类、公司、Slug
+      // 搜索匹配
       const matchSearch =
         !q ||
         p.title.toLowerCase().includes(q) ||
@@ -104,11 +148,10 @@ export default function BlogList({
         pCompany.toLowerCase() === selectedCompany.toLowerCase() ||
         p.title.toLowerCase().includes(selectedCompany.toLowerCase());
 
-      // 分类匹配
-      const pCat = p.category.split(/[,，/]/)[0].replace(/\(.*?\)/g, "").trim().toLowerCase();
+      // 分类匹配：只要选中的分类包含在文章的任意一个标签中即匹配
       const matchCategory =
         selectedCategory === "All" ||
-        pCat === selectedCategory.toLowerCase() ||
+        postTags.includes(selectedCategory.toLowerCase()) ||
         p.category.toLowerCase().includes(selectedCategory.toLowerCase());
 
       return matchSearch && matchCompany && matchCategory;
@@ -126,13 +169,13 @@ export default function BlogList({
 
   return (
     <div className="space-y-8">
-      {/* 🌟 1. 搜索框 */}
+      {/* 搜索框 */}
       <div className="relative">
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="🔍 搜索面经文章标题、目标大厂 (如 Meta / Amazon / Google)、分类或关键字..."
+          placeholder="🔍 搜索面经文章标题、目标大厂 (如 IBM / Meta / Amazon / Google)、分类或关键字..."
           className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-gray-900 bg-white shadow-sm transition"
         />
         {searchQuery && (
@@ -145,7 +188,7 @@ export default function BlogList({
         )}
       </div>
 
-      {/* 🌟 2. Company 大厂筛选 */}
+      {/* 公司筛选 */}
       {companies.length > 1 && (
         <div className="space-y-2.5">
           <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -169,7 +212,7 @@ export default function BlogList({
         </div>
       )}
 
-      {/* 🌟 3. Category 一级分类筛选 */}
+      {/* 分类筛选 */}
       <div className="space-y-2.5">
         <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">
           Category (分类领域)
@@ -191,7 +234,7 @@ export default function BlogList({
         </div>
       </div>
 
-      {/* 统计栏与清除筛选按钮 */}
+      {/* 统计栏 */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <span className="text-sm text-gray-500 font-medium">
           {filteredPosts.length} articles found
@@ -206,7 +249,7 @@ export default function BlogList({
         )}
       </div>
 
-      {/* 🌟 4. 面经文章列表卡片 */}
+      {/* 面经文章列表卡片 */}
       <div className="space-y-4">
         {filteredPosts.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 border border-gray-200 text-center text-gray-400 space-y-2">
@@ -215,8 +258,11 @@ export default function BlogList({
           </div>
         ) : (
           filteredPosts.map((post, index) => {
-            const isFree = typeof post.isFree === "boolean" ? post.isFree : index < 5;
+            const isFree = typeof post.isFree === "boolean" ? post.isFree : index < 6;
             const comp = detectCompany(post);
+
+            // 🌟 提取该文章包含的所有标签
+            const tags = extractAllTags(post.category);
 
             return (
               <Link
@@ -224,7 +270,7 @@ export default function BlogList({
                 href={`/blog/${post.slug}`}
                 className="group block bg-white p-6 sm:p-7 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition space-y-3"
               >
-                {/* 顶部标签：公司 + 一级分类 + 免费/付费 */}
+                {/* 顶部标签行：公司 + 🌟完整展示所有标签（如两个标签都显示） + 免费/付费 */}
                 <div className="flex flex-wrap items-center gap-2">
                   {comp && (
                     <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
@@ -232,9 +278,15 @@ export default function BlogList({
                     </span>
                   )}
 
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-gray-100 text-gray-700">
-                    {post.category.split(/[,，/]/)[0].replace(/\(.*?\)/g, "").trim()}
-                  </span>
+                  {/* 🌟 核心：遍历展示文章的所有分类标签（同时展示多个） */}
+                  {tags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-gray-100 text-gray-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
 
                   {isFree ? (
                     <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -253,7 +305,7 @@ export default function BlogList({
                   {post.title}
                 </h2>
 
-                {/* 🌟 摘要（通过 MarkdownRenderer 支持解析数学公式与行内代码） */}
+                {/* 摘要 */}
                 {post.description && (
                   <div className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
                     <MarkdownRenderer content={post.description} />

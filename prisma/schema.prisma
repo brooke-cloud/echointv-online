@@ -40,6 +40,7 @@ model Post {
   id          Int      @id @default(autoincrement())
   slug        String   @unique
   title       String
+  company     String?  // 🌟 新增：独立目标公司字段 (如 IBM, Google, Meta)
   description String
   content     String?
   category    String

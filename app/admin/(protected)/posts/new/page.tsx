@@ -12,15 +12,17 @@ export default function NewPostPage() {
   const [showModal, setShowModal] = useState(false);
   const [importText, setImportText] = useState("");
 
+  // 表单受控字段状态
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
+  const [company, setCompany] = useState(""); // 🌟 新增 Company 状态
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [date, setDate] = useState("");
   const [readingTime, setReadingTime] = useState("");
   const [content, setContent] = useState("");
 
-  // 🌟 精准解析格式文本函数（已修复 TS 类型报错）
+  // 🌟 一键解析文本函数（支持解析 Company 字段）
   const handleParseAndFill = () => {
     if (!importText.trim()) {
       alert("请先粘贴内容");
@@ -30,14 +32,30 @@ export default function NewPostPage() {
     const text = importText;
 
     const extractSection = (startKey: string, nextKeys: string[]) => {
-      const nextKeysPattern = nextKeys.length > 0 ? `(?=(?:${nextKeys.join("|")})\\s*[:：]|$)` : "$";
+      const nextKeysPattern =
+        nextKeys.length > 0
+          ? `(?=(?:${nextKeys.join("|")})\\s*[:：]|$)`
+          : "$";
       const pattern = `${startKey}\\s*[:：]\\s*([\\s\\S]*?)${nextKeysPattern}`;
       const regex = new RegExp(pattern, "i");
       const match = text.match(regex);
-      return match?.[1]?.trim() ?? "";
+      return match ? match[1].trim() : "";
     };
 
     const extractedTitle = extractSection("Title", [
+      "Company",
+      "URL",
+      "Slug",
+      "Description",
+      "Content",
+      "Category",
+      "Date",
+      "Reading Time",
+    ]);
+
+    // 🌟 提取 Company
+    const extractedCompany = extractSection("Company", [
+      "Title",
       "URL",
       "Slug",
       "Description",
@@ -87,11 +105,11 @@ export default function NewPostPage() {
     ]);
 
     const extractedDate = extractSection("Date", ["Reading Time"]);
-
     const extractedReadingTime = extractSection("Reading Time", []);
 
     // 填充到各表单字段
     if (extractedTitle) setTitle(extractedTitle);
+    if (extractedCompany) setCompany(extractedCompany);
     if (extractedSlug) setSlug(extractedSlug);
     if (extractedDescription) setDescription(extractedDescription);
     if (extractedContent) setContent(extractedContent);
@@ -132,7 +150,7 @@ export default function NewPostPage() {
           </button>
         </div>
 
-        {/* 导入弹窗 */}
+        {/* 一键导入弹窗 Modal */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-4 relative">
@@ -150,14 +168,14 @@ export default function NewPostPage() {
               </div>
 
               <p className="text-xs text-gray-500 leading-relaxed">
-                直接把包含 <code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Title:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">URL:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Description:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Content:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Category:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Date:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Reading Time:</code> 的内容粘贴在下方：
+                支持粘贴包含 <code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Company:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Title:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">URL:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Description:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Content:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Category:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Date:</code>、<code className="bg-gray-100 px-1 py-0.5 rounded text-blue-600">Reading Time:</code> 的内容：
               </p>
 
               <textarea
                 rows={10}
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
-                placeholder={`Title:\n大厂面试复盘\n\nURL:\n/blog/interview-guide\n\nDescription:\n本文分享...\n\nContent:\n## 正文标题\n- 核心内容...\n\nCategory:\nCareer\n\nDate:\nAug 27, 2026\n\nReading Time:\n6 min read`}
+                placeholder={`Company:\nIBM\n\nTitle:\nIBM Backend Engineer 面试复盘\n\nURL:\n/blog/ibm-backend-engineer-interview\n\nDescription:\n本文详细解析...\n\nContent:\n## 面试流程\n...\n\nCategory:\nSoftware Engineering, System Design\n\nDate:\nAug 27, 2026\n\nReading Time:\n8 min read`}
                 className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none text-xs font-mono text-gray-800 leading-relaxed bg-gray-50"
               />
 
@@ -181,11 +199,12 @@ export default function NewPostPage() {
           </div>
         )}
 
-        {/* 原有表单 */}
+        {/* 核心表单 */}
         <form
           action={createPost}
           className="mt-10 space-y-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8"
         >
+          {/* Title */}
           <div>
             <label htmlFor="title" className="font-medium text-gray-900">
               Title
@@ -202,6 +221,22 @@ export default function NewPostPage() {
             />
           </div>
 
+          {/* 🌟 目标大厂 Company */}
+          <div>
+            <label htmlFor="company" className="font-medium text-gray-900">
+              Company (目标大厂)
+            </label>
+            <input
+              id="company"
+              name="company"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="e.g. IBM, Google, Amazon, Meta, TikTok, Apple..."
+              className={inputStyle}
+            />
+          </div>
+
+          {/* Slug */}
           <div>
             <div className="flex items-center justify-between">
               <label htmlFor="slug" className="font-medium text-gray-900">
@@ -220,6 +255,7 @@ export default function NewPostPage() {
             />
           </div>
 
+          {/* Description */}
           <div>
             <label htmlFor="description" className="font-medium text-gray-900">
               Description
@@ -237,14 +273,16 @@ export default function NewPostPage() {
             />
           </div>
 
+          {/* Markdown Content */}
           <BlogContentEditor
             key={content ? `content_${content.length}` : "empty"}
             defaultValue={content}
           />
 
+          {/* Category */}
           <div>
             <label htmlFor="category" className="font-medium text-gray-900">
-              Category
+              Category (支持逗号写入多个标签)
             </label>
             <input
               id="category"
@@ -253,11 +291,12 @@ export default function NewPostPage() {
               maxLength={100}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g. Career, System Design, Coding"
+              placeholder="e.g. Software Engineering, Behavioral Question"
               className={inputStyle}
             />
           </div>
 
+          {/* Date */}
           <div>
             <label htmlFor="date" className="font-medium text-gray-900">
               Date
@@ -270,10 +309,11 @@ export default function NewPostPage() {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className={inputStyle}
-              placeholder="Aug 14, 2026"
+              placeholder="Aug 27, 2026"
             />
           </div>
 
+          {/* Reading Time */}
           <div>
             <label htmlFor="readingTime" className="font-medium text-gray-900">
               Reading Time
@@ -290,6 +330,7 @@ export default function NewPostPage() {
             />
           </div>
 
+          {/* Submit */}
           <AdminSubmitButton pendingText="Publishing...">
             Create Blog Post
           </AdminSubmitButton>
