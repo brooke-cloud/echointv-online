@@ -5,6 +5,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/user-auth";
 
+export const dynamic = "force-dynamic";
+
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
 export default async function ProfilePage() {
@@ -57,6 +59,28 @@ export default async function ProfilePage() {
   const mediumCount = allProblems.filter((p) => isMedium(p.difficulty)).length;
   const hardCount = allProblems.filter((p) => isHard(p.difficulty)).length;
 
+// 🌟 2. 精准计算 Pro 会员有效期与剩余天数（加入安全断言，消除 TS 报错）
+  let proDetails: { isActive: boolean; text: string } | null = null;
+  const userExpires = (user as any).proExpiresAt;
+
+  if (user.role === "PRO" && userExpires) {
+    const now = Date.now();
+    const expiresTime = new Date(userExpires).getTime();
+    const remainingDays = Math.ceil((expiresTime - now) / (1000 * 60 * 60 * 24));
+
+    if (remainingDays > 0) {
+      proDetails = {
+        isActive: true,
+        text: `有效期至：${new Date(userExpires).toLocaleDateString("zh-CN")}（剩余 ${remainingDays} 天）`,
+      };
+    } else {
+      proDetails = {
+        isActive: false,
+        text: `已于 ${new Date(userExpires).toLocaleDateString("zh-CN")} 到期`,
+      };
+    }
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -67,29 +91,37 @@ export default async function ProfilePage() {
               {user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}
             </div>
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-xl font-bold text-gray-900">
                   {user.name || user.email.split("@")[0]}
                 </h1>
 
+                {/* 🌟 动态会员身份与到期时间展示 */}
                 {isAdmin ? (
                   <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                     👑 系统管理员 (Pro)
                   </span>
-                ) : user.role === "PRO" ? (
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                    ⭐ EchoINTV Pro 会员
-                  </span>
+                ) : user.role === "PRO" && proDetails?.isActive !== false ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+                      ⭐ EchoINTV Pro 会员
+                    </span>
+                    {proDetails?.text && (
+                      <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                        {proDetails.text}
+                      </span>
+                    )}
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
-                      免费用户
+                      {proDetails ? "Pro 会员已过期" : "免费用户"}
                     </span>
                     <Link
                       href="/pricing"
                       className="text-xs text-blue-600 font-bold hover:underline"
                     >
-                      升级 Pro →
+                      {proDetails ? "立即续费 Pro →" : "升级 Pro →"}
                     </Link>
                   </div>
                 )}
@@ -122,7 +154,7 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {/* 题库大厂真题总览（已修复数量统计） */}
+        {/* 题库大厂真题总览 */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <span>📈</span> 题库大厂真题总览

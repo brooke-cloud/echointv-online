@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboardPage() {
   const [
     totalUsers,
@@ -65,7 +67,7 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* 4 个指标卡片（防止标题折行） */}
+      {/* 4 个指标卡片 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         {stats.map((stat, idx) => (
           <div key={idx} className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm space-y-2">
@@ -79,7 +81,7 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* 3 列数据列表（优化排版与防文字重叠） */}
+      {/* 3 列数据列表（保持原版清爽卡片样式） */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* 1. 最新注册用户 */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
