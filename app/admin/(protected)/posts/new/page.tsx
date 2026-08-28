@@ -8,21 +8,36 @@ import { createPost } from "../actions";
 import BlogContentEditor from "@/components/BlogContentEditor";
 import AdminSubmitButton from "@/components/AdminSubmitButton";
 
+// 🌟 强力 Slug 净化函数（彻底剔除任何字段粘连与多余符号，杜绝 404）
+function sanitizeSlug(raw: string): string {
+  if (!raw) return "";
+  let s = raw.trim();
+  // 1. 去除开头的 /blog/ 前缀
+  s = s.replace(/^\/?blog\//i, "");
+  // 2. 强力切断任何以 Company:、Title:、Description: 等开头的粘连内容
+  s = s.split(/company[:：]|title[:：]|description[:：]|category[:：]/i)[0].trim();
+  // 3. 过滤非法字符，只保留合法字母、数字、中文和短横线
+  s = s.replace(/[^a-zA-Z0-9\u4e00-\u9fa5-]/g, "-");
+  // 4. 合并多余横线并转为小写
+  return s.replace(/-+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
+}
+
 export default function NewPostPage() {
+  // 一键导入弹窗与输入文本状态
   const [showModal, setShowModal] = useState(false);
   const [importText, setImportText] = useState("");
 
   // 表单受控字段状态
   const [title, setTitle] = useState("");
+  const [company, setCompany] = useState("");
   const [slug, setSlug] = useState("");
-  const [company, setCompany] = useState(""); // 🌟 新增 Company 状态
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [date, setDate] = useState("");
   const [readingTime, setReadingTime] = useState("");
   const [content, setContent] = useState("");
 
-  // 🌟 一键解析文本函数（支持解析 Company 字段）
+  // 🌟 一键解析文本函数
   const handleParseAndFill = () => {
     if (!importText.trim()) {
       alert("请先粘贴内容");
@@ -31,30 +46,9 @@ export default function NewPostPage() {
 
     const text = importText;
 
-    const extractSection = (startKey: string, nextKeys: string[]) => {
-      const nextKeysPattern =
-        nextKeys.length > 0
-          ? `(?=(?:${nextKeys.join("|")})\\s*[:：]|$)`
-          : "$";
-      const pattern = `${startKey}\\s*[:：]\\s*([\\s\\S]*?)${nextKeysPattern}`;
-      const regex = new RegExp(pattern, "i");
-      const match = text.match(regex);
-      return match ? match[1].trim() : "";
-    };
-
-    const extractedTitle = extractSection("Title", [
+    // 定义所有合法字段关键字，防止多行内容时相互粘连
+    const allKeys = [
       "Company",
-      "URL",
-      "Slug",
-      "Description",
-      "Content",
-      "Category",
-      "Date",
-      "Reading Time",
-    ]);
-
-    // 🌟 提取 Company
-    const extractedCompany = extractSection("Company", [
       "Title",
       "URL",
       "Slug",
@@ -63,60 +57,44 @@ export default function NewPostPage() {
       "Category",
       "Date",
       "Reading Time",
-    ]);
+    ];
 
-    let extractedSlug =
-      extractSection("URL", [
-        "Slug",
-        "Description",
-        "Content",
-        "Category",
-        "Date",
-        "Reading Time",
-      ]) ||
-      extractSection("Slug", [
-        "Description",
-        "Content",
-        "Category",
-        "Date",
-        "Reading Time",
-      ]);
+    const extractSection = (startKey: string) => {
+      const nextKeys = allKeys.filter(
+        (k) => k.toLowerCase() !== startKey.toLowerCase()
+      );
+      const pattern = `${startKey}\\s*[:：]\\s*([\\s\\S]*?)(?=(?:${nextKeys.join(
+        "|"
+      )})\\s*[:：]|$)`;
+      const regex = new RegExp(pattern, "i");
+      const match = text.match(regex);
+      return match ? match[1].trim() : "";
+    };
 
-    if (extractedSlug.includes("/blog/")) {
-      extractedSlug = extractedSlug.split("/blog/")[1]?.trim() || extractedSlug;
-    }
+    const extractedTitle = extractSection("Title");
+    const extractedCompany = extractSection("Company");
+    const rawSlug = extractSection("URL") || extractSection("Slug");
+    
+    // 🌟 自动强力净化 Slug
+    const cleanSlug = sanitizeSlug(rawSlug);
 
-    const extractedDescription = extractSection("Description", [
-      "Content",
-      "Category",
-      "Date",
-      "Reading Time",
-    ]);
+    const extractedDescription = extractSection("Description");
+    const extractedContent = extractSection("Content");
+    const extractedCategory = extractSection("Category");
+    const extractedDate = extractSection("Date");
+    const extractedReadingTime = extractSection("Reading Time");
 
-    const extractedContent = extractSection("Content", [
-      "Category",
-      "Date",
-      "Reading Time",
-    ]);
-
-    const extractedCategory = extractSection("Category", [
-      "Date",
-      "Reading Time",
-    ]);
-
-    const extractedDate = extractSection("Date", ["Reading Time"]);
-    const extractedReadingTime = extractSection("Reading Time", []);
-
-    // 填充到各表单字段
+    // 填充到表单对应的各个输入框
     if (extractedTitle) setTitle(extractedTitle);
     if (extractedCompany) setCompany(extractedCompany);
-    if (extractedSlug) setSlug(extractedSlug);
+    if (cleanSlug) setSlug(cleanSlug);
     if (extractedDescription) setDescription(extractedDescription);
     if (extractedContent) setContent(extractedContent);
     if (extractedCategory) setCategory(extractedCategory);
     if (extractedDate) setDate(extractedDate);
     if (extractedReadingTime) setReadingTime(extractedReadingTime);
 
+    // 关闭弹窗并清空导入框
     setShowModal(false);
     setImportText("");
   };
@@ -134,7 +112,7 @@ export default function NewPostPage() {
           ← Back to Blog Posts
         </Link>
 
-        {/* 标题栏与一键导入按钮 */}
+        {/* 顶部标题栏与一键导入按钮 */}
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
             Add Blog Post
@@ -150,7 +128,7 @@ export default function NewPostPage() {
           </button>
         </div>
 
-        {/* 一键导入弹窗 Modal */}
+        {/* 🌟 一键导入弹窗 Modal */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-4 relative">
@@ -175,7 +153,7 @@ export default function NewPostPage() {
                 rows={10}
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
-                placeholder={`Company:\nIBM\n\nTitle:\nIBM Backend Engineer 面试复盘\n\nURL:\n/blog/ibm-backend-engineer-interview\n\nDescription:\n本文详细解析...\n\nContent:\n## 面试流程\n...\n\nCategory:\nSoftware Engineering, System Design\n\nDate:\nAug 27, 2026\n\nReading Time:\n8 min read`}
+                placeholder={`Company:\nAmazon\n\nTitle:\nAmazon SDE 面试实战复盘\n\nURL:\n/blog/amazon-sde-interview-experience\n\nDescription:\n本文详细解析...\n\nContent:\n## 面试流程\n...\n\nCategory:\nSoftware Engineering, Behavioral Question\n\nDate:\nAug 28, 2026\n\nReading Time:\n6 min read`}
                 className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none text-xs font-mono text-gray-800 leading-relaxed bg-gray-50"
               />
 
@@ -221,7 +199,7 @@ export default function NewPostPage() {
             />
           </div>
 
-          {/* 🌟 目标大厂 Company */}
+          {/* Company */}
           <div>
             <label htmlFor="company" className="font-medium text-gray-900">
               Company (目标大厂)
@@ -231,7 +209,7 @@ export default function NewPostPage() {
               name="company"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              placeholder="e.g. IBM, Google, Amazon, Meta, TikTok, Apple..."
+              placeholder="e.g. Amazon, Google, Meta, IBM, TikTok, Apple..."
               className={inputStyle}
             />
           </div>
@@ -282,7 +260,7 @@ export default function NewPostPage() {
           {/* Category */}
           <div>
             <label htmlFor="category" className="font-medium text-gray-900">
-              Category (支持逗号写入多个标签)
+              Category (支持以逗号输入多个标签)
             </label>
             <input
               id="category"
@@ -309,7 +287,7 @@ export default function NewPostPage() {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className={inputStyle}
-              placeholder="Aug 27, 2026"
+              placeholder="Aug 28, 2026"
             />
           </div>
 
@@ -330,7 +308,7 @@ export default function NewPostPage() {
             />
           </div>
 
-          {/* Submit */}
+          {/* 提交按钮 */}
           <AdminSubmitButton pendingText="Publishing...">
             Create Blog Post
           </AdminSubmitButton>

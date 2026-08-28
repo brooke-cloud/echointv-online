@@ -5,20 +5,17 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { updatePost } from "../../actions";
 import BlogContentEditor from "@/components/BlogContentEditor";
+import AdminSubmitButton from "@/components/AdminSubmitButton";
 
-type EditPostPageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+interface Props {
+  params: Promise<{ id: string }>;
+}
 
-export default async function EditPostPage({
-  params,
-}: EditPostPageProps) {
+export default async function EditPostPage({ params }: Props) {
   const { id } = await params;
-  const postId = Number(id);
+  const postId = parseInt(id, 10);
 
-  if (Number.isNaN(postId)) {
+  if (isNaN(postId)) {
     notFound();
   }
 
@@ -37,21 +34,21 @@ export default async function EditPostPage({
 
   return (
     <main className="py-12">
-      <div className="mx-auto max-w-4xl px-6">
+      <div className="mx-auto max-w-4xl px-5 sm:px-6">
         <Link
           href="/admin/posts"
-          className="text-sm font-medium text-blue-600 transition hover:text-blue-800"
+          className="text-sm font-medium text-blue-600 hover:text-blue-800"
         >
           ← Back to Blog Posts
         </Link>
 
-        <h1 className="mt-8 text-4xl font-bold text-gray-900">
+        <h1 className="mt-8 text-3xl font-bold text-gray-900 sm:text-4xl">
           Edit Blog Post
         </h1>
 
         <form
           action={updatePostWithId}
-          className="mt-10 space-y-8 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm"
+          className="mt-10 space-y-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8"
         >
           {/* Title */}
           <div>
@@ -62,17 +59,43 @@ export default async function EditPostPage({
               id="title"
               name="title"
               required
+              maxLength={200}
               defaultValue={post.title}
               className={inputStyle}
             />
           </div>
 
-          {/* Blog URL */}
+          {/* Company */}
           <div>
-            <p className="font-medium text-gray-900">URL</p>
-            <p className="mt-2 rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-600">
-              /blog/{post.slug}
-            </p>
+            <label htmlFor="company" className="font-medium text-gray-900">
+              Company (目标大厂)
+            </label>
+            <input
+              id="company"
+              name="company"
+              defaultValue={post.company || ""}
+              placeholder="e.g. Amazon, Google, Meta, IBM, TikTok..."
+              className={inputStyle}
+            />
+          </div>
+
+          {/* 🌟 URL / Slug：已恢复为可自由修改的输入框！ */}
+          <div>
+            <div className="flex items-center justify-between">
+              <label htmlFor="slug" className="font-medium text-gray-900">
+                Slug (URL Identifier)
+              </label>
+              <span className="text-xs text-blue-600 font-medium">支持自定义修改</span>
+            </div>
+            <input
+              id="slug"
+              name="slug"
+              required
+              maxLength={200}
+              defaultValue={post.slug}
+              placeholder="e.g. amazon-sde-interview-experience"
+              className={inputStyle}
+            />
           </div>
 
           {/* Description */}
@@ -84,14 +107,15 @@ export default async function EditPostPage({
               id="description"
               name="description"
               required
-              rows={4}
+              rows={3}
+              maxLength={500}
               defaultValue={post.description}
               className={inputStyle}
             />
           </div>
 
-          {/* Blog Markdown 内容 */}
-          <BlogContentEditor defaultValue={post.content ?? ""} />
+          {/* Content */}
+          <BlogContentEditor defaultValue={post.content || ""} />
 
           {/* Category */}
           <div>
@@ -102,6 +126,7 @@ export default async function EditPostPage({
               id="category"
               name="category"
               required
+              maxLength={100}
               defaultValue={post.category}
               className={inputStyle}
             />
@@ -116,6 +141,7 @@ export default async function EditPostPage({
               id="date"
               name="date"
               required
+              maxLength={50}
               defaultValue={post.date}
               className={inputStyle}
             />
@@ -130,18 +156,16 @@ export default async function EditPostPage({
               id="readingTime"
               name="readingTime"
               required
+              maxLength={50}
               defaultValue={post.readingTime}
               className={inputStyle}
             />
           </div>
 
-          {/* 保存按钮 */}
-          <button
-            type="submit"
-            className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700"
-          >
+          {/* Submit */}
+          <AdminSubmitButton pendingText="Saving...">
             Save Changes
-          </button>
+          </AdminSubmitButton>
         </form>
       </div>
     </main>

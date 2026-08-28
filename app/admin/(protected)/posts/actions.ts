@@ -94,26 +94,30 @@ export async function createPost(formData: FormData) {
 }
 
 // 🌟 3. 导出更新文章 Action（支持 company 更新）
+// app/admin/(protected)/posts/actions.ts 中的 updatePost 函数：
+
 export async function updatePost(postId: number, formData: FormData) {
   await verifyAdmin();
 
   const title = (formData.get("title") as string)?.trim();
-  const company = (formData.get("company") as string)?.trim(); // 🌟 接收 company
+  const company = (formData.get("company") as string)?.trim();
+  let slug = (formData.get("slug") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || "";
   const content = (formData.get("content") as string) || "";
   const category = (formData.get("category") as string)?.trim() || "Career";
   const readingTime = (formData.get("readingTime") as string)?.trim() || "5 min read";
   const date = (formData.get("date") as string)?.trim();
 
-  if (!postId) {
-    throw new Error("无效的文章 ID");
+  if (!postId) throw new Error("无效的文章 ID");
+  if (!title) throw new Error("文章标题不能为空");
+
+  // 🌟 自动纯化修改后的 Slug
+  if (slug) {
+    slug = slug.replace(/^\/?blog\//i, "").split(/company[:：]/i)[0].trim();
+    slug = slug.replace(/[^a-zA-Z0-9\u4e00-\u9fa5-]/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
   }
 
-  if (!title) {
-    throw new Error("文章标题不能为空");
-  }
-
-  // 更新文章数据
+  // 写入更新
   await prisma.post.update({
     where: { id: postId },
     data: {
@@ -122,7 +126,8 @@ export async function updatePost(postId: number, formData: FormData) {
       content,
       category,
       readingTime,
-      ...(company !== undefined ? { company } : {}), // 🌟 更新目标大厂
+      ...(slug ? { slug } : {}), // 🌟 保存修改后的 Slug
+      ...(company !== undefined ? { company } : {}),
       ...(date ? { date } : {}),
     },
   });
