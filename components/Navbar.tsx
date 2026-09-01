@@ -49,6 +49,7 @@ export default function Navbar() {
     { name: "首页", href: "/" },
     { name: "面试真题", href: "/problem" },
     { name: "面试经验", href: "/blog" },
+    { name: "大厂招聘", href: "/jobs" },
     { name: "我们的服务", href: "/contact" },
   ];
 

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "next start"
+    "start": "next start",
+    "sync-jobs": "node scripts/crawl-jobs.js"
   },
   "dependencies": {
     "@paddle/paddle-node-sdk": "^3.10.0",

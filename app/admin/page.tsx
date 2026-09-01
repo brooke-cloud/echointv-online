@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+import SyncJobsButton from "@/components/admin/SyncJobsButton";
 
 export default async function AdminDashboardPage() {
   const [
@@ -44,6 +45,10 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
+
+
+      
+
     <div className="space-y-8">
       {/* 顶部标题栏 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -52,6 +57,7 @@ export default async function AdminDashboardPage() {
           <p className="text-sm text-gray-500 mt-1">监控 EchoINTV 全站数据、用户增长与内容状态</p>
         </div>
         <div className="flex items-center gap-3">
+          
           <Link
             href="/admin/problems/new"
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition shadow-sm whitespace-nowrap"

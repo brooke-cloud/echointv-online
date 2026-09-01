@@ -47,6 +47,7 @@ export default async function AdminLayout({
     { name: "数据大盘", href: "/admin", icon: "📊" },
     { name: "题库管理", href: "/admin/problems", icon: "📚" },
     { name: "面经管理", href: "/admin/posts", icon: "📝" },
+    { name: "岗位管理", href: "/admin/jobs", icon: "💼" },
     { name: "用户管理", href: "/admin/users", icon: "👥" }, // 🌟 新增用户与会员管理菜单
   ];
 

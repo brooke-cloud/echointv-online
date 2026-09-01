@@ -111,3 +111,27 @@ model VerificationCode {
 
   @@index([email])
 }
+
+
+model Job {
+  id          Int      @id @default(autoincrement())
+  title       String   // 岗位名称 (例如: Software Development Engineer - 2026 New Grad)
+  company     String   // 公司名称 (例如: Google, Meta, Amazon, 字节跳动)
+  location    String   // 岗位地点 (例如: Seattle, WA / 北京 / 远程)
+  region      String   @default("NA") // 区域: "NA" (北美海外) | "CN" (国内) | "REMOTE" (远程)
+  type        String   @default("NEWGRAD") // 类型: "NEWGRAD" (校招) | "FULLTIME" (全职) | "INTERN" (实习)
+  track       String   @default("Backend") // 方向: "Backend" | "Frontend" | "AI/ML" | "Fullstack" | "Data"
+  salary      String?  // 薪资参考 (例如: "$140k - $185k / yr", "30k - 50k / 月")
+  applyUrl    String   // 官方投递直达链接
+  tags        String[] // 标签 (例如: ["2026校招", "Sponsor H1B", "Java/Go"])
+  isHot       Boolean  @default(false) // 是否为热门/急招岗位
+  deadline    String?  @default("正在热招") // 招聘状态
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([company])
+  @@index([region])
+  @@index([type])
+  @@index([track])
+  @@index([createdAt])
+}
