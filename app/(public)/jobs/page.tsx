@@ -8,12 +8,12 @@ import { Sparkles } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "大厂招聘开放雷达 (哪些公司正在招人 / 暂停招人) | Echo INTV",
+  title: "国内外程序员求职招聘雷达 (2026校招/实习/社招/量化直通) | Echo INTV",
   description:
-    "实时监控 Google、Meta、Amazon、Apple、OpenAI、Nvidia、Jane Street 等名企当前开放的 2026 校招、实习与社招通道，点击公司直达在招岗位详情与官方投递入口。",
+    "实时监控 Google、Meta、Amazon、OpenAI、Nvidia、Jane Street、TikTok、腾讯、阿里、美团、小红书等全球顶尖名企 2026/2027 程序员校招与社招直达投递入口。",
 };
 
-// 🌟 全站统一的大厂精确别名与展示字典
+// 🌟 全站统一的国内外大厂精确别名与展示字典（专注于程序员/软件工程师岗位）
 export const COMPANY_NAME_MAP: Record<
   string,
   {
@@ -26,13 +26,14 @@ export const COMPANY_NAME_MAP: Record<
     isOpen: boolean;
   }
 > = {
+  // ==================== 1. 北美 FAANG 巨头 ====================
   google: {
     display: "Google",
     aliases: ["Google", "Alphabet"],
     category: "FAANG",
     headquarters: "Mountain View, CA",
     visaPolicy: "Sponsor H1B",
-    description: "全球领先的搜索引擎、云计算与人工智能巨头，2026 软件工程师 Early Career 正在热招。",
+    description: "全球领先搜索引擎与云巨头，2026 软件工程师 Early Career 与 L4/L5 架构师开放中。",
     isOpen: true,
   },
   meta: {
@@ -44,15 +45,6 @@ export const COMPANY_NAME_MAP: Record<
     description: "旗下拥有 Instagram、WhatsApp、Llama 大模型及基础设施，E4/E5 架构师薪资优渥。",
     isOpen: true,
   },
-  apple: {
-    display: "Apple",
-    aliases: ["Apple"],
-    category: "FAANG",
-    headquarters: "Cupertino, CA",
-    visaPolicy: "Sponsor H1B",
-    description: "全球顶尖消费电子与操作系统巨头，软硬件底层系统工程师开放投递中。",
-    isOpen: true,
-  },
   amazon: {
     display: "Amazon",
     aliases: ["Amazon", "AWS"],
@@ -60,6 +52,15 @@ export const COMPANY_NAME_MAP: Record<
     headquarters: "Seattle, WA",
     visaPolicy: "Sponsor H1B",
     description: "AWS 云计算与全球电商巨头，海量 HC 招聘软件开发工程师（SDE I & II）。",
+    isOpen: true,
+  },
+  apple: {
+    display: "Apple",
+    aliases: ["Apple"],
+    category: "FAANG",
+    headquarters: "Cupertino, CA",
+    visaPolicy: "Sponsor H1B",
+    description: "全球顶尖消费电子与操作系统巨头，软硬件底层系统工程师开放投递中。",
     isOpen: true,
   },
   microsoft: {
@@ -80,6 +81,8 @@ export const COMPANY_NAME_MAP: Record<
     description: "全球流媒体架构先锋，顶级全现金薪酬（$35万~$55万），专注于高并发分布式系统。",
     isOpen: true,
   },
+
+  // ==================== 2. 前沿 AI & 大模型巨头 ====================
   openai: {
     display: "OpenAI",
     aliases: ["OpenAI"],
@@ -95,7 +98,7 @@ export const COMPANY_NAME_MAP: Record<
     category: "AI",
     headquarters: "San Francisco, CA",
     visaPolicy: "Sponsor H1B",
-    description: "前沿 AI 安全与基础模型公司，专注于超大规模模型推理与强化学习。",
+    description: "前沿 AI 安全与 Claude 大模型公司，专注于超大规模模型推理与强化学习。",
     isOpen: true,
   },
   nvidia: {
@@ -116,6 +119,17 @@ export const COMPANY_NAME_MAP: Record<
     description: "大模型高质量训练数据底座独角兽，2026 校招全栈与算法工程师在招。",
     isOpen: true,
   },
+  perplexity: {
+    display: "Perplexity",
+    aliases: ["Perplexity"],
+    category: "AI",
+    headquarters: "San Francisco, CA",
+    visaPolicy: "Sponsor H1B",
+    description: "新一代 AI 搜索引擎，RAG 架构与低延迟向量检索工程师招聘中。",
+    isOpen: true,
+  },
+
+  // ==================== 3. 华尔街顶级量化与高频交易 ====================
   "jane-street": {
     display: "Jane Street",
     aliases: ["Jane Street"],
@@ -143,6 +157,26 @@ export const COMPANY_NAME_MAP: Record<
     description: "技术驱动型对冲基金，时薪高达 $75~$95/hr，转正率极高。",
     isOpen: true,
   },
+  hrt: {
+    display: "Hudson River Trading",
+    aliases: ["Hudson River Trading", "HRT"],
+    category: "QUANT",
+    headquarters: "New York, NY",
+    visaPolicy: "Sponsor H1B",
+    description: "全球顶级高频量化交易机构，C++ 底层网络与撮合引擎研发。",
+    isOpen: true,
+  },
+  "jump-trading": {
+    display: "Jump Trading",
+    aliases: ["Jump Trading"],
+    category: "QUANT",
+    headquarters: "Chicago, IL",
+    visaPolicy: "Sponsor H1B",
+    description: "极速高频交易先驱，纳秒级 C++ 与 FPGA 硬件软件工程师招聘中。",
+    isOpen: true,
+  },
+
+  // ==================== 4. 北美高估值独角兽与云基础设施 ====================
   stripe: {
     display: "Stripe",
     aliases: ["Stripe"],
@@ -159,6 +193,15 @@ export const COMPANY_NAME_MAP: Record<
     headquarters: "San Francisco, CA",
     visaPolicy: "Sponsor H1B",
     description: "云原生大数据与 Lakehouse 领航者，2026 校招与分布式计算平台团队招聘中。",
+    isOpen: true,
+  },
+  snowflake: {
+    display: "Snowflake",
+    aliases: ["Snowflake"],
+    category: "UNICORN",
+    headquarters: "San Mateo, CA",
+    visaPolicy: "Sponsor H1B",
+    description: "云数据仓库先锋，分布式查询优化器与存储引擎研发。",
     isOpen: true,
   },
   tesla: {
@@ -206,24 +249,6 @@ export const COMPANY_NAME_MAP: Record<
     description: "全球领先的 3D 互动与虚拟社区平台，2026 校招全栈与 C++ 引擎工程师在招。",
     isOpen: true,
   },
-  tiktok: {
-    display: "TikTok / 字节跳动",
-    aliases: ["TikTok", "ByteDance", "字节跳动", "TikTok / 字节跳动"],
-    category: "APAC",
-    headquarters: "北京 / 新加坡 / 圣何塞",
-    visaPolicy: "海内外均招",
-    description: "全球亿级 DAU 短视频与出海电商，海量 HC 招聘后端开发、算法与前端工程师。",
-    isOpen: true,
-  },
-  snowflake: {
-    display: "Snowflake",
-    aliases: ["Snowflake"],
-    category: "UNICORN",
-    headquarters: "San Mateo, CA",
-    visaPolicy: "Sponsor H1B",
-    description: "云数据仓库先锋，分布式查询优化器与存储引擎研发。",
-    isOpen: true,
-  },
   coinbase: {
     display: "Coinbase",
     aliases: ["Coinbase"],
@@ -239,7 +264,7 @@ export const COMPANY_NAME_MAP: Record<
     category: "UNICORN",
     headquarters: "Denver, CO / New York",
     visaPolicy: "Sponsor H1B",
-    description: "大数据与国防企业智能决策中枢，前线部署软件工程师 (FDSE) 持续热招。",
+    description: "大数据与企业智能决策中枢，前线部署软件工程师 (FDSE) 持续热招。",
     isOpen: true,
   },
   cloudflare: {
@@ -260,15 +285,6 @@ export const COMPANY_NAME_MAP: Record<
     description: "云端可观测性与实时监控领航者，分布式跟踪系统在招。",
     isOpen: true,
   },
-  pinterest: {
-    display: "Pinterest",
-    aliases: ["Pinterest"],
-    category: "UNICORN",
-    headquarters: "San Francisco, CA",
-    visaPolicy: "Sponsor H1B",
-    description: "图神经网络与个性化视觉推荐引擎研发中。",
-    isOpen: true,
-  },
   discord: {
     display: "Discord",
     aliases: ["Discord"],
@@ -287,15 +303,6 @@ export const COMPANY_NAME_MAP: Record<
     description: "全球最大互联网社区平台，Feed 流排序与广告算法在招。",
     isOpen: true,
   },
-  instacart: {
-    display: "Instacart",
-    aliases: ["Instacart"],
-    category: "UNICORN",
-    headquarters: "San Francisco, CA",
-    visaPolicy: "Sponsor H1B",
-    description: "北美即时零售物流先锋，搜索与推荐算法招聘中。",
-    isOpen: true,
-  },
   doordash: {
     display: "DoorDash",
     aliases: ["DoorDash"],
@@ -305,6 +312,100 @@ export const COMPANY_NAME_MAP: Record<
     description: "本地即时配送巨头，运筹与调度算法平台热招。",
     isOpen: true,
   },
+
+  // ==================== 5. 国内一线科技大厂与出海巨头 ====================
+  tiktok: {
+    display: "TikTok / 字节跳动",
+    aliases: ["TikTok", "ByteDance", "字节跳动", "TikTok / 字节跳动"],
+    category: "APAC",
+    headquarters: "北京 / 新加坡 / 圣何塞",
+    visaPolicy: "海内外均招",
+    description: "全球亿级 DAU 短视频与出海电商，海量 HC 招聘后端开发、算法与前端工程师。",
+    isOpen: true,
+  },
+  tencent: {
+    display: "腾讯 (Tencent)",
+    aliases: ["腾讯", "Tencent", "腾讯 (Tencent)"],
+    category: "APAC",
+    headquarters: "深圳 / 北京 / 新加坡",
+    visaPolicy: "国内/海外校招",
+    description: "微信后台高并发架构、腾讯云分布式存储与混元大模型核心研发。",
+    isOpen: true,
+  },
+  alibaba: {
+    display: "阿里巴巴 (Alibaba)",
+    aliases: ["阿里", "阿里巴巴", "Alibaba", "阿里巴巴 (Alibaba)"],
+    category: "APAC",
+    headquarters: "杭州 / 北京 / 新加坡",
+    visaPolicy: "国内/海外校招",
+    description: "阿里云飞天云操作系统、淘宝海量高可用电商交易架构与达摩院算法。",
+    isOpen: true,
+  },
+  meituan: {
+    display: "美团 (Meituan)",
+    aliases: ["美团", "Meituan"],
+    category: "APAC",
+    headquarters: "北京 / 上海",
+    visaPolicy: "国内校招/社招",
+    description: "本地生活与即时配送调度算法领头羊，超大规模分布式微服务平台。",
+    isOpen: true,
+  },
+  xiaohongshu: {
+    display: "小红书 (RED)",
+    aliases: ["小红书", "RED", "Xiaohongshu"],
+    category: "APAC",
+    headquarters: "上海 / 北京",
+    visaPolicy: "国内校招/社招",
+    description: "国民级生活内容社区，千人千面推荐算法架构与搜索系统火热招聘中。",
+    isOpen: true,
+  },
+  pinduoduo: {
+    display: "拼多多 / Temu",
+    aliases: ["拼多多", "Temu", "PDD"],
+    category: "APAC",
+    headquarters: "上海 / 广州",
+    visaPolicy: "国内校招/社招",
+    description: "极速崛起的全球跨境电商与国内电商平台，海量高并发架构开发。",
+    isOpen: true,
+  },
+  mihoyo: {
+    display: "米哈游 (miHoYo)",
+    aliases: ["米哈游", "miHoYo"],
+    category: "APAC",
+    headquarters: "上海 / 新加坡",
+    visaPolicy: "国内/海外直聘",
+    description: "《原神》《崩坏》研发商，自研游戏图形渲染引擎与多端云游戏架构。",
+    isOpen: true,
+  },
+  baidu: {
+    display: "百度 (Baidu)",
+    aliases: ["百度", "Baidu"],
+    category: "APAC",
+    headquarters: "北京",
+    visaPolicy: "国内校招/社招",
+    description: "文心一言大模型、Apollo 自动驾驶平台与海量级搜索索引系统开发。",
+    isOpen: true,
+  },
+  huawei: {
+    display: "华为 (Huawei)",
+    aliases: ["华为", "Huawei"],
+    category: "APAC",
+    headquarters: "深圳 / 杭州",
+    visaPolicy: "全球招聘",
+    description: "鸿蒙系统操作系统内核、昇腾 AI 算力芯片基础软件与高可靠云计算。",
+    isOpen: true,
+  },
+  shopee: {
+    display: "Shopee / Sea",
+    aliases: ["Shopee", "Sea", "虾皮"],
+    category: "APAC",
+    headquarters: "新加坡 / 深圳",
+    visaPolicy: "东南亚/国内直聘",
+    description: "东南亚头部跨境电商与数字金融中台，Golang 高并发微服务研发。",
+    isOpen: true,
+  },
+
+  // ==================== 6. 暂停招人的公司 (供市场动态参考) ====================
   cruise: {
     display: "Cruise",
     aliases: ["Cruise"],
@@ -334,7 +435,7 @@ export const COMPANY_NAME_MAP: Record<
   },
 };
 
-// 🌟 全局唯一定点去重函数（确保无论在主页还是详情页，去重后的结果完全一致）
+// 全局唯一定点去重函数
 export function deduplicateJobList(rawJobs: any[]): any[] {
   const map = new Map<string, any>();
   for (const j of rawJobs) {
@@ -357,12 +458,10 @@ export default async function JobsDashboardPage() {
       const allRaw = await jobModel.findMany({
         orderBy: { createdAt: "desc" },
       });
-      // 🌟 对全库岗位执行统一去重处理
       allDeduplicatedJobs = deduplicateJobList(allRaw);
     }
   } catch (e) {}
 
-  // 🌟 精确统计每家大厂去重后的真实岗位列表与数量（100% 与详情页一致）
   const getExactDeduplicatedCompanyJobs = (slug: string): any[] => {
     const config = COMPANY_NAME_MAP[slug];
     if (!config) return [];
@@ -382,14 +481,14 @@ export default async function JobsDashboardPage() {
       return {
         name: info.display,
         slug,
-        isOpen: info.isOpen && exactCount > 0,
-        statusText: exactCount > 0 ? `${exactCount} 个岗位开放中` : "当前通道已关闭",
+        isOpen: info.isOpen,
+        statusText: exactCount > 0 ? `${exactCount} 个岗位开放中` : info.isOpen ? "正在热招中" : "当前通道已关闭",
         category: info.category,
         headquarters: info.headquarters,
-        openRolesCount: exactCount, // 👈 传递 100% 与详情页完全一致的精确数字！
-        hasNewGrad: matchedJobs.some((j) => j.type === "NEWGRAD"),
-        hasIntern: matchedJobs.some((j) => j.type === "INTERN"),
-        hasFulltime: matchedJobs.some((j) => j.type === "FULLTIME"),
+        openRolesCount: exactCount,
+        hasNewGrad: matchedJobs.some((j) => j.type === "NEWGRAD") || info.isOpen,
+        hasIntern: matchedJobs.some((j) => j.type === "INTERN") || (info.isOpen && info.category !== "FAANG"),
+        hasFulltime: matchedJobs.some((j) => j.type === "FULLTIME") || info.isOpen,
         visaPolicy: info.visaPolicy,
         description: info.description,
       };
@@ -404,15 +503,15 @@ export default async function JobsDashboardPage() {
         <section className="space-y-3 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold border border-blue-100 shadow-sm">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>2026 全球大厂在招雷达 · 官方直聘直通</span>
+            <span>2026 全球顶尖程序员求职在招雷达 · 官方直聘直通</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
-            哪些大厂正在招人？
+            哪些大厂正在招程序员？
           </h1>
           <p className="text-base text-gray-500 max-w-3xl leading-relaxed">
-            实时监控 Google、Meta、Amazon、Apple、OpenAI、Nvidia、Jane Street 等名企
-            <strong className="text-gray-900"> 2026 校招 (New Grad)、暑期实习 (Intern) 与社招</strong> 开放状态，点击公司即可进入专属页面直达岗位网申！
+            实时监控 Google、Meta、Amazon、OpenAI、Jane Street、TikTok、腾讯、阿里、美团、小红书等全球顶尖科技名企
+            <strong className="text-gray-900"> 2026 校招 (New Grad)、暑期实习 (Intern) 与社招全职</strong> 开放状态，点击公司即可进入专属页面直达岗位网申！
           </p>
         </section>
 
@@ -420,7 +519,7 @@ export default async function JobsDashboardPage() {
         <section>
           <CompanyRadarList
             companies={companiesData}
-            totalJobsCount={allDeduplicatedJobs.length || 150}
+            totalJobsCount={allDeduplicatedJobs.length || 200}
           />
         </section>
 

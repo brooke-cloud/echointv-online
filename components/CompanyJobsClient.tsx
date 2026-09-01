@@ -28,6 +28,125 @@ interface Job {
   deadline?: string | null;
 }
 
+// ============================================================
+// 🎨 标签配色方案
+// ============================================================
+const TAG_COLORS: Record<string, string> = {
+  // ---- 技术栈 ----
+  'React': 'bg-sky-50 text-sky-700 border-sky-200',
+  'Vue': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'Angular': 'bg-rose-50 text-rose-700 border-rose-200',
+  'Node.js': 'bg-lime-50 text-lime-700 border-lime-200',
+  'Python': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  'Java': 'bg-amber-50 text-amber-700 border-amber-200',
+  'Go': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  'Rust': 'bg-orange-50 text-orange-700 border-orange-200',
+  'C++': 'bg-blue-50 text-blue-700 border-blue-200',
+  'C#': 'bg-violet-50 text-violet-700 border-violet-200',
+  'PHP': 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+  'Ruby': 'bg-red-50 text-red-700 border-red-200',
+  'Swift': 'bg-rose-50 text-rose-700 border-rose-200',
+  'Kotlin': 'bg-purple-50 text-purple-700 border-purple-200',
+  'TypeScript': 'bg-blue-50 text-blue-700 border-blue-200',
+  'JavaScript': 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  'HTML': 'bg-orange-50 text-orange-700 border-orange-200',
+  'CSS': 'bg-sky-50 text-sky-700 border-sky-200',
+  'SQL': 'bg-teal-50 text-teal-700 border-teal-200',
+  'MongoDB': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'PostgreSQL': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  'MySQL': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  'Redis': 'bg-rose-50 text-rose-700 border-rose-200',
+  'Docker': 'bg-sky-50 text-sky-700 border-sky-200',
+  'Kubernetes': 'bg-blue-50 text-blue-700 border-blue-200',
+  'AWS': 'bg-amber-50 text-amber-700 border-amber-200',
+  'Azure': 'bg-sky-50 text-sky-700 border-sky-200',
+  'GCP': 'bg-blue-50 text-blue-700 border-blue-200',
+  'Linux': 'bg-gray-50 text-gray-700 border-gray-200',
+
+  // ---- 岗位类型 ----
+  'Full Stack': 'bg-purple-50 text-purple-700 border-purple-200',
+  'Frontend': 'bg-orange-50 text-orange-700 border-orange-200',
+  'Backend': 'bg-blue-50 text-blue-700 border-blue-200',
+  'DevOps': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  'SRE': 'bg-teal-50 text-teal-700 border-teal-200',
+  'ML': 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+  'AI': 'bg-violet-50 text-violet-700 border-violet-200',
+  'Data': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  'Cloud': 'bg-sky-50 text-sky-700 border-sky-200',
+  'Security': 'bg-red-50 text-red-700 border-red-200',
+  'Mobile': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'iOS': 'bg-rose-50 text-rose-700 border-rose-200',
+  'Android': 'bg-lime-50 text-lime-700 border-lime-200',
+  'Game': 'bg-purple-50 text-purple-700 border-purple-200',
+  'Embedded': 'bg-amber-50 text-amber-700 border-amber-200',
+
+  // ---- 工作性质 ----
+  'Remote': 'bg-teal-50 text-teal-700 border-teal-200',
+  'Hybrid': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  'Onsite': 'bg-gray-50 text-gray-700 border-gray-200',
+  'H1B': 'bg-violet-50 text-violet-700 border-violet-200',
+  'H1B Sponsor': 'bg-purple-50 text-purple-700 border-purple-200',
+  'Visa': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  'OPT': 'bg-blue-50 text-blue-700 border-blue-200',
+  'CPT': 'bg-sky-50 text-sky-700 border-sky-200',
+
+  // ---- 公司类型 ----
+  'FAANG': 'bg-rose-50 text-rose-700 border-rose-200',
+  'Startup': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'Fintech': 'bg-amber-50 text-amber-700 border-amber-200',
+  'Unicorn': 'bg-purple-50 text-purple-700 border-purple-200',
+
+  // ---- 时间/状态 ----
+  'Urgent': 'bg-red-50 text-red-700 border-red-200',
+  'Hot': 'bg-orange-50 text-orange-700 border-orange-200',
+  'New': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'Featured': 'bg-amber-50 text-amber-700 border-amber-200',
+
+  // ---- 薪资/级别 ----
+  'Entry': 'bg-green-50 text-green-700 border-green-200',
+  'Junior': 'bg-sky-50 text-sky-700 border-sky-200',
+  'Senior': 'bg-purple-50 text-purple-700 border-purple-200',
+  'Lead': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  'Staff': 'bg-violet-50 text-violet-700 border-violet-200',
+  'Principal': 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+
+  // ---- 业务领域 ----
+  'E-commerce': 'bg-amber-50 text-amber-700 border-amber-200',
+  'Social': 'bg-blue-50 text-blue-700 border-blue-200',
+  'Gaming': 'bg-purple-50 text-purple-700 border-purple-200',
+  'Healthcare': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'Finance': 'bg-rose-50 text-rose-700 border-rose-200',
+  'Education': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  'Logistics': 'bg-orange-50 text-orange-700 border-orange-200',
+  'AI/ML': 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+  'Blockchain': 'bg-violet-50 text-violet-700 border-violet-200',
+  'IoT': 'bg-teal-50 text-teal-700 border-teal-200',
+};
+
+// 默认颜色（当标签没有匹配到配色时使用）
+const DEFAULT_TAG_COLOR = 'bg-gray-50 text-gray-600 border-gray-200';
+
+// 获取标签颜色
+function getTagColor(tag: string): string {
+  // 精确匹配
+  if (TAG_COLORS[tag]) return TAG_COLORS[tag];
+  
+  // 忽略大小写匹配
+  const lowerTag = tag.toLowerCase();
+  for (const [key, color] of Object.entries(TAG_COLORS)) {
+    if (key.toLowerCase() === lowerTag) return color;
+  }
+  
+  // 部分匹配（比如 "Senior Software Engineer" 匹配 "Senior"）
+  for (const [key, color] of Object.entries(TAG_COLORS)) {
+    if (lowerTag.includes(key.toLowerCase()) || key.toLowerCase().includes(lowerTag)) {
+      return color;
+    }
+  }
+  
+  return DEFAULT_TAG_COLOR;
+}
+
 export default function CompanyJobsClient({
   initialJobs,
   companyName,
@@ -123,7 +242,7 @@ export default function CompanyJobsClient({
               暂无该分类下的开放岗位
             </p>
             <p className="text-xs text-gray-400">
-              请尝试切换其他招聘类型标签（如点击“全部”）
+              请尝试切换其他招聘类型标签（如点击"全部"）
             </p>
           </div>
         ) : (
@@ -181,16 +300,20 @@ export default function CompanyJobsClient({
                       </div>
                     )}
 
+                    {/* 🎨 彩色标签区域 - 这里是修改的核心 */}
                     {job.tags && job.tags.length > 0 && (
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        {job.tags.map((tag: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="bg-gray-50 text-gray-600 px-2 py-0.5 rounded text-[11px] border border-gray-200/70"
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                        {job.tags.map((tag: string, idx: number) => {
+                          const colorClass = getTagColor(tag);
+                          return (
+                            <span
+                              key={idx}
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full border text-[11px] font-medium ${colorClass}`}
+                            >
+                              {tag}
+                            </span>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

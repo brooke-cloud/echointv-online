@@ -60,6 +60,11 @@ export default async function CompanyJobsPage({ params }: Props) {
   // 🌟 使用与主页完全相同的去重函数，确保两边数量 100% 相同！
   const displayJobs = deduplicateJobList(rawJobs);
 
+  // 计算各类型数量
+  const internCount = displayJobs.filter((j) => j.type === "INTERN").length;
+  const newGradCount = displayJobs.filter((j) => j.type === "NEWGRAD").length;
+  const fulltimeCount = displayJobs.filter((j) => j.type === "FULLTIME").length;
+
   return (
     <main className="min-h-screen bg-white py-12 sm:py-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-8">
@@ -78,16 +83,48 @@ export default async function CompanyJobsPage({ params }: Props) {
         {/* 2. 公司专属头部信息卡片 */}
         <div className="bg-gray-50/70 rounded-3xl p-8 border border-gray-200 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-3xl font-extrabold text-gray-900">
                   {displayCompanyName}
                 </span>
+                {/* 🔥 总岗位数量标签 - 绿色 */}
                 <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   <span>正在热招 ({displayJobs.length}个岗位)</span>
                 </span>
               </div>
+
+              {/* 🎨 新增：彩色分类标签 */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* 2026暑期实习 - 琥珀色/橙色系 */}
+                {internCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                    <span>🏖️</span>
+                    <span>2026暑期实习 ({internCount})</span>
+                  </span>
+                )}
+                
+                {/* 2026校招 - 紫色系 */}
+                {newGradCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                    <span>🎓</span>
+                    <span>2026校招 ({newGradCount})</span>
+                  </span>
+                )}
+                
+                {/* 大厂在招 - 玫瑰红/粉色系 */}
+                {fulltimeCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                    <span>💼</span>
+                    <span>大厂在招 ({fulltimeCount})</span>
+                  </span>
+                )}
+
+                {/* 社招全职 - 蓝色系 (如果有剩余或作为补充) */}
+                {/* 可以根据需要继续添加其他标签 */}
+              </div>
+
               <p className="text-xs text-gray-500">
                 官方招聘直通 · 支持 Sponsor H1B 工签 · 2026/2027 批次开放中
               </p>
