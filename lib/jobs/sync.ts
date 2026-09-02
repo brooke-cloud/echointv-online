@@ -263,4 +263,4 @@ export async function syncAllCompanies(
     totalDurationMs: Date.now() - globalStartTime,
     details,
   };
-}ad
+}
