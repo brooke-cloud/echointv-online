@@ -1,297 +1,140 @@
 // components/CompanyRadarList.tsx
+'use client';
 
-"use client";
+import React from 'react';
+import { CompanyConfig, COMPANY_CONFIGS } from '@/lib/jobs/company-config';
+import { ExternalLink, ShieldCheck, CheckCircle2, GraduationCap, Sparkles } from 'lucide-react';
 
-import { useState, useMemo } from "react";
-import Link from "next/link";
-import {
-  Search,
-  Building2,
-  CheckCircle2,
-  XCircle,
-  GraduationCap,
-  Sprout,
-  Briefcase,
-  ChevronRight,
-  Sparkles,
-} from "lucide-react";
-
-export interface CompanyStatusItem {
-  name: string;
+export interface CompanyStats {
   slug: string;
-  isOpen: boolean;
-  statusText: string;
-  category: "FAANG" | "AI" | "QUANT" | "UNICORN" | "APAC" | "TECH";
-  headquarters: string;
-  openRolesCount: number;
-  hasNewGrad: boolean;
-  hasIntern: boolean;
-  hasFulltime: boolean;
-  visaPolicy: string;
-  description: string;
+  activeJobsCount: number;
+  newGradCount?: number;
+  internCount?: number;
 }
 
-export default function CompanyRadarList({
-  companies,
-  totalJobsCount,
-}: {
-  companies: CompanyStatusItem[];
-  totalJobsCount: number;
-}) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<"ALL" | "OPEN" | "CLOSED">("ALL");
-  const [selectedCategory, setSelectedCategory] = useState("ALL");
+interface Props {
+  stats?: CompanyStats[];
+  selectedCompanySlug?: string;
+  selectedJobType?: string; // ALL | New Grad | Intern | Full-time
+  onSelectCompany?: (slug: string) => void;
+}
 
-  const categories = [
-    { label: "全部大厂", value: "ALL" },
-    { label: "🔥 FAANG 巨头", value: "FAANG" },
-    { label: "🤖 AI & 大模型", value: "AI" },
-    { label: "📈 顶级量化对冲", value: "QUANT" },
-    { label: "🦄 独角兽与云原生", value: "UNICORN" },
-    { label: "🌏 国内出海名企", value: "APAC" },
-  ];
-
-  // 统计数据
-  const openCount = companies.filter((c) => c.isOpen).length;
-  const closedCount = companies.filter((c) => !c.isOpen).length;
-
-  // 实时多维过滤
-  const filteredCompanies = useMemo(() => {
-    return companies.filter((c) => {
-      const q = searchQuery.toLowerCase().trim();
-      const matchSearch =
-        !q ||
-        c.name.toLowerCase().includes(q) ||
-        c.headquarters.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q);
-
-      const matchStatus =
-        selectedStatus === "ALL" ||
-        (selectedStatus === "OPEN" && c.isOpen) ||
-        (selectedStatus === "CLOSED" && !c.isOpen);
-
-      const matchCategory =
-        selectedCategory === "ALL" || c.category === selectedCategory;
-
-      return matchSearch && matchStatus && matchCategory;
-    });
-  }, [companies, searchQuery, selectedStatus, selectedCategory]);
+export const CompanyRadarList: React.FC<Props> = ({
+  stats = [],
+  selectedCompanySlug,
+  selectedJobType = 'ALL',
+  onSelectCompany,
+}) => {
+  const statsMap = new Map(stats.map((s) => [s.slug, s]));
 
   return (
-    <div className="space-y-8">
-      {/* 🌟 1. 核心数据看板 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-emerald-50/70 p-6 rounded-3xl border border-emerald-200/80 shadow-sm space-y-1">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 uppercase tracking-wider">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            <span>正在开放招聘大厂</span>
+    <div className="w-full bg-slate-900/60 border border-slate-800/90 rounded-2xl p-5 sm:p-6 mb-8 backdrop-blur-md shadow-xl shadow-slate-950/40">
+      {/* 顶部标题与权威认证标识 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-slate-800/80 pb-4">
+        <div className="flex items-center space-x-3">
+          <div className="relative flex items-center justify-center">
+            <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </div>
-          <div className="text-3xl font-extrabold text-emerald-900">{openCount} 家名企</div>
-          <div className="text-xs text-emerald-700/80">包含 2026 校招、暑期实习与社招</div>
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-wide flex items-center gap-2">
+              大厂招聘雷达动态看板
+              <span className="text-xs font-normal text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" /> 官方 ATS 实时验真
+              </span>
+            </h2>
+          </div>
         </div>
 
-        <div className="bg-rose-50/70 p-6 rounded-3xl border border-rose-200/80 shadow-sm space-y-1">
-          <div className="flex items-center gap-2 text-xs font-bold text-rose-800 uppercase tracking-wider">
-            <XCircle className="h-4 w-4 text-rose-600" />
-            <span>暂停招聘 / 招满关闭</span>
-          </div>
-          <div className="text-3xl font-extrabold text-rose-900">{closedCount} 家企业</div>
-          <div className="text-xs text-rose-700/80">已招满或暂无软件研发通道</div>
-        </div>
-
-        <div className="bg-blue-50/70 p-6 rounded-3xl border border-blue-200/80 shadow-sm space-y-1">
-          <div className="flex items-center gap-2 text-xs font-bold text-blue-800 uppercase tracking-wider">
-            <Sparkles className="h-4 w-4 text-blue-600" />
-            <span>已收录官方在招岗位</span>
-          </div>
-          <div className="text-3xl font-extrabold text-blue-900">{totalJobsCount} 个在招职位</div>
-          <div className="text-xs text-blue-700/80">100% 官方直通投递通道</div>
+        {/* 右侧类别指示 */}
+        <div className="flex items-center gap-2.5 text-xs text-slate-400 flex-wrap">
+          <span className="flex items-center gap-1 text-amber-400/90 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 font-medium">
+            <GraduationCap className="w-3.5 h-3.5" /> 支持校招 NG
+          </span>
+          <span className="flex items-center gap-1 text-emerald-400/90 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 font-medium">
+            <Sparkles className="w-3.5 h-3.5" /> 支持实习 Intern
+          </span>
         </div>
       </div>
 
-      {/* 🌟 2. 搜索与状态过滤器 */}
-      <div className="space-y-4">
-        {/* 搜索框 */}
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
-            <Search className="h-5 w-5" />
-          </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="🔍 搜索大厂名称 (如 Google, Meta, Amazon, OpenAI, Jane Street) 或地点..."
-            className="w-full pl-12 pr-20 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-gray-900 bg-white shadow-sm transition"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-4 top-3.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl transition font-medium"
-            >
-              清空
-            </button>
-          )}
-        </div>
+      {/* 公司雷达网格 */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        {COMPANY_CONFIGS.filter((c) => c.enabled).map((company) => {
+          const stat = statsMap.get(company.slug);
+          const totalJobs = stat?.activeJobsCount ?? 0;
+          const ngJobs = stat?.newGradCount ?? 0;
+          const internJobs = stat?.internCount ?? 0;
 
-        {/* 状态与大厂分类选项卡 */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
-          {/* 状态切换 */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider w-20 flex-shrink-0">
-              招聘状态
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedStatus("ALL")}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-                  selectedStatus === "ALL"
-                    ? "bg-gray-900 text-white shadow-sm"
-                    : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                全部状态 ({companies.length})
-              </button>
-              <button
-                onClick={() => setSelectedStatus("OPEN")}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 ${
-                  selectedStatus === "OPEN"
-                    ? "bg-emerald-600 text-white shadow-sm"
-                    : "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                }`}
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>🟢 正在招人 ({openCount})</span>
-              </button>
-              <button
-                onClick={() => setSelectedStatus("CLOSED")}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 ${
-                  selectedStatus === "CLOSED"
-                    ? "bg-rose-600 text-white shadow-sm"
-                    : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
-                }`}
-              >
-                <XCircle className="h-3.5 w-3.5" />
-                <span>🔴 暂停招人/招满 ({closedCount})</span>
-              </button>
-            </div>
-          </div>
+          // 动态显示当前筛选维度的岗位数
+          let displayCount = totalJobs;
+          let countLabel = '在招岗位';
+          if (selectedJobType === 'New Grad') {
+            displayCount = ngJobs;
+            countLabel = '校招 NG';
+          } else if (selectedJobType === 'Intern') {
+            displayCount = internJobs;
+            countLabel = '实习';
+          }
 
-          {/* 大厂分类 */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2 border-t border-gray-100">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider w-20 flex-shrink-0">
-              大厂领域
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat.value}
-                  onClick={() => setSelectedCategory(cat.value)}
-                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition ${
-                    selectedCategory === cat.value
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-600"
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+          const hasJobs = displayCount > 0;
+          const isSelected = selectedCompanySlug === company.slug;
 
-      {/* 🌟 3. 公司大盘卡片列表 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredCompanies.map((company) => {
           return (
             <div
-              key={company.name}
-              className={`rounded-3xl p-6 border shadow-sm transition flex flex-col justify-between min-h-[250px] ${
-                company.isOpen
-                  ? "bg-white border-gray-200/90 hover:shadow-md hover:border-blue-300"
-                  : "bg-gray-50/70 border-gray-200/60 opacity-80"
+              key={company.slug}
+              onClick={() => onSelectCompany?.(isSelected ? '' : company.slug)}
+              className={`group relative cursor-pointer rounded-xl p-3.5 border transition-all duration-200 ${
+                isSelected
+                  ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-500/20 ring-1 ring-indigo-500/50'
+                  : hasJobs
+                  ? 'bg-slate-800/40 border-slate-700/60 hover:border-slate-500 hover:bg-slate-800/80 hover:shadow-md'
+                  : 'bg-slate-900/40 border-slate-800/50 opacity-50 hover:opacity-100'
               }`}
             >
-              <div className="space-y-3">
-                {/* 顶部：公司名 + 状态徽章 */}
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-xl font-extrabold text-gray-900 leading-tight">
-                      {company.name}
-                    </h3>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      📍 {company.headquarters}
-                    </p>
-                  </div>
-
-                  {/* 状态徽章 */}
-                  {company.isOpen ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>正在招人</span>
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                      <span className="h-2 w-2 rounded-full bg-rose-400" />
-                      <span>暂停招聘</span>
-                    </span>
-                  )}
-                </div>
-
-                {/* 简介 */}
-                <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
-                  {company.description}
-                </p>
-
-                {/* 开放通道标签 */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  {company.isOpen ? (
-                    <>
-                      {company.hasNewGrad && (
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100 flex items-center gap-1">
-                          <GraduationCap className="h-3 w-3" />
-                          <span>2026 校招</span>
-                        </span>
-                      )}
-                      {company.hasIntern && (
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1">
-                          <Sprout className="h-3 w-3" />
-                          <span>暑期实习</span>
-                        </span>
-                      )}
-                      {company.hasFulltime && (
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1">
-                          <Briefcase className="h-3 w-3" />
-                          <span>社招全职</span>
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-[11px] text-gray-400 italic">
-                      {company.statusText}
-                    </span>
-                  )}
-                </div>
+              {/* 第一行：公司名与官网直达 */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-white truncate group-hover:text-indigo-300 transition-colors">
+                  {company.name}
+                </span>
+                <a
+                  href={company.careerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-slate-500 hover:text-indigo-400 transition-colors p-0.5"
+                  title="访问公司官方招聘主页"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
               </div>
 
-              {/* 底部跳转按钮 */}
-              <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-xs text-gray-400">
-                  {company.isOpen ? `${company.openRolesCount} 个职位开放中` : "当前通道已关闭"}
+              {/* 第二行：ATS 类型与岗位数量 */}
+              <div className="flex items-center justify-between text-xs mb-2.5">
+                <span className="text-slate-400 font-mono bg-slate-950/80 px-1.5 py-0.5 rounded text-[10px] border border-slate-800">
+                  {company.ats}
                 </span>
+                <span className={`font-mono text-xs font-bold ${hasJobs ? 'text-emerald-400' : 'text-slate-500'}`}>
+                  {hasJobs ? `${displayCount} ${countLabel}` : '暂无HC'}
+                </span>
+              </div>
 
-                {company.isOpen ? (
-                  <Link
-                    href={`/jobs/${company.slug}`}
-                    className="inline-flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition active:scale-95"
-                  >
-                    <span>查看在招岗位</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                ) : (
-                  <span className="text-xs font-semibold text-gray-400">
-                    暂无在招
+              {/* 第三行：NG 与 实习早鸟指标 */}
+              <div className="flex items-center gap-1.5 text-[10px] pt-1 border-t border-slate-800/60">
+                {ngJobs > 0 && (
+                  <span className="px-1.5 py-0.5 bg-amber-500/15 text-amber-300 border border-amber-500/30 rounded font-medium">
+                    NG {ngJobs}
                   </span>
+                )}
+                {internJobs > 0 && (
+                  <span className="px-1.5 py-0.5 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded font-medium">
+                    实习 {internJobs}
+                  </span>
+                )}
+                {ngJobs === 0 && internJobs === 0 && totalJobs > 0 && (
+                  <span className="text-slate-500 text-[10px]">仅社招全职</span>
+                )}
+                {totalJobs === 0 && (
+                  <span className="text-slate-600 text-[10px]">暂未开岗</span>
                 )}
               </div>
             </div>
@@ -300,4 +143,4 @@ export default function CompanyRadarList({
       </div>
     </div>
   );
-}
+};

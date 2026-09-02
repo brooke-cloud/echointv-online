@@ -1,58 +1,59 @@
-// app/api/cron/sync-jobs/route.ts
+// app/api/sync-jobs/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { syncAllCompanies } from '@/lib/jobs/sync';
 
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // 允许长时任务运行
 
-export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(req: NextRequest) {
+  return handleSync(req);
+}
 
-  const jobModel = (prisma as any).job;
-  if (!jobModel) return NextResponse.json({ error: "No Job Model" }, { status: 500 });
+export async function POST(req: NextRequest) {
+  return handleSync(req);
+}
 
-  let addedCount = 0;
+async function handleSync(req: NextRequest) {
+  const authHeader = req.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+  const tokenQuery = req.nextUrl.searchParams.get('token');
+  const isReset = req.nextUrl.searchParams.get('reset') === 'true';
 
-  // 每日自动拉取最新 2026 校招与独角兽在招岗位
-  try {
-    const rawRes = await fetch(
-      "https://raw.githubusercontent.com/SimplifyJobs/New-Grad-Positions/dev/.github/scripts/listings.json",
-      { cache: "no-store" }
-    );
-    if (rawRes.ok) {
-      const liveListings = await rawRes.json();
-      for (const item of (liveListings || []).slice(0, 30)) {
-        if (!item.url || !item.company_name || !item.title) continue;
+  // 1. 安全鉴权（支持 Vercel Cron 内置请求头校验与手动 Token）
+  if (cronSecret && !isReset) {
+    const isVercelCron = req.headers.get('user-agent')?.includes('vercel-cron');
+    const isAuthorized =
+      authHeader === `Bearer ${cronSecret}` ||
+      tokenQuery === cronSecret ||
+      isVercelCron;
 
-        const exists = await jobModel.findFirst({ where: { applyUrl: item.url } });
-        if (!exists) {
-          await jobModel.create({
-            data: {
-              title: item.title,
-              company: item.company_name,
-              location: Array.isArray(item.locations) && item.locations.length > 0 ? item.locations.join(" / ") : "United States",
-              region: "NA",
-              type: "NEWGRAD",
-              track: "Backend",
-              salary: "$145,000 - $195,000 / yr",
-              applyUrl: item.url,
-              tags: ["2026秋招", "Sponsor H1B", "北美大厂"],
-              isHot: true,
-              deadline: "🟢 正在热招",
-            },
-          });
-          addedCount++;
-        }
-      }
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-  } catch (err) {
-    console.error("Cron 执行异常:", err);
   }
 
-  return NextResponse.json({
-    success: true,
-    message: `每日定时抓取完成，新增 ${addedCount} 个在招岗位`,
-    count: addedCount,
-  });
+  try {
+    // 2. 如果携带 ?reset=true，彻底清空现有 Job 表再同步
+    let deletedCount = 0;
+    if (isReset) {
+      const deleted = await prisma.job.deleteMany();
+      deletedCount = deleted.count;
+    }
+
+    // 3. 执行全量公司官方 ATS 调度同步
+    const result = await syncAllCompanies();
+
+    return NextResponse.json({
+      timestamp: new Date().toISOString(),
+      resetExecuted: isReset,
+      deletedOldJobs: deletedCount,
+      ...result,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || 'Sync failed' },
+      { status: 500 }
+    );
+  }
 }

@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  
 }
 
 model Problem {
@@ -113,25 +114,69 @@ model VerificationCode {
 }
 
 
-model Job {
-  id          Int      @id @default(autoincrement())
-  title       String   // 岗位名称 (例如: Software Development Engineer - 2026 New Grad)
-  company     String   // 公司名称 (例如: Google, Meta, Amazon, 字节跳动)
-  location    String   // 岗位地点 (例如: Seattle, WA / 北京 / 远程)
-  region      String   @default("NA") // 区域: "NA" (北美海外) | "CN" (国内) | "REMOTE" (远程)
-  type        String   @default("NEWGRAD") // 类型: "NEWGRAD" (校招) | "FULLTIME" (全职) | "INTERN" (实习)
-  track       String   @default("Backend") // 方向: "Backend" | "Frontend" | "AI/ML" | "Fullstack" | "Data"
-  salary      String?  // 薪资参考 (例如: "$140k - $185k / yr", "30k - 50k / 月")
-  applyUrl    String   // 官方投递直达链接
-  tags        String[] // 标签 (例如: ["2026校招", "Sponsor H1B", "Java/Go"])
-  isHot       Boolean  @default(false) // 是否为热门/急招岗位
-  deadline    String?  @default("正在热招") // 招聘状态
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// prisma/schema.prisma (Job 模型部分)
 
-  @@index([company])
-  @@index([region])
-  @@index([type])
-  @@index([track])
-  @@index([createdAt])
+model Job {
+  id              String    @id @default(cuid())
+  companyId       String?   // 关联 Company
+  company         Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // 关键去重字段：ATS + 外部 Job ID (设为可选与默认值，平滑兼容旧数据)
+  ats             String    @default("custom")
+  externalJobId   String?   // String? 允许旧数据安全过渡，同时严格保障新数据唯一性
+  companyName     String    @default("")
+  companySlug     String    @default("")
+
+  // 核心信息
+  title           String
+  location        String    @default("US")
+  locations       String[]  @default([])
+  isRemote        Boolean   @default(false)
+  department      String?
+  team            String?
+  employmentType  String?
+  track           String    @default("Fullstack")
+  level           String?
+  salary          String?
+  description     String?   @db.Text
+
+  // 官方直达链接
+  jobUrl          String    @default("")
+  applyUrl        String    @default("")
+
+  // 生命周期时间戳
+  postedAt        DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  firstSeenAt     DateTime  @default(now())
+  lastSeenAt      DateTime  @default(now())
+  isActive        Boolean   @default(true)
+
+  // 唯一约束：彻底防止同名、多地区岗位重复插入
+  @@unique([ats, externalJobId])
+
+  // 核心查询索引
+  @@index([isActive, track, postedAt(sort: Desc)])
+  @@index([companySlug, isActive])
+  @@index([isRemote])
+  @@index([lastSeenAt])
+}
+
+model Company {
+  id             String    @id @default(cuid())
+  name           String    @unique // 公司名称
+  slug           String    @unique // URL slug
+  logoUrl        String?
+  careersUrl     String    // 官网招聘主页
+  atsType        String    // GREENHOUSE | LEVER | ASHBY | CUSTOM
+  atsIdentifier  String    // ATS 识别号
+  tier           String?   @default("HIGH_GROWTH")
+  lastSyncedAt   DateTime?
+  syncStatus     String    @default("IDLE")
+  lastError      String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  jobs           Job[]
+
+  @@index([atsType])
 }
