@@ -83,7 +83,7 @@ export async function syncCompany(company: CompanyConfig): Promise<CompanySyncRe
       where: { companySlug: company.slug },
     });
     const existingJobsMap = new Map(
-      existingJobs.filter((j) => j.reqId).map((j) => [j.reqId!, j])
+      existingJobs.filter((j) => j.externalJobId).map((j) => [j.externalJobId!, j])
     );
 
     const jobsToCreate: any[] = [];
@@ -97,7 +97,7 @@ export async function syncCompany(company: CompanyConfig): Promise<CompanySyncRe
 
       if (!existing) {
         jobsToCreate.push({
-          reqId: incomingId,
+          externalJobId: incomingId,
           ats: incoming.ats || incoming.source || company.ats.toLowerCase(),
           companyName: incoming.companyName || incoming.company || company.name,
           companySlug: incoming.companySlug || company.slug,
@@ -174,8 +174,8 @@ export async function syncCompany(company: CompanyConfig): Promise<CompanySyncRe
 
     let closedCount = 0;
     if (incomingJobs.length > 0) {
-      const activeExisting = existingJobs.filter((j) => j.isActive && j.reqId);
-      const jobsToClose = activeExisting.filter((j) => !incomingIds.has(j.reqId!));
+      const activeExisting = existingJobs.filter((j) => j.isActive && j.externalJobId);
+      const jobsToClose = activeExisting.filter((j) => !incomingIds.has(j.externalJobId!));
       closedCount = jobsToClose.length;
 
       if (closedCount > 0) {
