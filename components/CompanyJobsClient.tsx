@@ -94,11 +94,67 @@ export const CompanyJobsClient: React.FC<Props> = ({ initialJobs }) => {
     return Date.now() - 24 * 60 * 60 * 1000;
   }, []);
 
-  // 1. 动态统计各公司各类型岗位数量（用于顶部雷达动态透视）
+  // 0. 对初始数据做智能归一化：自动识别 Early Career/University/New Grad，补全 jobType
+  const normalizedJobs = useMemo(() => {
+    return (initialJobs || []).map((job) => {
+      const t = (job.title || '').toLowerCase();
+      const l = (job.level || '').toLowerCase();
+      const e = (job.employmentType || '').toLowerCase();
+
+      let resolvedType = job.jobType;
+
+      // 优先识别实习
+      if (
+        job.jobType === 'Intern' ||
+        e.includes('intern') ||
+        l.includes('intern') ||
+        t.includes('intern') ||
+        t.includes('co-op') ||
+        t.includes('coop') ||
+        t.includes('实习')
+      ) {
+        resolvedType = 'Intern';
+      }
+      // 智能识别校招应届
+      else if (
+        job.jobType === 'New Grad' ||
+        l.includes('grad') ||
+        l.includes('early') ||
+        l.includes('ng') ||
+        e.includes('grad') ||
+        t.includes('new grad') ||
+        t.includes('early career') ||
+        t.includes('university') ||
+        t.includes('graduate') ||
+        t.includes('campus') ||
+        t.includes('entry level') ||
+        t.includes('entry-level') ||
+        t.includes('junior') ||
+        t.includes('sde i') ||
+        t.includes('swe i') ||
+        t.includes('校招') ||
+        t.includes('应届') ||
+        t.includes('2025') ||
+        t.includes('2026') ||
+        t.includes('2027')
+      ) {
+        resolvedType = 'New Grad';
+      } else if (!resolvedType) {
+        resolvedType = 'Full-time';
+      }
+
+      return {
+        ...job,
+        jobType: resolvedType,
+      };
+    });
+  }, [initialJobs]);
+
+  // 1. 动态统计各公司各类型岗位数量（基于归一化后的 normalizedJobs 进行统计）
   const dynamicCompanyStats = useMemo(() => {
     const statsMap = new Map<string, { total: number; ng: number; intern: number }>();
 
-    for (const job of initialJobs) {
+    for (const job of normalizedJobs) {
       if (!job.companySlug) continue;
       const current = statsMap.get(job.companySlug) || { total: 0, ng: 0, intern: 0 };
       current.total++;
@@ -113,11 +169,11 @@ export const CompanyJobsClient: React.FC<Props> = ({ initialJobs }) => {
       newGradCount: s.ng,
       internCount: s.intern,
     }));
-  }, [initialJobs]);
+  }, [normalizedJobs]);
 
-  // 2. 筛选过滤与智能去重
+  // 2. 筛选过滤与智能去重（基于归一化后的 normalizedJobs 进行过滤）
   const filteredJobs = useMemo(() => {
-    const matched = initialJobs.filter((job) => {
+    const matched = normalizedJobs.filter((job) => {
       // 搜索过滤：支持 职位名称、公司名称、技术栈标签
       if (searchTerm) {
         const query = searchTerm.toLowerCase();
@@ -147,7 +203,7 @@ export const CompanyJobsClient: React.FC<Props> = ({ initialJobs }) => {
         }
       }
 
-      // 工作类型过滤
+      // 工作类型过滤（此时校招岗位的 jobType 已经规范化为 'New Grad'）
       if (selectedJobType !== 'ALL') {
         if (job.jobType !== selectedJobType && job.employmentType !== selectedJobType) {
           return false;
@@ -187,7 +243,7 @@ export const CompanyJobsClient: React.FC<Props> = ({ initialJobs }) => {
 
     return Array.from(uniqueMap.values());
   }, [
-    initialJobs,
+    normalizedJobs,
     searchTerm,
     selectedCompanySlug,
     selectedRegion,
@@ -471,7 +527,7 @@ export const CompanyJobsClient: React.FC<Props> = ({ initialJobs }) => {
                       </span>
                     )}
 
-                    {/* 级别标签：当与 jobType 相同（如均为 Intern）时自动排重 */}
+                    {/* 级别标签：当与 jobType 相同（如均为 Intern 或均为 New Grad）时自动排重 */}
                     {job.level && job.level !== job.jobType && (
                       <span className="text-xs font-medium text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-md">
                         {job.level}
@@ -530,7 +586,7 @@ export const CompanyJobsClient: React.FC<Props> = ({ initialJobs }) => {
                     )}
                   </div>
 
-                  {/* 第四行：官方来源与更新时间（suppressHydrationWarning 防止报错） */}
+                  {/* 第四行：官方来源与更新时间 */}
                   <div className="flex items-center flex-wrap gap-y-1 gap-x-4 text-[11px] text-slate-500 pt-1">
                     <span className="flex items-center gap-1 text-emerald-400 font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5" />
