@@ -89,23 +89,68 @@ export default async function JobsPage() {
      * location
      * description
      * department
-     *
-     * 你的 normalizer.ts 本身已经支持：
-     * - Intern
-     * - New Grad
-     * - Early Career
-     * - University
-     * - Campus
-     * - Entry Level
-     * - Graduate
-     * 等关键词。
+     * employmentType
      */
     const classification = classifyJob(
       j.title,
       j.location,
       j.description || '',
-      j.department || ''
+      j.department || '',
+      j.employmentType || undefined
     );
+
+    const levelText = (j.level || '').toLowerCase().trim();
+    const employmentText = (j.employmentType || '')
+      .toLowerCase()
+      .trim();
+
+    /**
+     * ------------------------------------------------------------
+     * ATS 结构化 level 兼容
+     *
+     * 很多公司不会在 title 里写：
+     *   New Grad
+     *
+     * 而是通过 level / job family 表示：
+     *   Entry Level
+     *   Early Career
+     *   University
+     *   Campus
+     *   Graduate
+     *   Junior
+     *   Associate
+     *
+     * 这些信息不能丢，否则大量真正的 NG 会被当成 Experienced。
+     * ------------------------------------------------------------
+     */
+    const levelLooksIntern =
+      levelText.includes('intern') ||
+      levelText.includes('internship') ||
+      levelText.includes('co-op') ||
+      levelText.includes('coop') ||
+      levelText.includes('student') ||
+      levelText.includes('trainee') ||
+      levelText.includes('apprentice');
+
+    const levelLooksNewGrad =
+      levelText.includes('new grad') ||
+      levelText.includes('new-grad') ||
+      levelText.includes('new graduate') ||
+      levelText.includes('early career') ||
+      levelText.includes('early-career') ||
+      levelText.includes('university') ||
+      levelText.includes('campus') ||
+      levelText.includes('graduate') ||
+      levelText.includes('entry level') ||
+      levelText.includes('entry-level') ||
+      levelText.includes('entrylevel') ||
+      levelText.includes('junior') ||
+      levelText.includes('associate') ||
+      levelText.includes('rotational') ||
+      levelText.includes('sde i') ||
+      levelText.includes('sde 1') ||
+      levelText.includes('swe i') ||
+      levelText.includes('swe 1');
 
     /**
      * ------------------------------------------------------------
@@ -113,24 +158,24 @@ export default async function JobsPage() {
      *
      * 优先级：
      *
-     * 1. 数据库明确标记 Intern
-     * 2. 数据库明确标记 New Grad
-     * 3. normalizer 分类结果
-     * 4. level
-     *
-     * 注意：
-     * employmentType = Full-time 不能作为 NG / 社招判断依据。
+     * 1. ATS 结构化 level
+     * 2. ATS employmentType
+     * 3. normalizer / title / description 分类
      * ------------------------------------------------------------
      */
     let resolvedJobType: JobItem['jobType'];
 
     if (
-      j.level?.toLowerCase() === 'intern' ||
-      j.employmentType?.toLowerCase() === 'intern' ||
+      levelLooksIntern ||
+      employmentText === 'intern' ||
+      employmentText === 'internship' ||
+      employmentText === 'co-op' ||
+      employmentText === 'coop' ||
       classification.jobType === 'Intern'
     ) {
       resolvedJobType = 'Intern';
     } else if (
+      levelLooksNewGrad ||
       j.level?.toLowerCase() === 'new grad' ||
       classification.jobType === 'New Grad'
     ) {
