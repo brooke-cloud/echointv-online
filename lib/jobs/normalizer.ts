@@ -1,5 +1,7 @@
 // lib/jobs/normalizer.ts
 
+import { classifyTargetJob } from './target-classifier';
+
 export interface ClassificationResult {
   isTech: boolean;
   region: 'North America' | 'China' | 'Remote' | 'Other';
@@ -10,340 +12,741 @@ export interface ClassificationResult {
   tags: string[];
 }
 
+/**
+ * ---------------------------------------------------------------------------
+ * Non-tech keywords
+ * ---------------------------------------------------------------------------
+ */
+
 const NON_TECH_KEYWORDS = [
-  'account executive', 'sales representative', 'sales manager', 'sales director',
-  'recruiter', 'recruiting coordinator', 'talent acquisition', 'people operations',
-  'human resources', 'hr generalist', 'hr manager', 'hr business partner',
-  'legal counsel', 'attorney', 'paralegal', 'compliance officer',
-  'payroll', 'accountant', 'accounting manager', 'accounts payable', 'tax manager',
-  'workplace coordinator', 'office manager', 'executive assistant', 'receptionist',
-  'event coordinator', 'facilities specialist', 'customer support specialist',
-  'brand designer', 'copywriter', 'content strategist', 'public relations',
-  'strategy & execution', 'business development representative', 'bdr', 'sdr'
+  'account executive',
+  'sales representative',
+  'sales manager',
+  'sales director',
+  'recruiter',
+  'recruiting coordinator',
+  'talent acquisition',
+  'people operations',
+  'human resources',
+  'hr generalist',
+  'hr manager',
+  'hr business partner',
+  'legal counsel',
+  'attorney',
+  'paralegal',
+  'compliance officer',
+  'payroll',
+  'accountant',
+  'accounting manager',
+  'accounts payable',
+  'tax manager',
+  'workplace coordinator',
+  'office manager',
+  'executive assistant',
+  'receptionist',
+  'event coordinator',
+  'facilities specialist',
+  'customer support specialist',
+  'brand designer',
+  'copywriter',
+  'content strategist',
+  'public relations',
+  'strategy & execution',
+  'business development representative',
+  'bdr',
+  'sdr',
 ];
+
+/**
+ * ---------------------------------------------------------------------------
+ * Common technical tags
+ * ---------------------------------------------------------------------------
+ */
 
 const COMMON_TECH_TAGS = [
-  'Python', 'Java', 'Go', 'Golang', 'C++', 'Rust', 'TypeScript', 'JavaScript',
-  'React', 'Next.js', 'Vue', 'Node.js', 'PyTorch', 'TensorFlow', 'LLM', 'CUDA',
-  'Kubernetes', 'Docker', 'AWS', 'GCP', 'Azure', 'PostgreSQL', 'Redis', 'Kafka',
-  'GraphQL', 'Spark', 'Flink', 'Android', 'iOS', 'Swift', 'Kotlin', 'Linux'
+  'Python',
+  'Java',
+  'Go',
+  'Golang',
+  'C++',
+  'Rust',
+  'TypeScript',
+  'JavaScript',
+  'React',
+  'Next.js',
+  'Vue',
+  'Node.js',
+  'PyTorch',
+  'TensorFlow',
+  'LLM',
+  'CUDA',
+  'Kubernetes',
+  'Docker',
+  'AWS',
+  'GCP',
+  'Azure',
+  'PostgreSQL',
+  'Redis',
+  'Kafka',
+  'GraphQL',
+  'Spark',
+  'Flink',
+  'Android',
+  'iOS',
+  'Swift',
+  'Kotlin',
+  'Linux',
 ];
 
+/**
+ * ---------------------------------------------------------------------------
+ * Helpers
+ * ---------------------------------------------------------------------------
+ */
+
+function normalizeText(value: string = ''): string {
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function lower(value: string = ''): string {
+  return normalizeText(value).toLowerCase();
+}
+
+/**
+ * Avoid false-positive matches for very short programming language names
+ * such as "Go".
+ */
 function matchTechTag(text: string, tag: string): boolean {
   const lowerText = text.toLowerCase();
   const lowerTag = tag.toLowerCase();
 
   if (lowerTag === 'c++') {
-    return lowerText.includes('c++') || lowerText.includes('cpp');
-  }
-  if (lowerTag === 'go' || lowerTag === 'r') {
     return (
-      lowerText.includes(' ' + lowerTag + ' ') ||
-      lowerText.includes('/' + lowerTag + '/') ||
-      lowerText.includes('(' + lowerTag + ')') ||
-      lowerText.includes(',' + lowerTag) ||
-      lowerText.startsWith(lowerTag + ' ') ||
-      lowerText.endsWith(' ' + lowerTag) ||
+      lowerText.includes('c++') ||
+      lowerText.includes('cpp')
+    );
+  }
+
+  if (lowerTag === 'go') {
+    return (
+      /\bgo\b/i.test(text) ||
       lowerText.includes('golang')
     );
   }
+
   return lowerText.includes(lowerTag);
 }
 
-export function isTechnicalJob(title: string, department: string = ''): boolean {
-  const t = title.toLowerCase();
-  const d = department.toLowerCase();
+/**
+ * ---------------------------------------------------------------------------
+ * Technical job detection
+ * ---------------------------------------------------------------------------
+ */
 
+export function isTechnicalJob(
+  title: string,
+  department: string = ''
+): boolean {
+  const t = lower(title);
+  const d = lower(department);
+
+  /**
+   * First remove obvious non-technical roles.
+   */
   for (const nonTech of NON_TECH_KEYWORDS) {
-    if (t.includes(nonTech)) return false;
+    if (t.includes(nonTech) || d.includes(nonTech)) {
+      return false;
+    }
   }
 
   const TECH_INDICATORS = [
-    'engineer', 'engineering', 'developer', 'software', 'swe', 'sde',
-    'architect', 'scientist', 'machine learning', 'ai ', 'ml ', 'deep learning',
-    'frontend', 'front-end', 'backend', 'back-end', 'fullstack', 'full-stack',
-    'devops', 'sre', 'infrastructure', 'infra', 'cloud', 'platform',
-    'data', 'analytics', 'database', 'security', 'infosec', 'cyber',
-    'mobile', 'ios', 'android', 'embedded', 'firmware', 'hardware',
-    'tpm', 'technical product manager', 'product manager', 'solutions architect',
-    'qa', 'test engineer', 'sdet', 'algorithm', 'researcher', 'intern',
-    'member of technical staff', 'technical staff', 'mts', 'research scientist',
-    'research engineer', 'applied scientist', 'core contributor', 'fellow', 'ai support'
+    'engineer',
+    'engineering',
+    'developer',
+    'software',
+    'swe',
+    'sde',
+    'architect',
+    'scientist',
+    'machine learning',
+    'ai ',
+    'ml ',
+    'deep learning',
+    'frontend',
+    'front-end',
+    'front end',
+    'backend',
+    'back-end',
+    'back end',
+    'fullstack',
+    'full-stack',
+    'full stack',
+    'devops',
+    'sre',
+    'infrastructure',
+    'infra',
+    'cloud',
+    'platform',
+    'data',
+    'analytics',
+    'database',
+    'security',
+    'infosec',
+    'cyber',
+    'mobile',
+    'ios',
+    'android',
+    'embedded',
+    'firmware',
+    'hardware',
+    'tpm',
+    'technical product manager',
+    'product manager',
+    'solutions architect',
+    'qa',
+    'test engineer',
+    'sdet',
+    'algorithm',
+    'researcher',
+    'intern',
+    'member of technical staff',
+    'technical staff',
+    'mts',
+    'research scientist',
+    'research engineer',
+    'applied scientist',
+    'core contributor',
+    'fellow',
+    'ai support',
   ];
 
-  return TECH_INDICATORS.some((ind) => t.includes(ind) || d.includes(ind));
+  return TECH_INDICATORS.some(
+    (indicator) =>
+      t.includes(indicator) ||
+      d.includes(indicator)
+  );
 }
+
+/**
+ * ---------------------------------------------------------------------------
+ * Remote detection
+ * ---------------------------------------------------------------------------
+ */
+
+function detectRemote(
+  title: string,
+  location: string
+): boolean {
+  const t = lower(title);
+  const l = lower(location);
+
+  return (
+    l.includes('remote') ||
+    l.includes('anywhere') ||
+    l.includes('virtual') ||
+    l.includes('work from home') ||
+    t.includes('(remote)') ||
+    t.includes('[remote]') ||
+    t.includes('remote -') ||
+    t.includes('remote —')
+  );
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Region detection
+ * ---------------------------------------------------------------------------
+ */
+
+function detectRegion(
+  location: string,
+  isRemote: boolean
+): 'North America' | 'China' | 'Remote' | 'Other' {
+  const loc = lower(location);
+
+  if (isRemote) {
+    return 'Remote';
+  }
+
+  /**
+   * China / Greater China.
+   */
+  if (
+    loc.includes('china') ||
+    loc.includes('beijing') ||
+    loc.includes('shanghai') ||
+    loc.includes('shenzhen') ||
+    loc.includes('hangzhou') ||
+    loc.includes('guangzhou') ||
+    loc.includes('chengdu') ||
+    loc.includes('nanjing') ||
+    loc.includes('suzhou') ||
+    loc.includes('wuhan') ||
+    loc.includes('hong kong') ||
+    loc.includes('macau') ||
+    loc.includes('中国') ||
+    loc.includes('北京') ||
+    loc.includes('上海') ||
+    loc.includes('深圳') ||
+    loc.includes('杭州') ||
+    loc.includes('广州') ||
+    loc.includes('成都') ||
+    loc.includes('香港') ||
+    loc.includes('澳门')
+  ) {
+    return 'China';
+  }
+
+  /**
+   * North America.
+   */
+  if (
+    loc.includes('united states') ||
+    loc.includes('usa') ||
+    loc.includes('u.s.') ||
+    loc.includes('canada') ||
+    loc.includes('seattle') ||
+    loc.includes('san francisco') ||
+    loc.includes('bay area') ||
+    loc.includes('new york') ||
+    loc.includes('sunnyvale') ||
+    loc.includes('austin') ||
+    loc.includes('toronto') ||
+    loc.includes('vancouver') ||
+    loc.includes('boston') ||
+    loc.includes('chicago') ||
+    loc.includes('los angeles') ||
+    loc.includes('san diego') ||
+    loc.includes('palo alto') ||
+    loc.includes('mountain view') ||
+    loc.includes('cupertino') ||
+    loc.includes('redmond') ||
+    loc.includes('california') ||
+    loc.includes('texas') ||
+    loc.includes('washington')
+  ) {
+    return 'North America';
+  }
+
+  return 'Other';
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Track detection
+ * ---------------------------------------------------------------------------
+ */
+
+function inferTrack(
+  title: string,
+  department: string = '',
+  description: string = ''
+): string {
+  const t = lower(title);
+  const d = lower(department);
+  const desc = lower(description).slice(0, 3000);
+
+  const text = `${t} ${d} ${desc}`;
+
+  /**
+   * AI / ML
+   */
+  if (
+    t.includes('machine learning') ||
+    t.includes('ml engineer') ||
+    t.includes('deep learning') ||
+    t.includes('artificial intelligence') ||
+    t.includes('ai engineer') ||
+    t.includes('ai researcher') ||
+    t.includes('research scientist') ||
+    t.includes('applied scientist') ||
+    t.includes('data scientist') ||
+    t.includes('computer vision') ||
+    t.includes('natural language processing') ||
+    t.includes('nlp') ||
+    t.includes('llm') ||
+    t.includes('generative ai') ||
+    t.includes('genai') ||
+    t.includes('reinforcement learning') ||
+    text.includes('pytorch') ||
+    text.includes('tensorflow')
+  ) {
+    return 'AI/ML';
+  }
+
+  /**
+   * Frontend
+   */
+  if (
+    t.includes('frontend') ||
+    t.includes('front-end') ||
+    t.includes('front end') ||
+    t.includes('ui engineer') ||
+    t.includes('web developer') ||
+    t.includes('web engineer')
+  ) {
+    return 'Frontend';
+  }
+
+  /**
+   * Backend
+   */
+  if (
+    t.includes('backend') ||
+    t.includes('back-end') ||
+    t.includes('back end') ||
+    t.includes('server engineer') ||
+    t.includes('distributed systems') ||
+    t.includes('api engineer') ||
+    t.includes('services engineer')
+  ) {
+    return 'Backend';
+  }
+
+  /**
+   * Data
+   */
+  if (
+    t.includes('data engineer') ||
+    t.includes('data platform') ||
+    t.includes('analytics engineer') ||
+    t.includes('big data') ||
+    t.includes('database engineer') ||
+    t.includes('data infrastructure')
+  ) {
+    return 'Data';
+  }
+
+  /**
+   * DevOps / Infrastructure
+   */
+  if (
+    t.includes('devops') ||
+    t.includes('site reliability') ||
+    t.includes('sre') ||
+    t.includes('infrastructure') ||
+    t.includes('infra engineer') ||
+    t.includes('cloud engineer') ||
+    t.includes('platform engineer') ||
+    t.includes('systems engineer') ||
+    t.includes('solutions architect') ||
+    t.includes('cloud architect')
+  ) {
+    return 'DevOps';
+  }
+
+  /**
+   * Mobile
+   */
+  if (
+    t.includes('mobile') ||
+    t.includes('ios') ||
+    t.includes('android') ||
+    t.includes('swift') ||
+    t.includes('kotlin') ||
+    t.includes('flutter')
+  ) {
+    return 'Mobile';
+  }
+
+  /**
+   * Security
+   */
+  if (
+    t.includes('security engineer') ||
+    t.includes('security') ||
+    t.includes('infosec') ||
+    t.includes('application security') ||
+    t.includes('cybersecurity') ||
+    t.includes('cyber security')
+  ) {
+    return 'Security';
+  }
+
+  /**
+   * Embedded / Hardware
+   */
+  if (
+    t.includes('embedded') ||
+    t.includes('firmware') ||
+    t.includes('hardware') ||
+    t.includes('iot') ||
+    t.includes('robotics')
+  ) {
+    return 'Embedded';
+  }
+
+  /**
+   * Product / Technical PM
+   */
+  if (
+    t.includes('technical product manager') ||
+    t.includes('technical program manager') ||
+    t.includes('tpm')
+  ) {
+    return 'Technical Product';
+  }
+
+  /**
+   * Generic software engineering.
+   */
+  if (
+    t.includes('software engineer') ||
+    t.includes('software developer') ||
+    t.includes('sde') ||
+    t.includes('swe') ||
+    t.includes('developer') ||
+    t.includes('engineering')
+  ) {
+    return 'Fullstack';
+  }
+
+  return 'Other';
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Level detection
+ * ---------------------------------------------------------------------------
+ */
+
+function inferLevel(
+  title: string,
+  jobType: ClassificationResult['jobType']
+): string {
+  const t = lower(title);
+
+  if (jobType === 'Intern') {
+    return 'Intern';
+  }
+
+  if (jobType === 'New Grad') {
+    return 'Entry/Junior';
+  }
+
+  if (
+    t.includes('staff') ||
+    t.includes('principal') ||
+    t.includes('distinguished') ||
+    t.includes('fellow')
+  ) {
+    return 'Staff/Principal';
+  }
+
+  if (
+    t.includes('senior') ||
+    t.includes('sr.') ||
+    t.includes('sr ') ||
+    /\bsde\s+(?:iii|3)\b/i.test(t) ||
+    /\bswe\s+(?:iii|3)\b/i.test(t)
+  ) {
+    return 'Senior';
+  }
+
+  if (
+    t.includes('lead') ||
+    t.includes('manager') ||
+    t.includes('director') ||
+    t.includes('head of')
+  ) {
+    return 'Lead/Mgr';
+  }
+
+  if (
+    t.includes('junior') ||
+    t.includes('associate') ||
+    t.includes('entry level') ||
+    t.includes('entry-level') ||
+    t.includes('level 1') ||
+    t.includes('level i') ||
+    /\bsde\s+(?:i|1)\b/i.test(t) ||
+    /\bswe\s+(?:i|1)\b/i.test(t)
+  ) {
+    return 'Entry/Junior';
+  }
+
+  return 'Mid';
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Job type normalization
+ * ---------------------------------------------------------------------------
+ *
+ * target-classifier.ts is now the single source of truth for:
+ *
+ *   Intern
+ *   New Grad
+ *   Experienced
+ *
+ * Contract and Part-time remain separate employment categories.
+ */
+
+function normalizeJobType(
+  title: string,
+  description: string,
+  department: string,
+  employmentType?: string
+): ClassificationResult['jobType'] {
+  const titleText = lower(title);
+  const employment = lower(employmentType);
+
+  /**
+   * Structured employment type first.
+   */
+  if (
+    employment.includes('contractor') ||
+    employment === 'contract' ||
+    employment.includes('contract')
+  ) {
+    return 'Contract';
+  }
+
+  if (
+    employment === 'part-time' ||
+    employment === 'part time' ||
+    employment.includes('parttime')
+  ) {
+    return 'Part-time';
+  }
+
+  /**
+   * The target classifier owns Intern / New Grad classification.
+   */
+  const target = classifyTargetJob({
+    title,
+    description,
+    department,
+    employmentType,
+  });
+
+  if (target.type === 'Intern') {
+    return 'Intern';
+  }
+
+  if (target.type === 'New Grad') {
+    return 'New Grad';
+  }
+
+  /**
+   * Contract / part-time can also appear only in the title.
+   */
+  if (
+    titleText.includes('contractor') ||
+    titleText.includes('contract position') ||
+    titleText.includes('contract role')
+  ) {
+    return 'Contract';
+  }
+
+  if (
+    titleText.includes('part-time') ||
+    titleText.includes('part time')
+  ) {
+    return 'Part-time';
+  }
+
+  return 'Full-time';
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Main classifier
+ * ---------------------------------------------------------------------------
+ */
 
 export function classifyJob(
   title: string,
   location: string,
   description: string = '',
-  department: string = ''
+  department: string = '',
+  employmentType?: string
 ): ClassificationResult {
-  const normalizedTitle = title.toLowerCase();
-  const normalizedLoc = location.toLowerCase();
-  const normalizedDept = department.toLowerCase();
-  const descSnippet = description.slice(0, 1500).toLowerCase();
-  const combinedText = `${normalizedTitle} ${normalizedDept} ${normalizedLoc} ${descSnippet}`;
+  const normalizedTitle = normalizeText(title);
+  const normalizedLocation = normalizeText(location);
+  const normalizedDescription = normalizeText(description);
+  const normalizedDepartment = normalizeText(department);
 
-  const isTech = isTechnicalJob(title, department);
-
-  // 1. 是否 Remote
-  const isRemote = (
-    normalizedLoc.includes('remote') ||
-    normalizedLoc.includes('anywhere') ||
-    normalizedLoc.includes('virtual') ||
-    normalizedLoc.includes('work from home') ||
-    normalizedTitle.includes('(remote)') ||
-    normalizedTitle.includes('[remote]')
+  const isTech = isTechnicalJob(
+    normalizedTitle,
+    normalizedDepartment
   );
 
-  // 2. 地区归属判定
-  let region: 'North America' | 'China' | 'Remote' | 'Other' = 'North America';
-  if (isRemote) {
-    region = 'Remote';
-  } else if (
-    normalizedLoc.includes('china') ||
-    normalizedLoc.includes('beijing') ||
-    normalizedLoc.includes('shanghai') ||
-    normalizedLoc.includes('shenzhen') ||
-    normalizedLoc.includes('hangzhou') ||
-    normalizedLoc.includes('guangzhou') ||
-    normalizedLoc.includes('chengdu') ||
-    normalizedLoc.includes('hong kong') ||
-    normalizedLoc.includes('中国') ||
-    normalizedLoc.includes('北京') ||
-    normalizedLoc.includes('上海') ||
-    normalizedLoc.includes('深圳')
-  ) {
-    region = 'China';
-  } else if (
-    normalizedLoc.includes('us') ||
-    normalizedLoc.includes('usa') ||
-    normalizedLoc.includes('united states') ||
-    normalizedLoc.includes('canada') ||
-    normalizedLoc.includes('seattle') ||
-    normalizedLoc.includes('san francisco') ||
-    normalizedLoc.includes('bay area') ||
-    normalizedLoc.includes('new york') ||
-    normalizedLoc.includes('sunnyvale') ||
-    normalizedLoc.includes('austin') ||
-    normalizedLoc.includes('toronto') ||
-    normalizedLoc.includes('vancouver') ||
-    normalizedLoc.includes('boston') ||
-    normalizedLoc.includes('chicago') ||
-    normalizedLoc.includes('los angeles')
-  ) {
-    region = 'North America';
-  }
-
-  // 3. 深度校招 (New Grad) 与实习 (Intern) 全方位识别
-  let jobType: 'Full-time' | 'Intern' | 'New Grad' | 'Contract' | 'Part-time' = 'Full-time';
-
-  const isInternship = (
-    normalizedTitle.includes('intern') ||
-    normalizedTitle.includes('internship') ||
-    normalizedTitle.includes('co-op') ||
-    normalizedTitle.includes('coop') ||
-    normalizedTitle.includes('summer 202') ||
-    normalizedTitle.includes('fall 202') ||
-    normalizedTitle.includes('spring 202') ||
-    normalizedTitle.includes('trainee') ||
-    normalizedTitle.includes('fellowship') ||
-    normalizedTitle.includes('实习') ||
-    normalizedDept.includes('intern') ||
-    normalizedDept.includes('student') ||
-    descSnippet.includes('currently pursuing a degree') ||
-    descSnippet.includes('returning to school after') ||
-    descSnippet.includes('must be currently enrolled')
+  const isRemote = detectRemote(
+    normalizedTitle,
+    normalizedLocation
   );
 
-  const isNewGrad = !isInternship && (
-    normalizedTitle.includes('new grad') ||
-    normalizedTitle.includes('new-grad') ||
-    normalizedTitle.includes('university grad') ||
-    normalizedTitle.includes('early career') ||
-    normalizedTitle.includes('early-career') ||
-    normalizedTitle.includes('campus') ||
-    normalizedTitle.includes('college grad') ||
-    normalizedTitle.includes('entry level') ||
-    normalizedTitle.includes('entry-level') ||
-    normalizedTitle.includes('rotational') ||
-    normalizedTitle.includes('apprentice') ||
-    normalizedTitle.includes('graduate program') ||
-    normalizedTitle.includes('graduate engineer') ||
-    normalizedTitle.includes('associate software') ||
-    normalizedTitle.includes('2025 grad') ||
-    normalizedTitle.includes('2026 grad') ||
-    normalizedTitle.includes('2025 start') ||
-    normalizedTitle.includes('2026 start') ||
-    normalizedTitle.includes('class of 2025') ||
-    normalizedTitle.includes('class of 2026') ||
-    normalizedTitle.includes('应届') ||
-    normalizedTitle.includes('校招') ||
-    normalizedDept.includes('university') ||
-    normalizedDept.includes('campus') ||
-    normalizedDept.includes('early career') ||
-    descSnippet.includes('graduating between') ||
-    descSnippet.includes('degree completed between') ||
-    descSnippet.includes('graduating in 2025') ||
-    descSnippet.includes('graduating in 2026')
+  const region = detectRegion(
+    normalizedLocation,
+    isRemote
   );
 
-  if (isInternship) {
-    jobType = 'Intern';
-  } else if (isNewGrad) {
-    jobType = 'New Grad';
-  } else if (normalizedTitle.includes('contract') || normalizedTitle.includes('contractor')) {
-    jobType = 'Contract';
-  } else if (normalizedTitle.includes('part-time') || normalizedTitle.includes('part time')) {
-    jobType = 'Part-time';
-  }
+  /**
+   * IMPORTANT:
+   *
+   * Intern / New Grad / Experienced classification is delegated to
+   * target-classifier.ts.
+   */
+  const jobType = normalizeJobType(
+    normalizedTitle,
+    normalizedDescription,
+    normalizedDepartment,
+    employmentType
+  );
 
-  // 4. 级别判定
-  let level = 'Mid';
-  if (jobType === 'Intern') {
-    level = 'Intern';
-  } else if (jobType === 'New Grad') {
-    level = 'Entry/Junior';
-  } else if (
-    normalizedTitle.includes('junior') ||
-    normalizedTitle.includes('associate') ||
-    normalizedTitle.includes('level 1') ||
-    normalizedTitle.includes(' l1') ||
-    normalizedTitle.includes(' l2') ||
-    normalizedTitle.includes('sde i ') ||
-    normalizedTitle.includes('sde 1')
-  ) {
-    level = 'Entry/Junior';
-  } else if (
-    normalizedTitle.includes('staff') ||
-    normalizedTitle.includes('principal') ||
-    normalizedTitle.includes('distinguished') ||
-    normalizedTitle.includes('fellow')
-  ) {
-    level = 'Staff/Principal';
-  } else if (
-    normalizedTitle.includes('senior') ||
-    normalizedTitle.includes('sr.') ||
-    normalizedTitle.includes('sr ') ||
-    normalizedTitle.includes('sde iii') ||
-    normalizedTitle.includes('sde 3') ||
-    normalizedTitle.includes('level 5')
-  ) {
-    level = 'Senior';
-  } else if (
-    normalizedTitle.includes('lead') ||
-    normalizedTitle.includes('manager') ||
-    normalizedTitle.includes('director') ||
-    normalizedTitle.includes('head of')
-  ) {
-    level = 'Lead/Mgr';
-  }
+  const level = inferLevel(
+    normalizedTitle,
+    jobType
+  );
 
-  // 5. 技术方向
-  let track = 'Fullstack';
+  const track = inferTrack(
+    normalizedTitle,
+    normalizedDepartment,
+    normalizedDescription
+  );
 
-  if (
-    normalizedTitle.includes('machine learning') ||
-    normalizedTitle.includes('ml ') ||
-    normalizedTitle.includes('ml engineer') ||
-    normalizedTitle.includes('deep learning') ||
-    normalizedTitle.includes('ai ') ||
-    normalizedTitle.includes('ai engineer') ||
-    normalizedTitle.includes('artificial intelligence') ||
-    normalizedTitle.includes('research scientist') ||
-    normalizedTitle.includes('applied scientist') ||
-    normalizedTitle.includes('llm') ||
-    normalizedTitle.includes('nlp') ||
-    normalizedTitle.includes('computer vision') ||
-    normalizedTitle.includes('data scientist') ||
-    normalizedTitle.includes('ai support')
-  ) {
-    track = 'AI/ML';
-  } else if (
-    normalizedTitle.includes('frontend') ||
-    normalizedTitle.includes('front-end') ||
-    normalizedTitle.includes('front end') ||
-    normalizedTitle.includes('ui engineer') ||
-    normalizedTitle.includes('web developer')
-  ) {
-    track = 'Frontend';
-  } else if (
-    normalizedTitle.includes('backend') ||
-    normalizedTitle.includes('back-end') ||
-    normalizedTitle.includes('back end') ||
-    normalizedTitle.includes('server') ||
-    normalizedTitle.includes('distributed systems') ||
-    normalizedTitle.includes('api engineer')
-  ) {
-    track = 'Backend';
-  } else if (
-    normalizedTitle.includes('data engineer') ||
-    normalizedTitle.includes('data platform') ||
-    normalizedTitle.includes('analytics engineer') ||
-    normalizedTitle.includes('big data') ||
-    normalizedTitle.includes('database')
-  ) {
-    track = 'Data';
-  } else if (
-    normalizedTitle.includes('devops') ||
-    normalizedTitle.includes('sre') ||
-    normalizedTitle.includes('site reliability') ||
-    normalizedTitle.includes('infrastructure') ||
-    normalizedTitle.includes('infra') ||
-    normalizedTitle.includes('cloud') ||
-    normalizedTitle.includes('platform engineer') ||
-    normalizedTitle.includes('systems engineer') ||
-    normalizedTitle.includes('solutions architect')
-  ) {
-    track = 'DevOps';
-  } else if (
-    normalizedTitle.includes('mobile') ||
-    normalizedTitle.includes('ios') ||
-    normalizedTitle.includes('android') ||
-    normalizedTitle.includes('swift') ||
-    normalizedTitle.includes('flutter')
-  ) {
-    track = 'Mobile';
-  } else if (
-    normalizedTitle.includes('security') ||
-    normalizedTitle.includes('infosec') ||
-    normalizedTitle.includes('application security') ||
-    normalizedTitle.includes('cyber')
-  ) {
-    track = 'Security';
-  } else if (
-    normalizedTitle.includes('embedded') ||
-    normalizedTitle.includes('firmware') ||
-    normalizedTitle.includes('hardware') ||
-    normalizedTitle.includes('iot') ||
-    normalizedTitle.includes('robotics')
-  ) {
-    track = 'Embedded';
-  } else if (
-    normalizedTitle.includes('fullstack') ||
-    normalizedTitle.includes('full-stack') ||
-    normalizedTitle.includes('full stack') ||
-    normalizedTitle.includes('software engineer') ||
-    normalizedTitle.includes('sde') ||
-    normalizedTitle.includes('developer') ||
-    normalizedTitle.includes('technical staff')
-  ) {
-    track = 'Fullstack';
-  }
+  /**
+   * Tags are generated from the entire relevant text.
+   */
+  const combinedText = [
+    normalizedTitle,
+    normalizedDepartment,
+    normalizedLocation,
+    normalizedDescription.slice(0, 3000),
+  ].join(' ');
 
   const tags: string[] = [];
+
   for (const tag of COMMON_TECH_TAGS) {
     if (matchTechTag(combinedText, tag)) {
       tags.push(tag);
-      if (tags.length >= 4) break;
+
+      /**
+       * Avoid excessively large tag arrays.
+       */
+      if (tags.length >= 6) {
+        break;
+      }
     }
   }
 
-  if (tags.length === 0 && isTech) {
+  /**
+   * If the job is technical but no specific technology was detected,
+   * use the track as a fallback tag.
+   */
+  if (tags.length === 0 && isTech && track !== 'Other') {
     tags.push(track);
-    if (isRemote) tags.push('Remote');
+  }
+
+  /**
+   * Remote is useful as a tag for filtering/search.
+   */
+  if (isRemote && !tags.includes('Remote')) {
+    tags.push('Remote');
   }
 
   return {

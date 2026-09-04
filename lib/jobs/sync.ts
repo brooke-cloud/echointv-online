@@ -1,610 +1,1791 @@
 // lib/jobs/sync.ts
+
 import { prisma } from '@/lib/prisma';
-import { CompanyConfig, getActiveCompanyConfigs } from './company-config';
-import { fetchJobsByAts, NormalizedJob } from './adapters';
+import {
+  CompanyConfig,
+  getActiveCompanyConfigs,
+} from './company-config';
+import {
+  fetchJobsByAts,
+  NormalizedJob,
+} from './adapters';
+import { classifyTargetJob } from './target-classifier';
+
+import {
+  fetchMetaJobs,
+  fetchByteDanceJobs,
+  fetchNvidiaJobs,
+  fetchTeslaJobs,
+  fetchAppleJobs,
+} from './custom-fetchers';
+
 
 export interface CompanySyncResult {
-  company: string;
-  slug: string;
-  ats: string;
-  status: 'SUCCESS' | 'FAILED' | 'SKIPPED';
-  fetchedCount: number;
-  newCount: number;
-  updatedCount: number;
-  unchangedCount: number;
-  closedCount: number;
-  error?: string;
-  durationMs: number;
+
+  company:string;
+
+  slug:string;
+
+  ats:string;
+
+  status:
+    | 'SUCCESS'
+    | 'FAILED'
+    | 'SKIPPED';
+
+  fetchedCount:number;
+
+  newCount:number;
+
+  updatedCount:number;
+
+  unchangedCount:number;
+
+  closedCount:number;
+
+  skippedCloseCount:number;
+
+  warningCount:number;
+
+  warnings:string[];
+
+  error?:string;
+
+  durationMs:number;
+
 }
+
+
 
 export interface SyncResult {
-  success: boolean;
-  totalCompanies: number;
-  succeededCompanies: number;
-  failedCompanies: number;
-  totalFetched: number;
-  totalNew: number;
-  totalUpdated: number;
-  totalUnchanged: number;
-  totalClosed: number;
-  totalDurationMs: number;
-  details: CompanySyncResult[];
+
+  success:boolean;
+
+  totalCompanies:number;
+
+  succeededCompanies:number;
+
+  failedCompanies:number;
+
+  totalFetched:number;
+
+  totalNew:number;
+
+  totalUpdated:number;
+
+  totalUnchanged:number;
+
+  totalClosed:number;
+
+  totalSkippedClose:number;
+
+  totalDurationMs:number;
+
+  details:CompanySyncResult[];
+
 }
+
+
+
+const FETCH_TIMEOUT_MS = 15000;
+
+
+const NEVER_CLOSE_ON_EMPTY_RESULT = true;
+
+
+const OFFICIAL_ATS = new Set([
+  'GREENHOUSE',
+  'LEVER',
+  'ASHBY',
+]);
+
+
 
 const BROWSER_HEADERS = {
+
   'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-  'Accept': 'application/json, text/plain, */*',
-  'Accept-Language': 'en-US,en;q=0.9',
+    'Mozilla/5.0 Chrome/128 Safari/537',
+
+  Accept:
+    'application/json,text/plain,*/*',
+
+  'Accept-Language':
+    'en-US,en;q=0.9',
+
 };
 
-/* =========================================================================
-   1. 规范化分类引擎
-   ========================================================================= */
 
-const EXCLUDE_TITLE_REGEX =
-  /\b(senior|sr\.?|staff|principal|lead|head|manager|director|vp|architect|distinguished|expert|partner)\b|\b(sde|swe)\s*(ii|iii|iv|2|3|4)\b/i;
 
-const INTERN_REGEX =
-  /\b(intern|internship|co-?op|coop|trainee|apprentice|fellowship|summer\s*associate|实习|实习生)\b/i;
+function normalizeAts(
+  value:string|null|undefined
+){
 
-const NEW_GRAD_REGEX =
-  /\b(new\s*grad(uate)?|university\s*grad(uate)?|college\s*grad(uate)?|campus(\s*hire)?|early\s*career|entry\s*level|entry-level|fresh\s*grad(uate)?|graduate\s*program|rotational|sde\s*i\b|swe\s*i\b|software\s*engineer\s*i\b|associate\s*engineer|junior|校招|应届(生)?|校园招聘|202[4-7]\s*(start|grad|class)|class\s*of\s*202[4-7]|bs\/ms)\b/i;
+  return String(value || '')
+    .trim()
+    .toUpperCase();
 
-export function classifyJobLevel(title: string, description: string = '') {
-  const cleanTitle = title.trim();
-
-  if (INTERN_REGEX.test(cleanTitle)) {
-    return { level: 'Intern', employmentType: 'Intern' };
-  }
-
-  if (EXCLUDE_TITLE_REGEX.test(cleanTitle)) {
-    return { level: 'Experienced', employmentType: 'Full-time' };
-  }
-
-  if (NEW_GRAD_REGEX.test(cleanTitle)) {
-    return { level: 'New Grad', employmentType: 'Full-time' };
-  }
-
-  const descPrefix = description.slice(0, 300);
-  if (INTERN_REGEX.test(descPrefix)) {
-    return { level: 'Intern', employmentType: 'Intern' };
-  }
-  if (NEW_GRAD_REGEX.test(descPrefix)) {
-    return { level: 'New Grad', employmentType: 'Full-time' };
-  }
-
-  return { level: 'Experienced', employmentType: 'Full-time' };
 }
 
-function inferTrack(title: string): string {
-  const t = title.toLowerCase();
-  if (t.includes('frontend') || t.includes('front end') || t.includes('web')) return 'Frontend';
-  if (t.includes('backend') || t.includes('back end') || t.includes('infra') || t.includes('cloud')) return 'Backend';
-  if (t.includes('mobile') || t.includes('ios') || t.includes('android')) return 'Mobile';
-  if (t.includes('data') || t.includes('ai') || t.includes('ml') || t.includes('machine learning') || t.includes('algorithm')) return 'Data / AI';
-  if (t.includes('security')) return 'Security';
-  if (t.includes('devops') || t.includes('sre')) return 'DevOps';
-  return 'Fullstack';
+
+
+function getJobExternalId(
+  job:NormalizedJob
+){
+
+  return String(
+    job.externalJobId ||
+    job.reqId ||
+    ''
+  ).trim();
+
 }
 
-function buildNormalizedJob(params: {
-  id: string;
-  title: string;
-  company: CompanyConfig;
-  location?: string;
-  url: string;
-  description?: string;
-  postedAt?: Date;
-  department?: string;
-  isRemote?: boolean;
-}): NormalizedJob {
-  const track = inferTrack(params.title);
-  const classification = classifyJobLevel(params.title, params.description || '');
-  const loc = params.location || 'United States';
+
+
+function normalizeDate(
+  value:unknown
+){
+
+  if(value instanceof Date){
+    return value;
+  }
+
+  if(
+    typeof value === 'string' ||
+    typeof value === 'number'
+  ){
+
+    const date =
+      new Date(value);
+
+    if(
+      !Number.isNaN(
+        date.getTime()
+      )
+    ){
+
+      return date;
+
+    }
+
+  }
+
+
+  return new Date();
+
+}
+
+
+
+function normalizeString(
+  value:unknown
+){
+
+  return String(value || '')
+    .trim();
+
+}
+
+
+
+function normalizeLocations(
+  locations:string[]|undefined,
+  fallback:string
+){
+
+  return Array.from(
+    new Set(
+      [
+        ...(locations || []),
+        fallback,
+      ]
+      .map(
+        item =>
+          String(item || '')
+            .trim()
+      )
+      .filter(Boolean)
+    )
+  );
+
+}
+
+
+
+function normalizeJobClassification(
+  job:NormalizedJob
+):NormalizedJob{
+
+
+  const result =
+    classifyTargetJob({
+
+      title:
+        job.title || '',
+
+      description:
+        job.description || '',
+
+      department:
+        job.department || '',
+
+      employmentType:
+        job.employmentType || '',
+
+      level:
+        job.level || '',
+
+    });
+
+
 
   return {
-    reqId: String(params.id),
-    company: params.company.name,
-    category: track,
-    source: 'custom',
 
-    externalJobId: String(params.id),
-    companyName: params.company.name,
-    companySlug: params.company.slug,
-    ats: 'custom',
-    title: params.title,
-    location: loc,
-    locations: [loc],
-    isRemote: params.isRemote ?? false,
-    department: params.department || 'Engineering',
-    team: params.department || 'Engineering',
-    employmentType: classification.employmentType,
-    track,
-    level: classification.level,
-    description: params.description || '',
-    jobUrl: params.url,
-    applyUrl: params.url,
-    postedAt: params.postedAt || new Date(),
-  } as NormalizedJob;
+    ...job,
+
+    level:
+      (
+        result as any
+      ).level ||
+      job.level,
+
+    employmentType:
+      result.type === 'Intern'
+        ? 'Intern'
+        : result.type === 'New Grad'
+          ? 'Full-time'
+          : job.employmentType,
+
+  };
+
 }
 
-/* =========================================================================
-   2. 大厂官网开放接口适配
-   ========================================================================= */
 
-async function fetchGoogleJobs(company: CompanyConfig): Promise<NormalizedJob[]> {
-  const url =
-    'https://careers.google.com/api/v3/search/?degree_levels=ASSOCIATE&degree_levels=BACHELORS&employment_types=FULL_TIME&employment_types=INTERN&j=Software%20Engineer&location=United%20States';
-  const res = await fetch(url, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(10000) });
-  if (!res.ok) return [];
-  const data = await res.json();
 
-  return (data.jobs || []).map((j: any) =>
-    buildNormalizedJob({
-      id: j.id,
-      title: j.title,
-      company,
-      location: j.locations?.[0]?.display_name,
-      url: j.apply_url || `https://careers.google.com/jobs/results/${j.id}`,
-      description: j.summary,
-      postedAt: j.created ? new Date(j.created) : undefined,
-    })
-  );
-}
+function isUsableIncomingJob(
+  job:NormalizedJob
+){
 
-async function fetchAmazonJobs(company: CompanyConfig): Promise<NormalizedJob[]> {
-  const url =
-    'https://www.amazon.jobs/en/search.json?category[]=software-development&country[]=USA&result_type=jobs';
-  const res = await fetch(url, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(10000) });
-  if (!res.ok) return [];
-  const data = await res.json();
-
-  return (data.jobs || []).map((j: any) =>
-    buildNormalizedJob({
-      id: j.id_icims || j.id,
-      title: j.title,
-      company,
-      location: j.location || j.city,
-      url: `https://www.amazon.jobs${j.job_path}`,
-      description: j.basic_qualifications || j.description,
-      postedAt: j.posted_date ? new Date(j.posted_date) : undefined,
-      isRemote: j.is_virtual || false,
-    })
-  );
-}
-
-async function fetchMicrosoftJobs(company: CompanyConfig): Promise<NormalizedJob[]> {
-  const url =
-    'https://gcsservices.careers.microsoft.com/search/api/v1/search?lc=United%20States&exp=Students%20and%20graduates&p=Software%20Engineering';
-  const res = await fetch(url, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(10000) });
-  if (!res.ok) return [];
-  const data = await res.json();
-
-  const jobs = data?.operationResult?.result?.jobs || [];
-  return jobs.map((j: any) =>
-    buildNormalizedJob({
-      id: j.jobId,
-      title: j.title,
-      company,
-      location: j.properties?.primaryLocation,
-      url: `https://jobs.careers.microsoft.com/global/en/job/${j.jobId}`,
-      description: j.properties?.description,
-      postedAt: j.postingDate ? new Date(j.postingDate) : undefined,
-      isRemote: j.properties?.workSiteFlexibility?.toLowerCase().includes('remote'),
-    })
-  );
-}
-
-async function fetchMetaJobs(company: CompanyConfig): Promise<NormalizedJob[]> {
-  const url = 'https://www.metacareers.com/careers_proxy/graphql';
-  const query = `
-    query GetMetaJobs($input: JobSearchInput!) {
-      job_search(input: $input) {
-        jobs {
-          id
-          title
-          locations
-          url
-          created_at
-        }
-      }
-    }
-  `;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { ...BROWSER_HEADERS, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query,
-      variables: {
-        input: { q: 'University', divisions: ['Software Engineering'] },
-      },
-    }),
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (!res.ok) return [];
-  const data = await res.json();
-  const jobs = data?.data?.job_search?.jobs || [];
-
-  return jobs.map((j: any) =>
-    buildNormalizedJob({
-      id: j.id,
-      title: j.title,
-      company,
-      location: j.locations?.[0],
-      url: j.url || `https://www.metacareers.com/v2/jobs/${j.id}/`,
-      postedAt: j.created_at ? new Date(j.created_at) : undefined,
-    })
-  );
-}
-
-async function fetchByteDanceJobs(company: CompanyConfig): Promise<NormalizedJob[]> {
-  const url =
-    'https://careers.tiktok.com/api/v1/search/job/posts?keyword=graduate&limit=50&offset=0';
-  const res = await fetch(url, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(10000) });
-  if (!res.ok) return [];
-  const data = await res.json();
-  const list = data?.data?.job_post_list || [];
-
-  return list.map((j: any) =>
-    buildNormalizedJob({
-      id: j.id,
-      title: j.title,
-      company,
-      location: j.city_info?.name,
-      url: `https://careers.tiktok.com/position/${j.id}/detail`,
-      description: j.description,
-      postedAt: j.publish_time ? new Date(j.publish_time) : undefined,
-    })
-  );
-}
-
-async function fetchNvidiaJobs(company: CompanyConfig): Promise<NormalizedJob[]> {
-  const url =
-    'https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs';
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { ...BROWSER_HEADERS, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      appliedFacets: {},
-      limit: 30,
-      offset: 0,
-      searchText: 'University',
-    }),
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (!res.ok) return [];
-  const data = await res.json();
-  const list = data?.jobPostings || [];
-
-  return list.map((j: any) =>
-    buildNormalizedJob({
-      id: j.bulletFields?.[0] || String(j.externalPath),
-      title: j.title,
-      company,
-      location: j.locationsText || 'Santa Clara, CA',
-      url: `https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite${j.externalPath}`,
-    })
-  );
-}
-
-async function fetchTeslaJobs(company: CompanyConfig): Promise<NormalizedJob[]> {
-  const url = 'https://www.tesla.com/cua-api/apps/careers/state';
-  const res = await fetch(url, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(10000) });
-  if (!res.ok) return [];
-  const data = await res.json();
-  const list = data?.listings || [];
-
-  return list.slice(0, 40).map((j: any) =>
-    buildNormalizedJob({
-      id: j.id,
-      title: j.t,
-      company,
-      location: j.l,
-      url: `https://www.tesla.com/careers/search/job/${j.id}`,
-    })
-  );
-}
-
-async function fetchAppleJobs(company: CompanyConfig): Promise<NormalizedJob[]> {
-  const url = 'https://jobs.apple.com/api/v1/jobDetails/search';
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { ...BROWSER_HEADERS, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: 'intern software',
-      filters: { range: { standardWeeklyHours: { start: null, end: null } } },
-      page: 1,
-      locale: 'en-us',
-      sort: 'relevance',
-    }),
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (!res.ok) return [];
-  const data = await res.json();
-  const list = data?.searchResults || [];
-
-  return list.map((j: any) =>
-    buildNormalizedJob({
-      id: j.id,
-      title: j.postingTitle,
-      company,
-      location: j.locations?.[0]?.name,
-      url: `https://jobs.apple.com/en-us/details/${j.id}`,
-      postedAt: j.postDateInGMT ? new Date(j.postDateInGMT) : undefined,
-    })
-  );
-}
-
-async function fetchCustomJobs(company: CompanyConfig): Promise<NormalizedJob[]> {
-  const slug = (company.slug || '').toLowerCase();
-  const name = (company.name || '').toLowerCase();
-
-  try {
-    if (slug.includes('google') || name.includes('google')) return await fetchGoogleJobs(company);
-    if (slug.includes('amazon') || name.includes('amazon')) return await fetchAmazonJobs(company);
-    if (slug.includes('microsoft') || name.includes('microsoft')) return await fetchMicrosoftJobs(company);
-    if (slug.includes('meta') || name.includes('meta') || name.includes('facebook')) return await fetchMetaJobs(company);
-    if (slug.includes('bytedance') || slug.includes('tiktok') || name.includes('tiktok')) return await fetchByteDanceJobs(company);
-    if (slug.includes('nvidia') || name.includes('nvidia')) return await fetchNvidiaJobs(company);
-    if (slug.includes('tesla') || name.includes('tesla')) return await fetchTeslaJobs(company);
-    if (slug.includes('apple') || name.includes('apple')) return await fetchAppleJobs(company);
-
-    return await fetchJobsByAts(company.name, company.slug, company.ats, company.identifier);
-  } catch (err: any) {
-    console.warn(`[Sync] ${company.name} 抓取异常:`, err?.message || err);
-    return [];
-  }
-}
-
-/* =========================================================================
-   3. 核心入库比对与更新
-   ========================================================================= */
-
-function hasJobChanged(existing: any, incoming: NormalizedJob): boolean {
-  return (
-    existing.title !== incoming.title ||
-    existing.location !== incoming.location ||
-    existing.isRemote !== incoming.isRemote ||
-    existing.track !== (incoming.track || incoming.category) ||
-    existing.applyUrl !== incoming.applyUrl ||
-    (existing.employmentType || '') !== (incoming.employmentType || '') ||
-    existing.level !== incoming.level ||
-    existing.isActive === false
-  );
-}
-
-export async function syncCompany(company: CompanyConfig): Promise<CompanySyncResult> {
-  const startTime = Date.now();
-
-  if (!company.enabled) {
-    return {
-      company: company.name,
-      slug: company.slug,
-      ats: company.ats,
-      status: 'SKIPPED',
-      fetchedCount: 0,
-      newCount: 0,
-      updatedCount: 0,
-      unchangedCount: 0,
-      closedCount: 0,
-      durationMs: 0,
-    };
+  if(!job){
+    return false;
   }
 
-  try {
-    let fetchedJobs: NormalizedJob[] = [];
-    if (company.ats && company.ats.toUpperCase() === 'CUSTOM') {
-      fetchedJobs = await fetchCustomJobs(company);
-    } else {
-      fetchedJobs = await fetchJobsByAts(
+
+  return Boolean(
+    normalizeString(job.title) &&
+    getJobExternalId(job) &&
+    normalizeString(
+      job.applyUrl ||
+      job.jobUrl
+    )
+  );
+
+}
+
+
+
+interface SourceFetchResult {
+
+  jobs:NormalizedJob[];
+
+  sourceComplete:boolean;
+
+  sourceSucceeded:boolean;
+
+  error?:string;
+
+}
+
+
+
+async function fetchWithTimeout(
+  company:CompanyConfig
+):Promise<SourceFetchResult>{
+
+
+  const ats =
+    normalizeAts(company.ats);
+
+
+  try{
+    const fetchPromise =
+  ats === 'CUSTOM'
+    ? fetchCustomCompanyJobs(company)
+    : fetchJobsByAts(
         company.name,
         company.slug,
-        company.ats,
+        company.ats.toLowerCase() as any,
         company.identifier
       );
-    }
+      const result =
+        await Promise.race([
+          fetchPromise,
+          new Promise<any>((_, reject) => {
+            setTimeout(() => {
+              reject(
+                new Error(
+                  `Job source timeout after ${FETCH_TIMEOUT_MS}ms`
+                )
+              );
+            }, FETCH_TIMEOUT_MS);
+          }),
+        ]);
 
-    const incomingMap = new Map<string, NormalizedJob>();
-    for (const job of fetchedJobs) {
-      const jobId = job.externalJobId || job.reqId;
-      if (!jobId) continue;
+      const jobs =
+        Array.isArray(result)
+          ? result
+          : result.jobs || [];
 
-      const classification = classifyJobLevel(job.title, job.description || '');
-      job.level = classification.level;
-      job.employmentType = classification.employmentType;
 
-      incomingMap.set(jobId, job);
-    }
 
-    const incomingJobs = Array.from(incomingMap.values());
-    const incomingIds = new Set(incomingJobs.map((j) => j.externalJobId || j.reqId));
+    const map =
+      new Map<string,NormalizedJob>();
 
-    const existingJobs = await prisma.job.findMany({
-      where: { companySlug: company.slug },
-    });
-    const existingJobsMap = new Map(
-      existingJobs.filter((j) => j.externalJobId).map((j) => [j.externalJobId!, j])
-    );
 
-    const jobsToCreate: any[] = [];
-    const jobsToUpdate: { id: string; data: any }[] = [];
-    let unchangedCount = 0;
-    const now = new Date();
+    for(
+      const raw of jobs
+    ){
 
-    for (const incoming of incomingJobs) {
-      const incomingId = incoming.externalJobId || incoming.reqId || '';
-      const existing = existingJobsMap.get(incomingId);
-
-      if (!existing) {
-        jobsToCreate.push({
-          externalJobId: incomingId,
-          ats: incoming.ats || incoming.source || company.ats.toLowerCase(),
-          companyName: incoming.companyName || incoming.company || company.name,
-          companySlug: incoming.companySlug || company.slug,
-          title: incoming.title,
-          location: incoming.location,
-          locations: incoming.locations || [incoming.location],
-          isRemote: incoming.isRemote,
-          department: incoming.department,
-          team: incoming.team,
-          employmentType: incoming.employmentType,
-          track: incoming.track || incoming.category || 'Fullstack',
-          level: incoming.level,
-          salary: incoming.salary,
-          description: incoming.description,
-          jobUrl: incoming.jobUrl || incoming.applyUrl,
-          applyUrl: incoming.applyUrl,
-          postedAt: incoming.postedAt,
-          firstSeenAt: now,
-          lastSeenAt: now,
-          isActive: true,
-        });
-      } else {
-        if (hasJobChanged(existing, incoming)) {
-          jobsToUpdate.push({
-            id: existing.id,
-            data: {
-              title: incoming.title,
-              location: incoming.location,
-              locations: incoming.locations || [incoming.location],
-              isRemote: incoming.isRemote,
-              department: incoming.department,
-              team: incoming.team,
-              employmentType: incoming.employmentType,
-              track: incoming.track || incoming.category || 'Fullstack',
-              level: incoming.level,
-              description: incoming.description,
-              jobUrl: incoming.jobUrl || incoming.applyUrl,
-              applyUrl: incoming.applyUrl,
-              postedAt: incoming.postedAt,
-              lastSeenAt: now,
-              isActive: true,
-              updatedAt: now,
-            },
-          });
-        } else {
-          unchangedCount++;
-        }
+      if(
+        !isUsableIncomingJob(raw)
+      ){
+        continue;
       }
-    }
 
-    const newCount = jobsToCreate.length;
-    if (newCount > 0) {
-      await prisma.job.createMany({
-        data: jobsToCreate,
-        skipDuplicates: true,
-      });
-    }
 
-    const updatedCount = jobsToUpdate.length;
-    if (updatedCount > 0) {
-      const CHUNK_SIZE = 25;
-      for (let i = 0; i < jobsToUpdate.length; i += CHUNK_SIZE) {
-        const chunk = jobsToUpdate.slice(i, i + CHUNK_SIZE);
-        await Promise.all(
-          chunk.map((item) =>
-            prisma.job.update({
-              where: { id: item.id },
-              data: item.data,
-            })
-          )
+      const normalized =
+        normalizeJobClassification(
+          raw
         );
-      }
+
+
+      map.set(
+        getJobExternalId(
+          normalized
+        ),
+        normalized
+      );
+
     }
 
-    let closedCount = 0;
-    if (incomingJobs.length > 0) {
-      const activeExisting = existingJobs.filter((j) => j.isActive && j.externalJobId);
-      const jobsToClose = activeExisting.filter((j) => !incomingIds.has(j.externalJobId!));
-      closedCount = jobsToClose.length;
 
-      if (closedCount > 0) {
-        await prisma.job.updateMany({
-          where: { id: { in: jobsToClose.map((j) => j.id) } },
-          data: {
-            isActive: false,
-            updatedAt: now,
-          },
-        });
-      }
-    }
+
+    const normalizedJobs =
+      Array.from(
+        map.values()
+      );
+
+
+
+    const sourceComplete =
+      OFFICIAL_ATS.has(ats) &&
+      !(
+        NEVER_CLOSE_ON_EMPTY_RESULT &&
+        normalizedJobs.length === 0
+      );
+
+
 
     return {
-      company: company.name,
-      slug: company.slug,
-      ats: company.ats,
-      status: 'SUCCESS',
-      fetchedCount: incomingJobs.length,
-      newCount,
-      updatedCount,
-      unchangedCount,
-      closedCount,
-      durationMs: Date.now() - startTime,
+
+      jobs:
+        normalizedJobs,
+
+      sourceComplete,
+      sourceSucceeded:true,
     };
-  } catch (error: any) {
+  }catch(error:any){
     return {
-      company: company.name,
-      slug: company.slug,
-      ats: company.ats,
-      status: 'FAILED',
-      fetchedCount: 0,
-      newCount: 0,
-      updatedCount: 0,
-      unchangedCount: 0,
-      closedCount: 0,
-      error: error?.message || 'Sync error',
-      durationMs: Date.now() - startTime,
+      jobs:[],
+      sourceComplete:false,
+      sourceSucceeded:false,
+      error:
+        error.message ||
+        'Fetch failed',
     };
   }
 }
 
-export async function syncAllCompanies(
-  customConfigs?: CompanyConfig[]
-): Promise<SyncResult> {
-  const globalStartTime = Date.now();
-  const targetConfigs = customConfigs || getActiveCompanyConfigs();
+async function fetchCustomCompanyJobs(
+  company:CompanyConfig
+):Promise<NormalizedJob[]>{
 
-  const settleResults = await Promise.allSettled(
-    targetConfigs.map((company) => syncCompany(company))
+
+  const slug =
+    normalizeString(
+      company.slug
+    ).toLowerCase();
+
+
+  const name =
+    normalizeString(
+      company.name
+    ).toLowerCase();
+
+
+
+  if(
+    slug.includes('google') ||
+    name.includes('google')
+  ){
+
+    return fetchGoogleJobs(company);
+
+  }
+
+
+  if(
+    slug.includes('amazon') ||
+    name.includes('amazon')
+  ){
+
+    return fetchAmazonJobs(company);
+
+  }
+
+
+  if(
+    slug.includes('microsoft') ||
+    name.includes('microsoft')
+  ){
+
+    return fetchMicrosoftJobs(company);
+
+  }
+
+
+  if(
+    slug.includes('meta') ||
+    name.includes('meta') ||
+    name.includes('facebook')
+  ){
+
+    return fetchMetaJobs(company);
+
+  }
+
+
+  if(
+    slug.includes('bytedance') ||
+    slug.includes('tiktok') ||
+    name.includes('tiktok')
+  ){
+
+    return fetchByteDanceJobs(company);
+
+  }
+
+
+  if(
+    slug.includes('nvidia') ||
+    name.includes('nvidia')
+  ){
+
+    return fetchNvidiaJobs(company);
+
+  }
+
+
+  if(
+    slug.includes('tesla') ||
+    name.includes('tesla')
+  ){
+
+    return fetchTeslaJobs(company);
+
+  }
+
+
+  if(
+    slug.includes('apple') ||
+    name.includes('apple')
+  ){
+
+    return fetchAppleJobs(company);
+
+  }
+
+
+  return [];
+
+}
+
+
+
+
+
+async function fetchGoogleJobs(
+  company:CompanyConfig
+):Promise<NormalizedJob[]>{
+
+
+  const response =
+    await fetch(
+      'https://careers.google.com/api/v3/search/?j=Software%20Engineer&location=United%20States',
+      {
+        headers:BROWSER_HEADERS
+      }
+    );
+
+
+  if(!response.ok){
+
+    throw new Error(
+      `Google API ${response.status}`
+    );
+
+  }
+
+
+  const data =
+    await response.json();
+
+
+
+  return (
+    data?.jobs || []
+  ).map(
+    (job:any)=>{
+
+      const id =
+        String(job.id || '');
+
+      const url =
+        job.apply_url ||
+        `https://careers.google.com/jobs/results/${id}`;
+
+
+      return {
+
+        reqId:id,
+
+        externalJobId:id,
+
+        company:company.name,
+
+        companyName:company.name,
+
+        companySlug:company.slug,
+
+        title:
+          job.title || '',
+
+        location:
+          job.locations?.[0]?.display_name ||
+          'United States',
+
+        locations:[],
+
+        isRemote:false,
+
+        department:'Engineering',
+
+        team:'Engineering',
+
+        employmentType:undefined,
+
+        category:'Engineering',
+
+        track:'Fullstack',
+
+        level:undefined,
+
+        description:
+          job.summary || '',
+
+        jobUrl:url,
+
+        applyUrl:url,
+
+        postedAt:
+          normalizeDate(
+            job.created
+          ),
+
+        source:'custom',
+
+        ats:'custom',
+
+      };
+
+    }
   );
 
-  const details: CompanySyncResult[] = settleResults.map((res, index) => {
-    if (res.status === 'fulfilled') {
-      return res.value;
-    }
-    return {
-      company: targetConfigs[index].name,
-      slug: targetConfigs[index].slug,
-      ats: targetConfigs[index].ats,
-      status: 'FAILED',
-      fetchedCount: 0,
-      newCount: 0,
-      updatedCount: 0,
-      unchangedCount: 0,
-      closedCount: 0,
-      error: res.reason?.message || 'Sync rejected',
-      durationMs: 0,
-    };
-  });
 
-  const succeededCompanies = details.filter((d) => d.status === 'SUCCESS').length;
-  const failedCompanies = details.filter((d) => d.status === 'FAILED').length;
+}
+
+
+
+
+
+async function fetchAmazonJobs(
+  company:CompanyConfig
+):Promise<NormalizedJob[]>{
+
+
+  const response =
+    await fetch(
+      'https://www.amazon.jobs/en/search.json?category[]=software-development&country[]=USA',
+      {
+        headers:BROWSER_HEADERS
+      }
+    );
+
+
+  if(!response.ok){
+
+    throw new Error(
+      `Amazon API ${response.status}`
+    );
+
+  }
+
+
+  const data =
+    await response.json();
+
+
+  return (
+    data?.jobs || []
+  ).map(
+    (job:any)=>{
+
+
+      const id =
+        String(
+          job.id ||
+          job.id_icims ||
+          ''
+        );
+
+
+      const url =
+        job.job_path
+          ? `https://www.amazon.jobs${job.job_path}`
+          : 'https://www.amazon.jobs';
+
+
+
+      return {
+
+        reqId:id,
+
+        externalJobId:id,
+
+        company:company.name,
+
+        companyName:company.name,
+
+        companySlug:company.slug,
+
+        title:
+          job.title || '',
+
+        location:
+          job.location ||
+          'United States',
+
+        locations:[],
+
+        isRemote:false,
+
+        department:
+          'Software Development',
+
+        team:'Engineering',
+
+        employmentType:undefined,
+
+        category:'Engineering',
+
+        track:'Fullstack',
+
+        level:undefined,
+
+        description:
+          job.description ||
+          '',
+
+        jobUrl:url,
+
+        applyUrl:url,
+
+        postedAt:
+          normalizeDate(
+            job.posted_date
+          ),
+
+        source:'custom',
+
+        ats:'custom',
+
+      };
+
+
+    }
+  );
+
+
+}
+
+
+
+
+
+async function fetchMicrosoftJobs(
+  company:CompanyConfig
+):Promise<NormalizedJob[]>{
+
+
+  const response =
+    await fetch(
+      'https://gcsservices.careers.microsoft.com/search/api/v1/search?lc=United%20States&p=Software%20Engineering',
+      {
+        headers:BROWSER_HEADERS
+      }
+    );
+
+
+  if(!response.ok){
+
+    throw new Error(
+      `Microsoft API ${response.status}`
+    );
+
+  }
+
+
+  const data =
+    await response.json();
+
+
+  const jobs =
+    data?.operationResult?.result?.jobs ||
+    [];
+
+
+
+  return jobs.map(
+    (job:any)=>{
+
+
+      const id =
+        String(job.jobId || '');
+
+
+      const url =
+        `https://jobs.careers.microsoft.com/global/en/job/${id}`;
+
+
+
+      return {
+
+        reqId:id,
+
+        externalJobId:id,
+
+        company:company.name,
+
+        companyName:company.name,
+
+        companySlug:company.slug,
+
+        title:
+          job.title || '',
+
+        location:
+          job.properties?.primaryLocation ||
+          'United States',
+
+        locations:[],
+
+        isRemote:false,
+
+        department:
+          'Software Engineering',
+
+        team:'Engineering',
+
+        employmentType:undefined,
+
+        category:'Engineering',
+
+        track:'Fullstack',
+
+        level:undefined,
+
+        description:
+          job.properties?.description ||
+          '',
+
+        jobUrl:url,
+
+        applyUrl:url,
+
+        postedAt:new Date(),
+
+        source:'custom',
+
+        ats:'custom',
+
+      };
+
+
+    }
+  );
+
+
+}
+
+function hasJobChanged(
+  existing:any,
+  incoming:NormalizedJob
+){
+
+  return (
+
+    existing.title !== incoming.title ||
+
+    existing.location !==
+      normalizeString(
+        incoming.location
+      ) ||
+
+    existing.department !==
+      (incoming.department || null) ||
+
+    existing.team !==
+      (incoming.team || null) ||
+
+    existing.employmentType !==
+      (incoming.employmentType || null) ||
+
+    existing.level !==
+      (incoming.level || null) ||
+
+    existing.description !==
+      (incoming.description || null) ||
+
+    existing.applyUrl !==
+      incoming.applyUrl ||
+
+    existing.isActive === false
+
+  );
+
+}
+
+
+
+
+
+export async function syncCompany(
+  company:CompanyConfig
+):Promise<CompanySyncResult>{
+
+
+  const startTime =
+    Date.now();
+
+
+
+  const warnings:string[]=[];
+
+
+
+  if(!company.enabled){
+
+    return {
+
+      company:company.name,
+
+      slug:company.slug,
+
+      ats:company.ats,
+
+      status:'SKIPPED' as const,
+
+      fetchedCount:0,
+
+      newCount:0,
+
+      updatedCount:0,
+
+      unchangedCount:0,
+
+      closedCount:0,
+
+      skippedCloseCount:0,
+
+      warningCount:0,
+
+      warnings:[],
+
+      durationMs:0,
+
+    };
+
+  }
+
+
+
+  try{
+
+
+    const sourceResult =
+      await fetchWithTimeout(
+        company
+      );
+
+
+
+    if(!sourceResult.sourceSucceeded){
+
+
+      await prisma.company.updateMany({
+
+        where:{
+          slug:company.slug
+        },
+
+        data:{
+
+          syncStatus:'FAILED',
+
+          lastError:
+            sourceResult.error ||
+            'Source failed',
+
+        },
+
+      });
+
+
+
+      return {
+
+        company:company.name,
+
+        slug:company.slug,
+
+        ats:company.ats,
+
+        status:'FAILED' as const,
+
+        fetchedCount:0,
+
+        newCount:0,
+
+        updatedCount:0,
+
+        unchangedCount:0,
+
+        closedCount:0,
+
+        skippedCloseCount:0,
+
+        warningCount:0,
+
+        warnings:[],
+
+        error:
+          sourceResult.error,
+
+        durationMs:
+          Date.now()-startTime,
+
+      };
+
+
+    }
+
+
+
+    const incomingJobs =
+      sourceResult.jobs;
+
+
+
+    /**
+     * 核心保护:
+     *
+     * ATS 返回空数组
+     *
+     * 不允许关闭任何岗位
+     */
+
+
+    if(
+      incomingJobs.length===0
+    ){
+
+      warnings.push(
+        'Source returned 0 jobs. Close operation skipped.'
+      );
+
+    }
+
+
+
+
+    const existingJobs =
+      await prisma.job.findMany({
+
+        where:{
+          companySlug:
+            company.slug,
+        },
+
+      });
+
+
+
+
+    const existingMap =
+      new Map<string,any>();
+
+
+
+    for(
+      const job of existingJobs
+    ){
+
+      if(
+        job.externalJobId
+      ){
+
+        existingMap.set(
+
+          String(
+            job.externalJobId
+          ),
+
+          job
+
+        );
+
+      }
+
+    }
+
+
+
+
+    const incomingMap =
+      new Map<string,NormalizedJob>();
+
+
+
+    for(
+      const job of incomingJobs
+    ){
+
+      const id =
+        getJobExternalId(job);
+
+
+      if(id){
+
+        incomingMap.set(
+          id,
+          job
+        );
+
+      }
+
+    }
+
+
+
+
+    const uniqueIncomingJobs =
+      Array.from(
+        incomingMap.values()
+      );
+
+
+
+    const incomingIds =
+      new Set(
+        uniqueIncomingJobs.map(
+          getJobExternalId
+        )
+      );
+
+
+
+    const now =
+      new Date();
+
+
+
+    const jobsToCreate:any[]=[];
+
+
+    const jobsToUpdate:any[]=[];
+
+
+
+    let unchangedCount=0;
+
+
+
+    for(
+      const incoming of uniqueIncomingJobs
+    ){
+
+      const id =
+        getJobExternalId(
+          incoming
+        );
+
+
+      const existing =
+        existingMap.get(id);
+
+
+
+      const data={
+
+
+        externalJobId:id,
+
+
+        ats:
+          incoming.ats ||
+          company.ats.toLowerCase(),
+
+
+        companyName:
+          company.name,
+
+
+        companySlug:
+          company.slug,
+
+
+        title:
+          incoming.title,
+
+
+        location:
+          incoming.location ||
+          'United States',
+
+
+        locations:
+          incoming.locations || [],
+
+
+        isRemote:
+          Boolean(
+            incoming.isRemote
+          ),
+
+
+        department:
+          incoming.department ||
+          null,
+
+
+        team:
+          incoming.team ||
+          null,
+
+
+        employmentType:
+          incoming.employmentType ||
+          null,
+
+
+        level:
+          incoming.level ||
+          null,
+
+
+        description:
+          incoming.description ||
+          null,
+
+
+        jobUrl:
+          incoming.jobUrl ||
+          incoming.applyUrl,
+
+
+        applyUrl:
+          incoming.applyUrl ||
+          incoming.jobUrl,
+
+
+        postedAt:
+          normalizeDate(
+            incoming.postedAt
+          ),
+
+
+        lastSeenAt:
+          now,
+
+
+        isActive:true,
+
+      };
+
+
+
+      if(!existing){
+
+
+        jobsToCreate.push({
+
+          ...data,
+
+          firstSeenAt:now,
+
+        });
+
+
+        continue;
+
+      }
+
+
+
+      if(
+        hasJobChanged(
+          existing,
+          incoming
+        )
+      ){
+
+
+        jobsToUpdate.push({
+
+          id:existing.id,
+
+          data,
+
+        });
+
+
+      }else{
+
+
+        unchangedCount++;
+
+
+        await prisma.job.update({
+
+          where:{
+            id:existing.id
+          },
+
+          data:{
+
+            lastSeenAt:now,
+
+            isActive:true,
+
+          },
+
+        });
+
+
+      }
+
+
+    }
+    if(jobsToCreate.length>0){
+
+      await prisma.job.createMany({
+
+        data:jobsToCreate,
+
+        skipDuplicates:true,
+
+      });
+
+    }
+
+
+
+    if(jobsToUpdate.length>0){
+
+
+      for(
+        const item of jobsToUpdate
+      ){
+
+        await prisma.job.update({
+
+          where:{
+            id:item.id,
+          },
+
+          data:item.data,
+
+        });
+
+      }
+
+
+    }
+
+
+
+    let closedCount=0;
+
+    let skippedCloseCount=0;
+
+
+
+    /**
+     * 只有 sourceComplete=true
+     *
+     * 才允许关闭不存在的岗位
+     *
+     */
+
+
+    if(
+      sourceResult.sourceComplete
+    ){
+
+
+      const activeJobs =
+        existingJobs.filter(
+          job =>
+            job.isActive &&
+            job.externalJobId
+        );
+
+
+
+      const jobsToClose =
+        activeJobs.filter(
+          job =>
+            !incomingIds.has(
+              String(
+                job.externalJobId
+              )
+            )
+        );
+
+
+
+      if(
+        jobsToClose.length>0
+      ){
+
+
+        closedCount =
+          jobsToClose.length;
+
+
+
+        await prisma.job.updateMany({
+
+          where:{
+
+            companySlug:
+              company.slug,
+
+            isActive:true,
+
+            externalJobId:{
+
+              notIn:
+                jobsToClose.map(
+                  job =>
+                    String(
+                      job.externalJobId
+                    )
+                ),
+
+            },
+
+          },
+
+          data:{
+
+            isActive:false,
+
+          },
+
+        });
+
+
+      }
+
+
+    }else{
+
+
+      /**
+       * source incomplete
+       *
+       * 跳过关闭
+       */
+
+
+      skippedCloseCount =
+        existingJobs.filter(
+          job =>
+            job.isActive
+        ).length;
+
+
+
+      warnings.push(
+        'Source incomplete. Existing jobs were preserved.'
+      );
+
+
+    }
+
+
+
+
+    await prisma.company.updateMany({
+
+      where:{
+
+        slug:
+          company.slug,
+
+      },
+
+
+      data:{
+
+        syncStatus:
+          sourceResult.sourceComplete
+            ? 'SUCCESS'
+            : 'PARTIAL',
+
+        lastSyncedAt:
+          now,
+
+        lastError:null,
+
+      },
+
+    });
+
+
+
+
+    return {
+
+
+      company:
+        company.name,
+
+
+      slug:
+        company.slug,
+
+
+      ats:
+        company.ats,
+
+
+      status:
+        'SUCCESS' as const,
+
+
+      fetchedCount:
+        uniqueIncomingJobs.length,
+
+
+      newCount:
+        jobsToCreate.length,
+
+
+      updatedCount:
+        jobsToUpdate.length,
+
+
+      unchangedCount,
+
+
+      closedCount,
+
+
+      skippedCloseCount,
+
+
+      warningCount:
+        warnings.length,
+
+
+      warnings,
+
+
+      durationMs:
+        Date.now()-startTime,
+
+
+    };
+
+
+
+  }catch(error:any){
+
+
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : String(error);
+
+
+
+    return {
+
+
+      company:
+        company.name,
+
+
+      slug:
+        company.slug,
+
+
+      ats:
+        company.ats,
+
+
+      status:
+        'FAILED',
+
+
+      fetchedCount:0,
+
+
+      newCount:0,
+
+
+      updatedCount:0,
+
+
+      unchangedCount:0,
+
+
+      closedCount:0,
+
+
+      skippedCloseCount:0,
+
+
+      warningCount:0,
+
+
+      warnings:[],
+
+
+      error:
+        message,
+
+
+      durationMs:
+        Date.now()-startTime,
+
+
+    };
+
+
+  }
+
+
+}
+
+
+
+
+export async function syncAllCompanies(
+  customConfigs?:CompanyConfig[]
+):Promise<SyncResult>{
+
+
+  const start =
+    Date.now();
+
+
+
+  const configs =
+    customConfigs ||
+    getActiveCompanyConfigs();
+
+
+
+  const results =
+    await Promise.allSettled(
+
+      configs.map(
+        company =>
+          syncCompany(company)
+      )
+
+    );
+
+
+
+  const details: CompanySyncResult[] =
+  results.map(
+      (result,index)=>{
+
+
+        if(
+          result.status==='fulfilled'
+        ){
+
+          return result.value;
+
+        }
+
+
+
+        const company =
+          configs[index];
+
+
+
+       return {
+
+  company:
+    company.name,
+
+  slug:
+    company.slug,
+
+  ats:
+    company.ats,
+
+  status:
+    'FAILED' as const,
+
+  fetchedCount:0,
+
+  newCount:0,
+
+  updatedCount:0,
+
+  unchangedCount:0,
+
+  closedCount:0,
+
+  skippedCloseCount:0,
+
+  warningCount:1,
+
+  warnings:[
+    'Sync promise rejected'
+  ],
+
+  error:
+    String(
+      result.reason ||
+      'Unknown error'
+    ),
+
+  durationMs:0,
+
+} satisfies CompanySyncResult;
+
+
+      }
+
+    );
+
+
+
+  const failedCompanies =
+    details.filter(
+      item =>
+        item.status==='FAILED'
+    ).length;
+
+
 
   return {
-    success: failedCompanies === 0,
-    totalCompanies: targetConfigs.length,
-    succeededCompanies,
+
+
+    success:
+      failedCompanies===0,
+
+
+    totalCompanies:
+      configs.length,
+
+
+    succeededCompanies:
+      details.filter(
+        item =>
+          item.status==='SUCCESS'
+      ).length,
+
+
     failedCompanies,
-    totalFetched: details.reduce((acc, curr) => acc + curr.fetchedCount, 0),
-    totalNew: details.reduce((acc, curr) => acc + curr.newCount, 0),
-    totalUpdated: details.reduce((acc, curr) => acc + curr.updatedCount, 0),
-    totalUnchanged: details.reduce((acc, curr) => acc + curr.unchangedCount, 0),
-    totalClosed: details.reduce((acc, curr) => acc + curr.closedCount, 0),
-    totalDurationMs: Date.now() - globalStartTime,
+
+
+    totalFetched:
+      details.reduce(
+        (sum,item)=>
+          sum+item.fetchedCount,
+        0
+      ),
+
+
+    totalNew:
+      details.reduce(
+        (sum,item)=>
+          sum+item.newCount,
+        0
+      ),
+
+
+    totalUpdated:
+      details.reduce(
+        (sum,item)=>
+          sum+item.updatedCount,
+        0
+      ),
+
+
+    totalUnchanged:
+      details.reduce(
+        (sum,item)=>
+          sum+item.unchangedCount,
+        0
+      ),
+
+
+    totalClosed:
+      details.reduce(
+        (sum,item)=>
+          sum+item.closedCount,
+        0
+      ),
+
+
+    totalSkippedClose:
+      details.reduce(
+        (sum,item)=>
+          sum+item.skippedCloseCount,
+        0
+      ),
+
+
+    totalDurationMs:
+      Date.now()-start,
+
+
     details,
+
+
   };
+
+
 }
