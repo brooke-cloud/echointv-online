@@ -1,6 +1,8 @@
 import ProblemList from "@/components/ProblemList";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
+import { isDatabaseDisabled } from '@/lib/db-mode';
+
 
 export const metadata: Metadata = {
   title: "Coding Interview Problems",
@@ -12,6 +14,9 @@ export const metadata: Metadata = {
 };
 
 export default async function ProblemsPage() {
+  if (isDatabaseDisabled()) {
+    return null;
+  }
   const problems = await prisma.problem.findMany({
     orderBy: { id: "asc" },
   });

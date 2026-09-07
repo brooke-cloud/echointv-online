@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
+import { isDatabaseDisabled } from '@/lib/db-mode';
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
@@ -7,6 +8,9 @@ const siteUrl =
 
 // 生成网站 Sitemap
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    if (isDatabaseDisabled()) {
+    return [];
+  }
   const [posts, problems] = await Promise.all([
     prisma.post.findMany({
       select: {

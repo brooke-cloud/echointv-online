@@ -1,7 +1,5 @@
 // components/Navbar.tsx
-
 "use client";
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -15,18 +13,14 @@ import {
   ChevronRight,
   Sparkles,
   Code2,
-  Flame,
 } from "lucide-react";
-
 interface UserSession {
   id: string;
   email: string;
   name?: string | null;
   role: string;
 }
-
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
-
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -34,11 +28,9 @@ export default function Navbar() {
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [logoError, setLogoError] = useState(false);
-
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
-
   useEffect(() => {
     async function checkAuth() {
       try {
@@ -57,7 +49,6 @@ export default function Navbar() {
     }
     checkAuth();
   }, [pathname]);
-
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -69,26 +60,19 @@ export default function Navbar() {
       console.error("Logout error:", e);
     }
   };
-
   const isEmailAdmin =
     user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
   const isAdmin = user?.role === "ADMIN" || isEmailAdmin;
-
-  // 🌟 核心：将“大厂招聘”置于“面试真题”前面，并增加动态热度标记
   const navLinks = [
     { name: "首页", href: "/" },
-    { name: "大厂招聘", href: "/jobs", isHot: true },
     { name: "面试真题", href: "/problem" },
     { name: "面试经验", href: "/blog" },
     { name: "我们的服务", href: "/contact" },
   ];
-
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-gray-100/90 bg-white/90 backdrop-blur-md transition-all">
         <div className="mx-auto flex h-18 sm:h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          
-          {/* 🌟 1. Logo 品牌区 */}
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0 group">
             {!logoError ? (
               <Image
@@ -109,15 +93,12 @@ export default function Navbar() {
               Echo<span className="text-blue-600">INTV</span>
             </span>
           </Link>
-
-          {/* 🌟 2. 桌面端精致胶囊导航栏（大厂招聘前置 + UI 优化） */}
           <nav className="hidden md:flex items-center gap-1.5 lg:gap-2 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-200/50">
             {navLinks.map((link) => {
               const isActive =
                 link.href === "/"
                   ? pathname === "/"
                   : pathname.startsWith(link.href);
-
               return (
                 <Link
                   key={link.href}
@@ -129,25 +110,15 @@ export default function Navbar() {
                   }`}
                 >
                   <span>{link.name}</span>
-
-                  {/* HOT 小角标 */}
-                  {link.isHot && (
-                    <span className="ml-1.5 text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-rose-50 text-rose-600 border border-rose-100 leading-none">
-                      HOT
-                    </span>
-                  )}
                 </Link>
               );
             })}
           </nav>
-
-          {/* 🌟 3. 桌面端用户状态区 */}
           <div className="hidden md:flex items-center gap-3">
             {!loading && (
               <>
                 {user ? (
                   <div className="flex items-center gap-3">
-                    {/* 管理员入口 */}
                     {isAdmin && (
                       <Link
                         href="/admin"
@@ -157,8 +128,6 @@ export default function Navbar() {
                         <span>管理后台</span>
                       </Link>
                     )}
-
-                    {/* 个人中心入口 */}
                     <Link
                       href="/profile"
                       className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200/90 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 transition shadow-sm active:scale-95"
@@ -170,8 +139,6 @@ export default function Navbar() {
                         {user.name || user.email.split("@")[0]}
                       </span>
                     </Link>
-
-                    {/* 退出按钮 */}
                     <button
                       onClick={handleLogout}
                       className="text-xs text-gray-400 hover:text-gray-600 font-medium transition px-1"
@@ -198,8 +165,6 @@ export default function Navbar() {
               </>
             )}
           </div>
-
-          {/* 🌟 4. 移动端汉堡菜单按钮 */}
           <div className="flex md:hidden items-center gap-2">
             <button
               type="button"
@@ -214,24 +179,16 @@ export default function Navbar() {
               )}
             </button>
           </div>
-
         </div>
       </header>
-
-      {/* 🌟 5. 移动端全屏滑出式抽屉菜单 */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden animate-fadeIn">
-          {/* 背景遮罩 */}
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
-
-          {/* 抽屉内容主体 */}
           <div className="fixed inset-y-0 right-0 w-4/5 max-w-sm bg-white shadow-2xl flex flex-col justify-between p-6 z-50 overflow-y-auto">
             <div className="space-y-6">
-              
-              {/* 抽屉头部 */}
               <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                 <div className="flex items-center gap-2.5">
                   {!logoError ? (
@@ -259,15 +216,12 @@ export default function Navbar() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-
-              {/* 移动端主导航链接 */}
               <nav className="space-y-1.5">
                 {navLinks.map((link) => {
                   const isActive =
                     link.href === "/"
                       ? pathname === "/"
                       : pathname.startsWith(link.href);
-
                   return (
                     <Link
                       key={link.href}
@@ -278,21 +232,12 @@ export default function Navbar() {
                           : "text-gray-700 hover:bg-gray-50"
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span>{link.name}</span>
-                        {link.isHot && (
-                          <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-rose-50 text-rose-600 border border-rose-100">
-                            HOT
-                          </span>
-                        )}
-                      </div>
+                      <span>{link.name}</span>
                       <ChevronRight className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-gray-300"}`} />
                     </Link>
                   );
                 })}
               </nav>
-
-              {/* VIP 专区卡片 */}
               <div className="pt-2">
                 <Link
                   href="/pricing"
@@ -306,8 +251,6 @@ export default function Navbar() {
                 </Link>
               </div>
             </div>
-
-            {/* 抽屉底部用户账户区 */}
             <div className="pt-6 border-t border-gray-100 space-y-3">
               {user ? (
                 <div className="space-y-3">
@@ -324,7 +267,6 @@ export default function Navbar() {
                       </div>
                     </div>
                   </div>
-
                   {isAdmin && (
                     <Link
                       href="/admin"
@@ -334,7 +276,6 @@ export default function Navbar() {
                       <span>👑 进入管理后台</span>
                     </Link>
                   )}
-
                   <Link
                     href="/profile"
                     className="flex w-full items-center justify-center gap-2 px-4 py-3 rounded-2xl border border-gray-200 bg-white text-gray-800 text-sm font-bold hover:bg-gray-50 shadow-sm transition"
@@ -342,7 +283,6 @@ export default function Navbar() {
                     <User className="h-4 w-4 text-gray-500" />
                     <span>👤 个人中心</span>
                   </Link>
-
                   <button
                     onClick={handleLogout}
                     className="flex w-full items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold text-gray-400 hover:text-red-600 transition"
@@ -368,7 +308,6 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-
           </div>
         </div>
       )}

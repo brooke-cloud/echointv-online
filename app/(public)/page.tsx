@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { isDatabaseDisabled } from "@/lib/db-mode";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -13,25 +14,21 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const [totalProblems, totalPosts, distinctCompanies, freeProblems, freePosts] =
-    await Promise.all([
-      prisma.problem.count(),
-      prisma.post.count(),
-      prisma.problem.findMany({ select: { company: true }, distinct: ["company"] }),
-      // 🌟 题目固定展示前 6 道
-      prisma.problem.findMany({ take: 6, orderBy: { id: "asc" } }),
-      // 🌟 文章固定展示前 6 篇
-      prisma.post.findMany({ take: 6, orderBy: { id: "asc" } }),
-    ]);
-  const companyList =
-    distinctCompanies.map((c) => c.company).filter(Boolean).length > 0
-      ? distinctCompanies.map((c) => c.company).filter(Boolean)
-      : ["Google", "Meta", "Amazon", "TikTok", "Microsoft", "Apple", "ByteDance"];
-
-  const stats = [
-    { value: `${totalProblems > 0 ? totalProblems : 6}+`, label: "Interview Problems" },
-    { value: `${totalPosts > 0 ? totalPosts : 5}+`, label: "Interview Articles" },
-    { value: `${companyList.length || 4}+`, label: "Companies Covered" },
-  ];
+  isDatabaseDisabled()
+    ? [0, 0, [], [], []]
+    : await Promise.all([
+        prisma.problem.count(),
+        prisma.post.count(),
+        prisma.problem.findMany({ select: { company: true }, distinct: ["company"] }),
+        prisma.problem.findMany({ take: 6, orderBy: { id: "asc" } }),
+        prisma.post.findMany({ take: 6, orderBy: { id: "asc" } }),
+      ]);
+const companyList = distinctCompanies.map((c) => c.company).filter(Boolean);
+const stats = [
+  { value: `${totalProblems}`, label: "Interview Problems" },
+  { value: `${totalPosts}`, label: "Interview Articles" },
+  { value: `${companyList.length}`, label: "Companies Covered" },
+];
 
   return (
     <main className="min-h-screen bg-white">

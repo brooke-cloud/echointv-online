@@ -1,5 +1,5 @@
 // app/(public)/problem/[slug]/page.tsx
-
+import { isDatabaseDisabled } from '@/lib/db-mode';
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -30,6 +30,9 @@ export const dynamicParams = true;
 
 // ⚡ 2. 预生成静态路由参数
 export async function generateStaticParams() {
+  if (isDatabaseDisabled()) {
+    return [];
+  }
   const problems = await prisma.problem.findMany({
     select: { slug: true },
   });

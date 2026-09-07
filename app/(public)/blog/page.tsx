@@ -1,10 +1,9 @@
 // app/(public)/blog/page.tsx
-
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { isDatabaseDisabled } from "@/lib/db-mode";
 import BlogList from "@/components/BlogList";
 import type { Metadata } from "next";
-
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -15,12 +14,13 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function BlogPage() {
-  // 按最早发布正序查询（确保最底部的文章为前 6 篇免费）
-  const rawPosts = await prisma.post.findMany({
-    orderBy: {
-      id: "asc",
-    },
-  });
+  const rawPosts = isDatabaseDisabled()
+    ? []
+    : await prisma.post.findMany({
+        orderBy: {
+          id: "asc",
+        },
+      });
 
   // 处理 company 与 content 兼容
   const posts = rawPosts.map((post, index) => ({

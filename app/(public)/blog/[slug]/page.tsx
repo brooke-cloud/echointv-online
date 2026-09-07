@@ -23,16 +23,14 @@ type Props = {
 };
 
 // ⚡ 1. 开启 ISR 增量静态再生（每 60 秒后台静默刷新）
-export const revalidate = 60;
-
-// ⚡ 2. 预生成静态文章路由
 export async function generateStaticParams() {
+  if (process.env.SKIP_DATABASE === 'true') {
+    return [];
+  }
   const posts = await prisma.post.findMany({
     select: { slug: true },
   });
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
+  return posts.map((post) => ({ slug: post.slug }));
 }
 
 // 1. 动态生成博客详情页 SEO 元数据

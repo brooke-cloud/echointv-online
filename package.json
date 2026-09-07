@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "next start",
-    "sync-jobs": "node scripts/crawl-jobs.js"
+    "start": "next start"
   },
   "dependencies": {
     "@paddle/paddle-node-sdk": "^3.10.0",
@@ -25,6 +24,7 @@
     "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
     "rehype-katex": "^7.0.1",
+    "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0"
   },
