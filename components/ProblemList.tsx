@@ -313,9 +313,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
                     ? problem.topics.join(" · ")
                     : problem.category}
                 </span>
-                <span className="text-blue-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                  查看解析 →
-                </span>
               </div>
             </Link>
           );

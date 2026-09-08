@@ -86,9 +86,7 @@ export default function BlogCard({
         <div>
           {post.date} · 预计阅读 {post.readingTime}
         </div>
-        <span className="text-blue-600 font-semibold group-hover:underline flex items-center gap-1">
-          阅读全文 →
-        </span>
+        
       </div>
     </Link>
   );
