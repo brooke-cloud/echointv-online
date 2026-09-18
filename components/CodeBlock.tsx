@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import CopyButton from "./CopyButton";
-import hljs from "highlight.js";
+import { highlightSolution, resolveSolution } from "@/lib/solution-language";
 import "highlight.js/styles/github-dark.css";
 
 type CodeBlockProps = {
@@ -13,25 +13,14 @@ type CodeBlockProps = {
 
 export default function CodeBlock({
   code,
-  language = "python",
-  title = "Solution",
+  language,
+  title,
 }: CodeBlockProps) {
-  const [highlightedHtml, setHighlightedHtml] = useState<string>("");
-
-  useEffect(() => {
-    if (!code) return;
-    try {
-      if (language && hljs.getLanguage(language)) {
-        const res = hljs.highlight(code, { language });
-        setHighlightedHtml(res.value);
-      } else {
-        const res = hljs.highlightAuto(code);
-        setHighlightedHtml(res.value);
-      }
-    } catch {
-      setHighlightedHtml(code);
-    }
-  }, [code, language]);
+  const solution = useMemo(() => resolveSolution(code, language), [code, language]);
+  const highlightedHtml = useMemo(
+    () => highlightSolution(solution.code, solution.language),
+    [solution.code, solution.language],
+  );
 
   return (
     <div className="my-4 overflow-hidden rounded-2xl border border-gray-800 bg-[#0d1117] shadow-xl">
@@ -46,21 +35,21 @@ export default function CodeBlock({
           </div>
           {/* 语言名称标签 */}
           <span className="ml-2 font-mono text-xs font-semibold text-gray-300">
-            {title}
+            {title || solution.title}
           </span>
         </div>
 
         {/* 右上角复制按钮 */}
-        <CopyButton text={code} />
+        <CopyButton text={solution.code} />
       </div>
 
       {/* 语法着色代码内容 */}
       <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed text-gray-100">
-        <code
-          dangerouslySetInnerHTML={{
-            __html: highlightedHtml || code,
-          }}
-        />
+        {highlightedHtml !== null ? (
+          <code className={`language-${solution.language}`} dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
+        ) : (
+          <code className="language-plaintext">{solution.code}</code>
+        )}
       </pre>
     </div>
   );

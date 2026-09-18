@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/user-auth";
 import PaywallCard from "@/components/PaywallCard";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import CodeBlock from "@/components/CodeBlock";
+import { resolveSolution } from "@/lib/solution-language";
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,65 +23,6 @@ import {
 
 type Props = {
   params: Promise<{ slug: string }>;
-};
-
-type SolutionLanguage =
-  | "python"
-  | "java"
-  | "cpp"
-  | "javascript"
-  | "typescript"
-  | "go"
-  | "rust"
-  | "c"
-  | string;
-
-const getSolutionLanguageLabel = (language: SolutionLanguage) => {
-  switch (language?.toLowerCase()) {
-    case "python":
-    case "py":
-      return "Python 3";
-    case "java":
-      return "Java";
-    case "cpp":
-    case "c++":
-      return "C++";
-    case "javascript":
-    case "js":
-      return "JavaScript";
-    case "typescript":
-    case "ts":
-      return "TypeScript";
-    case "go":
-    case "golang":
-      return "Go";
-    case "rust":
-    case "rs":
-      return "Rust";
-    case "c":
-      return "C";
-    default:
-      return language || "Python 3";
-  }
-};
-
-const getSolutionCodeLanguage = (language: SolutionLanguage) => {
-  switch (language?.toLowerCase()) {
-    case "py":
-      return "python";
-    case "c++":
-      return "cpp";
-    case "js":
-      return "javascript";
-    case "ts":
-      return "typescript";
-    case "golang":
-      return "go";
-    case "rs":
-      return "rust";
-    default:
-      return language || "python";
-  }
 };
 
 // ⚡ 1. 开启 ISR 增量静态再生与动态路由放行
@@ -218,15 +160,7 @@ export default async function ProblemDetailPage({ params }: Props) {
     notFound();
   }
 
-  // solutionLanguage 默认使用 Python，兼容历史数据
-  const solutionLanguage =
-    ((problem as any).solutionLanguage as SolutionLanguage) || "python";
-
-  const solutionLanguageLabel =
-    getSolutionLanguageLabel(solutionLanguage);
-
-  const solutionCodeLanguage =
-    getSolutionCodeLanguage(solutionLanguage);
+  const solution = resolveSolution(problem.solution, problem.solutionLanguage);
 
   // 前 6 道题免费
   const freeProblems = await prisma.problem.findMany({
@@ -509,14 +443,14 @@ export default async function ProblemDetailPage({ params }: Props) {
                     <Code2 className="h-5 w-5 text-blue-600" />
 
                     <span>
-                      Solution ({solutionLanguageLabel} 最优解)
+                      {solution.heading}
                     </span>
                   </h2>
 
                   <CodeBlock
                     code={problem.solution}
-                    language={solutionCodeLanguage}
-                    title={`${solutionLanguageLabel} Solution`}
+                    language={problem.solutionLanguage}
+                    title={solution.title}
                   />
                 </div>
               )}
