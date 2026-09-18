@@ -9,24 +9,25 @@ datasource db {
 }
 
 model Problem {
-  id              Int      @id @default(autoincrement())
-  slug            String   @unique
-  title           String
-  company         String
-  role            String
-  difficulty      String
-  stage           String   @default("VO") // 🌟 必须加上这一行
-  category        String
-  description     String
-  example         String
-  approach        String
-  solution        String
-  similarProblems String?  // 🌟 新增：LeetCode 相似题目（如: "373. 查找和最小的 K 对数字, 378. 有序矩阵中第 K 小的元素"）
-  timeComplexity  String
-  spaceComplexity String
-  topics          String[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               Int      @id @default(autoincrement())
+  slug             String   @unique
+  title            String
+  company          String
+  role             String
+  difficulty       String
+  stage            String   @default("VO")
+  category         String
+  description      String
+  example          String
+  approach         String
+  solution         String
+  solutionLanguage String   @default("python")
+  similarProblems  String?
+  timeComplexity   String
+  spaceComplexity  String
+  topics           String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   progress        UserProblemProgress[]
   favorites       Favorite[]

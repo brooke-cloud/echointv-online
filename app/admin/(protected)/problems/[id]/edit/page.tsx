@@ -50,7 +50,10 @@ export default async function EditProblemPage({ params }: Props) {
         >
           {/* Title */}
           <div>
-            <label htmlFor="title" className="font-semibold text-gray-900 text-sm">
+            <label
+              htmlFor="title"
+              className="font-semibold text-gray-900 text-sm"
+            >
               Title
             </label>
             <input
@@ -65,7 +68,10 @@ export default async function EditProblemPage({ params }: Props) {
           {/* Company & Role */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="company" className="font-semibold text-gray-900 text-sm">
+              <label
+                htmlFor="company"
+                className="font-semibold text-gray-900 text-sm"
+              >
                 Company
               </label>
               <input
@@ -76,8 +82,12 @@ export default async function EditProblemPage({ params }: Props) {
                 className={inputStyle}
               />
             </div>
+
             <div>
-              <label htmlFor="role" className="font-semibold text-gray-900 text-sm">
+              <label
+                htmlFor="role"
+                className="font-semibold text-gray-900 text-sm"
+              >
                 Role (e.g. Software Engineer)
               </label>
               <input
@@ -92,7 +102,10 @@ export default async function EditProblemPage({ params }: Props) {
           {/* Difficulty & Stage & Category */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
-              <label htmlFor="difficulty" className="font-semibold text-gray-900 text-sm">
+              <label
+                htmlFor="difficulty"
+                className="font-semibold text-gray-900 text-sm"
+              >
                 Difficulty
               </label>
               <select
@@ -108,7 +121,10 @@ export default async function EditProblemPage({ params }: Props) {
             </div>
 
             <div>
-              <label htmlFor="stage" className="font-semibold text-gray-900 text-sm">
+              <label
+                htmlFor="stage"
+                className="font-semibold text-gray-900 text-sm"
+              >
                 Stage (考核形式)
               </label>
               <select
@@ -123,7 +139,10 @@ export default async function EditProblemPage({ params }: Props) {
             </div>
 
             <div>
-              <label htmlFor="category" className="font-semibold text-gray-900 text-sm">
+              <label
+                htmlFor="category"
+                className="font-semibold text-gray-900 text-sm"
+              >
                 Category
               </label>
               <input
@@ -138,7 +157,10 @@ export default async function EditProblemPage({ params }: Props) {
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="font-semibold text-gray-900 text-sm">
+            <label
+              htmlFor="description"
+              className="font-semibold text-gray-900 text-sm"
+            >
               Problem Description
             </label>
             <textarea
@@ -154,11 +176,18 @@ export default async function EditProblemPage({ params }: Props) {
           {/* Example */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label htmlFor="example" className="font-semibold text-gray-900 text-sm">
+              <label
+                htmlFor="example"
+                className="font-semibold text-gray-900 text-sm"
+              >
                 Example (输入输出示例 - 支持 Markdown 格式)
               </label>
-              <span className="text-xs text-blue-600">Markdown Format Supported</span>
+
+              <span className="text-xs text-blue-600">
+                Markdown Format Supported
+              </span>
             </div>
+
             <textarea
               id="example"
               name="example"
@@ -172,11 +201,18 @@ export default async function EditProblemPage({ params }: Props) {
           {/* Approach */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label htmlFor="approach" className="font-semibold text-gray-900 text-sm">
+              <label
+                htmlFor="approach"
+                className="font-semibold text-gray-900 text-sm"
+              >
                 Approach (解题思路 - 支持 Markdown)
               </label>
-              <span className="text-xs text-blue-600">Markdown Format Supported</span>
+
+              <span className="text-xs text-blue-600">
+                Markdown Format Supported
+              </span>
             </div>
+
             <textarea
               id="approach"
               name="approach"
@@ -187,29 +223,73 @@ export default async function EditProblemPage({ params }: Props) {
             />
           </div>
 
+          {/* Solution Language */}
+          <div>
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="solutionLanguage"
+                className="font-semibold text-gray-900 text-sm"
+              >
+                Solution Language
+              </label>
+
+              <span className="text-xs text-gray-400">
+                选择 Solution 使用的编程语言
+              </span>
+            </div>
+
+            <select
+              id="solutionLanguage"
+              name="solutionLanguage"
+              defaultValue={
+                (problem as any).solutionLanguage || "python"
+              }
+              className={inputStyle}
+            >
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+              <option value="javascript">JavaScript</option>
+              <option value="typescript">TypeScript</option>
+              <option value="go">Go</option>
+              <option value="rust">Rust</option>
+              <option value="c">C</option>
+            </select>
+          </div>
+
           {/* Solution Code */}
           <div>
-            <label htmlFor="solution" className="font-semibold text-gray-900 text-sm">
+            <label
+              htmlFor="solution"
+              className="font-semibold text-gray-900 text-sm"
+            >
               Solution (核心代码)
             </label>
+
             <textarea
               id="solution"
               name="solution"
-              rows={8}
+              rows={12}
               defaultValue={problem.solution || ""}
               className={`${inputStyle} font-mono`}
+              placeholder="请输入 Solution 代码..."
             />
           </div>
 
-          {/* 🌟 核心升级：Time Complexity 与 Space Complexity 改为多行 Textarea */}
+          {/* Time Complexity & Space Complexity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="timeComplexity" className="font-semibold text-gray-900 text-sm">
+                <label
+                  htmlFor="timeComplexity"
+                  className="font-semibold text-gray-900 text-sm"
+                >
                   Time Complexity (支持换行与 Markdown)
                 </label>
+
                 <span className="text-xs text-gray-400">支持列表</span>
               </div>
+
               <textarea
                 id="timeComplexity"
                 name="timeComplexity"
@@ -222,11 +302,16 @@ export default async function EditProblemPage({ params }: Props) {
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="spaceComplexity" className="font-semibold text-gray-900 text-sm">
+                <label
+                  htmlFor="spaceComplexity"
+                  className="font-semibold text-gray-900 text-sm"
+                >
                   Space Complexity (支持换行与 Markdown)
                 </label>
+
                 <span className="text-xs text-gray-400">支持列表</span>
               </div>
+
               <textarea
                 id="spaceComplexity"
                 name="spaceComplexity"
@@ -240,28 +325,48 @@ export default async function EditProblemPage({ params }: Props) {
 
           {/* Topics */}
           <div>
-            <label htmlFor="topics" className="font-semibold text-gray-900 text-sm">
+            <label
+              htmlFor="topics"
+              className="font-semibold text-gray-900 text-sm"
+            >
               Topics (标签)
             </label>
+
             <input
               id="topics"
               name="topics"
-              defaultValue={Array.isArray(problem.topics) ? problem.topics.join(", ") : ""}
+              defaultValue={
+                Array.isArray(problem.topics)
+                  ? problem.topics.join(", ")
+                  : ""
+              }
               placeholder="e.g. Array, Heap (Priority Queue), Two Pointers"
               className={inputStyle}
             />
-            <p className="mt-1 text-xs text-gray-400">Separate topics with commas.</p>
+
+            <p className="mt-1 text-xs text-gray-400">
+              Separate topics with commas.
+            </p>
           </div>
 
-          {/* LeetCode 相似题目推荐 */}
+          {/* LeetCode Similar Problems */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label htmlFor="similarProblems" className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+              <label
+                htmlFor="similarProblems"
+                className="font-semibold text-gray-900 text-sm flex items-center gap-1.5"
+              >
                 <span>🎯</span>
-                <span>LeetCode 相似题目推荐 (Similar LeetCode Problems)</span>
+                <span>
+                  LeetCode 相似题目推荐 (Similar LeetCode Problems)
+                </span>
               </label>
-              <span className="text-xs text-gray-400">多个题目用逗号隔开</span>
+
+              <span className="text-xs text-gray-400">
+                多个题目用逗号隔开
+              </span>
             </div>
+
             <input
               id="similarProblems"
               name="similarProblems"
@@ -271,7 +376,7 @@ export default async function EditProblemPage({ params }: Props) {
             />
           </div>
 
-          {/* 提交按钮 */}
+          {/* Submit */}
           <button
             type="submit"
             className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 shadow-sm"

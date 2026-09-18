@@ -45,6 +45,7 @@ export async function createProblem(formData: FormData) {
   const example = getFormString(formData, "example", 10000);
   const approach = getFormString(formData, "approach", 20000);
   const solution = getFormString(formData, "solution", 30000);
+  const solutionLanguage = getFormString(formData, "solutionLanguage", 30) || "python";
   const timeComplexity = getFormString(formData, "timeComplexity", 5000);
   const spaceComplexity = getFormString(formData, "spaceComplexity", 5000);
   const topicsValue = getFormString(formData, "topics", 1000);
@@ -82,6 +83,7 @@ export async function createProblem(formData: FormData) {
       example,
       approach,
       solution,
+      solutionLanguage,
       timeComplexity,
       spaceComplexity,
       topics,
@@ -110,6 +112,7 @@ export async function updateProblem(problemId: number, formData: FormData) {
   const example = getFormString(formData, "example", 10000);
   const approach = getFormString(formData, "approach", 20000);
   const solution = getFormString(formData, "solution", 30000);
+  const solutionLanguage = getFormString(formData, "solutionLanguage", 30) || "python";
   const timeComplexity = getFormString(formData, "timeComplexity", 5000);
   const spaceComplexity = getFormString(formData, "spaceComplexity", 5000);
   const topicsValue = getFormString(formData, "topics", 1000);
@@ -145,6 +148,7 @@ export async function updateProblem(problemId: number, formData: FormData) {
       example,
       approach,
       solution,
+      solutionLanguage,
       timeComplexity,
       spaceComplexity,
       topics,
