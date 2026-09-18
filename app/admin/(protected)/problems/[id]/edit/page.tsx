@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { updateProblem } from "../../actions";
+import { resolveSolution } from "@/lib/solution-language";
+
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -242,10 +244,15 @@ export default async function EditProblemPage({ params }: Props) {
               id="solutionLanguage"
               name="solutionLanguage"
               defaultValue={
-                (problem as any).solutionLanguage || "python"
+                resolveSolution(
+                  problem.solution,
+                  problem.solutionLanguage
+                ).language
               }
               className={inputStyle}
             >
+              <option value="plaintext">自动识别 / 未识别</option>
+              <option value="sql">SQL</option>
               <option value="python">Python</option>
               <option value="java">Java</option>
               <option value="cpp">C++</option>

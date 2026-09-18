@@ -218,7 +218,7 @@ export default async function BlogDetailPage({ params }: Props) {
         }}
       />
       <div className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4 print:hidden">
             <Link
               href="/blog"
