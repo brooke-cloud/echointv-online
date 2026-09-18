@@ -332,7 +332,7 @@ export default async function ProblemDetailPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-10 sm:py-12">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
 
         {/* 返回按钮 */}
         <div className="mb-6">
