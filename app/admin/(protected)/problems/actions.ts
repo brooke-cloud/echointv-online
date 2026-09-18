@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/user-auth";
 import { createUniqueProblemSlug } from "@/lib/slug";
 import { getFormString } from "@/lib/validation";
+import { resolveSolution } from "@/lib/solution-language";
 
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
 
@@ -44,8 +45,10 @@ export async function createProblem(formData: FormData) {
   const description = getFormString(formData, "description", 10000);
   const example = getFormString(formData, "example", 10000);
   const approach = getFormString(formData, "approach", 20000);
-  const solution = getFormString(formData, "solution", 30000);
-  const solutionLanguage = getFormString(formData, "solutionLanguage", 30) || "python";
+  const { code: solution, language: solutionLanguage } = resolveSolution(
+    getFormString(formData, "solution", 30000),
+    getFormString(formData, "solutionLanguage", 30),
+  );
   const timeComplexity = getFormString(formData, "timeComplexity", 5000);
   const spaceComplexity = getFormString(formData, "spaceComplexity", 5000);
   const topicsValue = getFormString(formData, "topics", 1000);
@@ -111,8 +114,10 @@ export async function updateProblem(problemId: number, formData: FormData) {
   const description = getFormString(formData, "description", 10000);
   const example = getFormString(formData, "example", 10000);
   const approach = getFormString(formData, "approach", 20000);
-  const solution = getFormString(formData, "solution", 30000);
-  const solutionLanguage = getFormString(formData, "solutionLanguage", 30) || "python";
+  const { code: solution, language: solutionLanguage } = resolveSolution(
+    getFormString(formData, "solution", 30000),
+    getFormString(formData, "solutionLanguage", 30),
+  );
   const timeComplexity = getFormString(formData, "timeComplexity", 5000);
   const spaceComplexity = getFormString(formData, "spaceComplexity", 5000);
   const topicsValue = getFormString(formData, "topics", 1000);

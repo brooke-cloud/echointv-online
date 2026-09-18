@@ -4,7 +4,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-import SyncJobsButton from "@/components/admin/SyncJobsButton";
 
 export default async function AdminDashboardPage() {
   const [

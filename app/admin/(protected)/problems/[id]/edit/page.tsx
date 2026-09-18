@@ -1,5 +1,6 @@
 // app/admin/(protected)/problems/[id]/edit/page.tsx
 
+import { resolveSolution } from "@/lib/solution-language";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -234,7 +235,7 @@ export default async function EditProblemPage({ params }: Props) {
               </label>
 
               <span className="text-xs text-gray-400">
-                选择 Solution 使用的编程语言
+                保存时自动识别代码语言，短片段可手动选择
               </span>
             </div>
 
@@ -242,10 +243,12 @@ export default async function EditProblemPage({ params }: Props) {
               id="solutionLanguage"
               name="solutionLanguage"
               defaultValue={
-                (problem as any).solutionLanguage || "python"
+                resolveSolution(problem.solution, problem.solutionLanguage).language
               }
               className={inputStyle}
             >
+              <option value="plaintext">自动识别 / 未识别</option>
+              <option value="sql">SQL</option>
               <option value="python">Python</option>
               <option value="java">Java</option>
               <option value="cpp">C++</option>

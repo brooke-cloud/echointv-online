@@ -12,145 +12,11 @@ import {
   Loader2,
 } from "lucide-react";
 
-type SolutionLanguage =
-  | "python"
-  | "java"
-  | "cpp"
-  | "javascript"
-  | "typescript"
-  | "go"
-  | "rust"
-  | "c";
-
-const LANGUAGE_LABELS: Record<SolutionLanguage, string> = {
-  python: "Python 3",
-  java: "Java",
-  cpp: "C++",
-  javascript: "JavaScript",
-  typescript: "TypeScript",
-  go: "Go",
-  rust: "Rust",
-  c: "C",
-};
-
-/**
- * Detect programming language from:
- *
- * 1. Solution header
- *    **Solution (Java)**
- *
- * 2. Markdown code fence
- *    ```java
- *
- * 3. Code syntax
- */
-const detectSolutionLanguage = (
-  solutionText: string,
-  solutionHeader: string = ""
-): SolutionLanguage => {
-  const text = `${solutionHeader}\n${solutionText}`;
-  const lowerText = text.toLowerCase();
-
-  // Check fenced code language first.
-  const codeBlockMatch = solutionText.match(
-    /```([a-zA-Z0-9+#.-]+)/
-  );
-
-  const codeLanguage = codeBlockMatch?.[1]?.toLowerCase() || "";
-
-  // Explicit language names.
-  if (
-    codeLanguage === "ts" ||
-    codeLanguage === "typescript" ||
-    lowerText.includes("typescript")
-  ) {
-    return "typescript";
-  }
-
-  if (
-    codeLanguage === "js" ||
-    codeLanguage === "javascript" ||
-    lowerText.includes("javascript") ||
-    lowerText.includes("node.js")
-  ) {
-    return "javascript";
-  }
-
-  if (
-    codeLanguage === "java" ||
-    /\bpublic\s+(class|static)\b/i.test(text) ||
-    /\bimport\s+java\./i.test(text)
-  ) {
-    return "java";
-  }
-
-  if (
-    codeLanguage === "cpp" ||
-    codeLanguage === "c++" ||
-    lowerText.includes("c++") ||
-    lowerText.includes("cpp") ||
-    /#include\s*<iostream>/i.test(text) ||
-    /\bvector\s*</i.test(text)
-  ) {
-    return "cpp";
-  }
-
-  if (
-    codeLanguage === "go" ||
-    lowerText.includes("golang") ||
-    /\bpackage\s+main\b/i.test(text)
-  ) {
-    return "go";
-  }
-
-  if (
-    codeLanguage === "rust" ||
-    codeLanguage === "rs" ||
-    lowerText.includes("rust") ||
-    /\bfn\s+main\s*\(/i.test(text)
-  ) {
-    return "rust";
-  }
-
-  if (
-    codeLanguage === "c" ||
-    /#include\s*<stdio\.h>/i.test(text) ||
-    /\bint\s+main\s*\(/i.test(text)
-  ) {
-    return "c";
-  }
-
-  return "python";
-};
-
-/**
- * Remove the outer Markdown code fence from Solution.
- *
- * Example:
- *
- * ```java
- * public class Solution {
- * }
- * ```
- *
- * becomes:
- *
- * public class Solution {
- * }
- */
-const extractSolutionCode = (solutionText: string): string => {
-  const trimmed = solutionText.trim();
-
-  const match = trimmed.match(
-    /^```(?:[a-zA-Z0-9+#.-]+)?\s*\n([\s\S]*?)\n```$/i
-  );
-
-  if (match) {
-    return match[1].trim();
-  }
-
-  return trimmed;
-};
+import {
+  LANGUAGE_LABELS,
+  resolveSolution,
+  type SolutionLanguage,
+} from "@/lib/solution-language";
 
 export default function NewProblemPage() {
   const [rawText, setRawText] = useState("");
@@ -169,7 +35,7 @@ export default function NewProblemPage() {
   const [approach, setApproach] = useState("");
   const [solution, setSolution] = useState("");
   const [solutionLanguage, setSolutionLanguage] =
-    useState<SolutionLanguage>("python");
+    useState<SolutionLanguage>("plaintext");
   const [timeComplexity, setTimeComplexity] = useState("");
   const [spaceComplexity, setSpaceComplexity] = useState("");
   const [topics, setTopics] = useState("");
@@ -715,19 +581,10 @@ export default function NewProblemPage() {
      * Fill Solution and detect language.
      */
     if (solutionValue) {
-      const detectedLanguage =
-        detectSolutionLanguage(
-          solutionValue,
-          currentSolutionHeader
-        );
-
-      setSolutionLanguage(
-        detectedLanguage
-      );
-
-      setSolution(
-        extractSolutionCode(solutionValue)
-      );
+      const headerLanguage = currentSolutionHeader.match(/[(（]([^()（）]+)[)）]/)?.[1];
+      const parsedSolution = resolveSolution(solutionValue, headerLanguage);
+      setSolutionLanguage(parsedSolution.language);
+      setSolution(parsedSolution.code);
     }
 
     setParseSuccess(true);
@@ -1184,6 +1041,8 @@ num2 = "456"
                 }
                 className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               >
+                <option value="plaintext">自动识别 / 未识别</option>
+                <option value="sql">SQL</option>
                 <option value="python">
                   Python 3
                 </option>
@@ -1223,9 +1082,10 @@ num2 = "456"
               name="solution"
               rows={16}
               value={solution}
-              onChange={(e) =>
-                setSolution(e.target.value)
-              }
+              onChange={(e) => {
+                setSolution(e.target.value);
+                setSolutionLanguage(resolveSolution(e.target.value).language);
+              }}
               placeholder={`Java:
 
 import java.util.*;
@@ -1237,7 +1097,7 @@ public class Solution {
             />
 
             <p className="mt-2 text-xs text-gray-400">
-              智能解析会自动识别代码语言，你也可以在右上角手动修改。
+              粘贴或修改代码会自动识别语言；短片段识别不出时，可以手动选择。
               当前语言：
               <span className="font-semibold text-gray-600">
                 {" "}
