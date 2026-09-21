@@ -15,7 +15,6 @@ interface Problem {
   category: string;
   description: string;
   topics?: string[];
-  stage?: string;
   isFree?: boolean;
 }
 
@@ -23,7 +22,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
-  const [selectedStage, setSelectedStage] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   // 1. 公司列表去重
@@ -36,7 +34,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
   }, [problems]);
 
   const difficulties = ["All", "Easy", "Medium", "Hard"];
-  const stages = ["All", "OA (线上测评/笔试)", "VO (技术轮面/Onsite)"];
 
   // 2. 提取一级主分类并去重
   const categories = useMemo(() => {
@@ -53,16 +50,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
     });
     return ["All", ...Array.from(set).sort()];
   }, [problems]);
-
-  // 🌟 3. 精准判定 OA / VO（严格以数据库 stage 为准，绝不再误伤 board/load/loan 等英文单词）
-  const isProblemOA = (prob: Problem) => {
-    const st = ((prob as any).stage || "").trim().toUpperCase();
-    if (st === "OA") return true;
-    if (st === "VO") return false;
-
-    // 只有在未显式设置 stage 时，才使用独立单词正则边界匹配 (\bOA\b)
-    return /\bOA\b/i.test(prob.title || "");
-  };
 
   // 综合过滤逻辑
   const filteredProblems = useMemo(() => {
@@ -83,16 +70,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         selectedDifficulty === "All" ||
         p.difficulty.toLowerCase() === selectedDifficulty.toLowerCase();
 
-      const isOA = isProblemOA(p);
-      const isFilterAll = selectedStage === "All" || !selectedStage;
-      const isFilterOA = selectedStage.toUpperCase().includes("OA");
-      const isFilterVO = selectedStage.toUpperCase().includes("VO");
-
-      const matchStage =
-        isFilterAll ||
-        (isFilterOA && isOA) ||
-        (isFilterVO && !isOA);
-
       const pMainCat = p.category
         ? p.category.split(/[,，/]/)[0].replace(/\(.*?\)/g, "").trim().toLowerCase()
         : "";
@@ -102,15 +79,14 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         pMainCat === selectedCategory.toLowerCase() ||
         p.category.toLowerCase().includes(selectedCategory.toLowerCase());
 
-      return matchSearch && matchCompany && matchDifficulty && matchStage && matchCategory;
+      return matchSearch && matchCompany && matchDifficulty && matchCategory;
     });
-  }, [problems, searchQuery, selectedCompany, selectedDifficulty, selectedStage, selectedCategory]);
+  }, [problems, searchQuery, selectedCompany, selectedDifficulty, selectedCategory]);
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setSelectedCompany("All");
     setSelectedDifficulty("All");
-    setSelectedStage("All");
     setSelectedCategory("All");
   };
 
@@ -118,7 +94,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
     searchQuery !== "" ||
     selectedCompany !== "All" ||
     selectedDifficulty !== "All" ||
-    selectedStage !== "All" ||
     selectedCategory !== "All";
 
   return (
@@ -174,28 +149,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
         </div>
       </div>
 
-      {/* 3. Stage 考核形式筛选 */}
-      <div className="space-y-2">
-        <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-          Stage (考核形式)
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {stages.map((st) => (
-            <button
-              key={st}
-              onClick={() => setSelectedStage(st)}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition ${
-                selectedStage === st
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-600"
-              }`}
-            >
-              {st}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* 4. Category 分类筛选 */}
       <div className="space-y-2">
         <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">Category</div>
@@ -234,8 +187,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
       {/* 题目卡片网格 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
         {filteredProblems.map((problem) => {
-          const isOA = isProblemOA(problem);
-
           const originalIndex = problems.findIndex((p) => p.id === problem.id);
           const isFree =
             typeof problem.isFree === "boolean"
@@ -251,7 +202,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
               className="group bg-white rounded-3xl p-6 sm:p-7 border border-gray-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between min-h-[250px] cursor-pointer"
             >
               <div>
-                {/* 顶部：公司名 + [免费/付费 徽章] + [OA/VO 徽章] + [难度 Badge] */}
+                {/* 顶部：公司名 + [免费/付费 徽章] + [难度 Badge] */}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-extrabold text-blue-600 tracking-tight">
                     {problem.company}
@@ -267,17 +218,6 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
                       }`}
                     >
                       {isFree ? "Free" : "Paid"}
-                    </span>
-
-                    {/* 🌟 精准的 OA / VO 徽章 */}
-                    <span
-                      className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                        isOA
-                          ? "bg-purple-50 text-purple-700 border border-purple-200/80"
-                          : "bg-sky-50 text-sky-700 border border-sky-200/80"
-                      }`}
-                    >
-                      {isOA ? "OA" : "VO"}
                     </span>
 
                     {/* 难度 Badge */}
