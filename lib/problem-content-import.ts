@@ -81,6 +81,9 @@ function parseExamples(text: string) {
 
 function parseParameters(text: string) {
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const tableParameters = lines.map((line) => line.replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim())).filter((cells) => cells.length >= 3 && !/^(name|名称)$/i.test(cells[0]) && !cells.every((cell) => /^:?-{2,}:?$/.test(cell))).map((cells) => ({ name: cells[0], type: cells[1], description: cells.slice(2).join(" | ") }));
+  if (tableParameters.length) return tableParameters;
+
   const structured: Array<{ name: string; type: string; description: string }> = [];
   let parameter: { name: string; type: string; description: string } | undefined;
   for (const line of lines) {

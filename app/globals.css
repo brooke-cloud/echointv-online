@@ -219,3 +219,8 @@ body {
 .practice-workspace:not(.practice-workspace-dark) .practice-content .text-slate-700 {
   color: #000000;
 }
+
+/* Preserve the paragraph and blank-line formatting authored in Admin content. */
+.practice-workspace .practice-content section > h2 + p {
+  white-space: pre-wrap;
+}

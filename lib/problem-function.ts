@@ -1,9 +1,35 @@
 export type ProblemFunctionParameter = { name: string; type: string; description: string };
 export type ProblemFunctionDescription = { functionName: string; parameters: ProblemFunctionParameter[]; returnDescription: string };
 export type PracticeLanguage = "Python 3" | "Java" | "C++";
+type AvailableSolutions = { solution?: string | null; solutionLanguage?: string | null; solutionPython?: string | null; solutionJava?: string | null; solutionCpp?: string | null };
 
 const clean = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const safeIdentifier = (value: string, fallback: string) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(value) ? value : fallback;
+
+export function primaryFunctionName(value: string) {
+  const names = functionNames(value);
+  return names.find((name) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) || "solve";
+}
+
+export function functionNames(value: string) {
+  return clean(value).split(/[,，;；\r\n]+/).map((name) => name.replace(/`/g, "").trim()).filter((name) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(name));
+}
+
+export function preferredSolutionLanguage(solutions: AvailableSolutions): PracticeLanguage {
+  if (clean(solutions.solutionPython)) return "Python 3";
+  if (clean(solutions.solutionJava)) return "Java";
+  if (clean(solutions.solutionCpp)) return "C++";
+
+  const legacyCode = clean(solutions.solution);
+  if (/\bdef\s+[A-Za-z_]\w*\s*\(|\bimport\s+heapq\b|\bfrom\s+\w+\s+import\b/.test(legacyCode)) return "Python 3";
+  if (/#include\s*[<"]|\bvector\s*<|\busing\s+namespace\s+std\b|\bpublic\s*:/.test(legacyCode)) return "C++";
+  if (/\bimport\s+java\.|\bPriorityQueue\s*<|\bpublic\s+class\s+/.test(legacyCode)) return "Java";
+
+  const configured = clean(solutions.solutionLanguage).toLowerCase();
+  if (/c\+\+|cpp|cxx/.test(configured)) return "C++";
+  if (/java/.test(configured)) return "Java";
+  return "Python 3";
+}
 
 function defaultDescription(name: string, index: number) {
   const normalized = name.toLowerCase();
@@ -40,7 +66,7 @@ export function parseLegacyFunctionParameters(value?: string | null): ProblemFun
 
 export function normalizeProblemFunctionDescription(value: unknown, legacy?: { functionName?: string | null; functionParameters?: string | null; returnDescription?: string | null }): ProblemFunctionDescription {
   const input = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
-  const functionName = safeIdentifier(clean(input.functionName) || clean(legacy?.functionName) || "solve", "solve");
+  const functionName = clean(input.functionName) || clean(legacy?.functionName) || "solve";
   const structured = Array.isArray(input.parameters) ? input.parameters.map(normalizeParameter).filter((parameter): parameter is ProblemFunctionParameter => Boolean(parameter)) : [];
   return {
     functionName,
@@ -69,23 +95,34 @@ function cppType(type: string) {
   return "auto";
 }
 
-export function createPracticeTemplates(description: ProblemFunctionDescription): Record<PracticeLanguage, string> {
-  const functionName = description.functionName || "solve";
+export function createPracticeTemplates(description: ProblemFunctionDescription, references?: { python?: string | null; java?: string | null; cpp?: string | null }): Record<PracticeLanguage, string> {
+  const declaredNames = functionNames(description.functionName);
+  const namesToRender = declaredNames.length ? declaredNames : ["solve"];
   const names = description.parameters.map((parameter, index) => safeIdentifier(parameter.name, `arg${index + 1}`));
   const pythonParameters = names.join(", ");
   const javaParameters = description.parameters.map((parameter, index) => `${javaType(parameter.type)} ${names[index]}`).join(", ");
   const cppParameters = description.parameters.map((parameter, index) => `${cppType(parameter.type)} ${names[index]}`).join(", ");
+  const escaped = (name: string) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const signatureParameters = (code: string | null | undefined, name: string, fallback: string, language: PracticeLanguage) => {
+    if (!code) return fallback;
+    const prefix = language === "Python 3" ? `(?:^|\\n)\\s*(?:async\\s+)?def\\s+${escaped(name)}` : `\\b${escaped(name)}`;
+    return code.match(new RegExp(`${prefix}\\s*\\(([^)]*)\\)`, language === "Python 3" ? "m" : ""))?.[1]?.trim() || fallback;
+  };
+  const pythonTemplate = namesToRender.map((name) => `def ${name}(${signatureParameters(references?.python, name, pythonParameters, "Python 3")}):\n    # Write your solution here\n    pass`).join("\n\n");
+  const javaMethods = namesToRender.map((name) => `    public Object ${name}(${signatureParameters(references?.java, name, javaParameters, "Java")}) {\n        // Write your solution here\n        return null;\n    }`).join("\n\n");
+  const cppFunctions = namesToRender.map((name) => `auto ${name}(${signatureParameters(references?.cpp, name, cppParameters, "C++")}) {\n    // Write your solution here\n}`).join("\n\n");
   return {
-    "Python 3": `def ${functionName}(${pythonParameters}):\n    # Write your solution here\n    pass\n`,
-    Java: `class Solution {\n    public Object ${functionName}(${javaParameters}) {\n        // Write your solution here\n        return null;\n    }\n}\n`,
-    "C++": `class Solution {\npublic:\n    auto ${functionName}(${cppParameters}) {\n        // Write your solution here\n        return {};\n    }\n};\n`,
+    "Python 3": `${pythonTemplate}\n`,
+    Java: `class Solution {\n${javaMethods}\n}\n`,
+    "C++": `#include <bits/stdc++.h>\nusing namespace std;\n\n${cppFunctions}\n`,
   };
 }
 
 export function alignSolutionFunctionName(code: string, functionName: string, language: PracticeLanguage) {
-  if (!code.trim() || !functionName || functionName === "solve") return code;
-  const targetPattern = new RegExp(`\\b${functionName}\\s*\\(`);
+  const entryFunctionName = primaryFunctionName(functionName);
+  if (!code.trim() || entryFunctionName === "solve") return code;
+  const targetPattern = new RegExp(`\\b${entryFunctionName}\\s*\\(`);
   if (targetPattern.test(code)) return code;
-  if (language === "Python 3") return code.replace(/\bdef\s+solve\s*\(/, `def ${functionName}(`);
-  return code.replace(/\bsolve\s*\(/, `${functionName}(`);
+  if (language === "Python 3") return code.replace(/\bdef\s+solve\s*\(/, `def ${entryFunctionName}(`);
+  return code.replace(/\bsolve\s*\(/, `${entryFunctionName}(`);
 }

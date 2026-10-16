@@ -108,4 +108,20 @@ assert.deepEqual(standaloneParsed.functionDescription.parameters, [
 ]);
 assert.equal(standaloneParsed.functionDescription.returnDescription, "Return up to k pairs.");
 
+const tableParsed = parseProblemImportText(`# 4. Function Description
+Function Name: sigmoid, fit_q1, predict_q1
+
+Parameters
+| NAME | TYPE | DESCRIPTION |
+| --- | --- | --- |
+| X | float[][] / List[List[float]] | Feature matrix containing training or prediction samples |
+| y | int[] / List[int] | Class labels corresponding to training samples |
+| lr | float | Learning rate used by logistic regression |
+`);
+assert.deepEqual(tableParsed.functionDescription.parameters, [
+  { name: "X", type: "float[][] / List[List[float]]", description: "Feature matrix containing training or prediction samples" },
+  { name: "y", type: "int[] / List[int]", description: "Class labels corresponding to training samples" },
+  { name: "lr", type: "float", description: "Learning rate used by logistic regression" },
+]);
+
 console.log("problem-content-import tests passed");

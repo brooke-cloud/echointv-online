@@ -64,6 +64,7 @@ export default async function ProblemDetailPage({ params }: Props) {
     example: problem.example,
     approach: problem.approach,
     solution: problem.solution,
+    solutionLanguage: problem.solutionLanguage,
     topics: problem.topics || [],
     timeComplexity: problem.timeComplexity,
     spaceComplexity: problem.spaceComplexity,
