@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { isDatabaseDisabled } from "@/lib/db-mode";
 import BlogList from "@/components/BlogList";
 import type { Metadata } from "next";
+import { posts as fallbackPosts } from "@/data/posts";
+import { retryAsync } from "@/lib/retry";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -14,13 +16,18 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function BlogPage() {
+  const offlinePosts = fallbackPosts.map((post, index) => ({
+    id: index + 1,
+    company: undefined,
+    ...post,
+  }));
   const rawPosts = isDatabaseDisabled()
-    ? []
-    : await prisma.post.findMany({
+    ? offlinePosts
+    : await retryAsync(() => prisma.post.findMany({
         orderBy: {
           id: "asc",
         },
-      });
+      })).catch(() => offlinePosts);
 
   // 处理 company 与 content 兼容
   const posts = rawPosts.map((post, index) => ({
@@ -34,7 +41,7 @@ export default async function BlogPage() {
   return (
     // 🌟 核心修改：使用 bg-white 纯白通透背景，去除沉闷的暗灰底色
     <main className="min-h-screen bg-white py-12 sm:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="mx-auto w-full space-y-8 px-4 sm:px-6 lg:px-10 2xl:px-14">
         
         {/* 顶部标题区 */}
         <section className="space-y-2">

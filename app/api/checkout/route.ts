@@ -4,22 +4,20 @@ import { NextResponse } from "next/server";
 import { createPayPalOrder } from "@/lib/paypal";
 import { getCurrentUser } from "@/lib/user-auth";
 
-export async function GET() {
+export async function POST() {
   try {
     const user = await getCurrentUser();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
     if (!user) {
-      return NextResponse.redirect(`${siteUrl}/login?redirect=/pricing`);
+      return NextResponse.json({ error: "请先登录后再继续支付" }, { status: 401 });
     }
 
     const approveUrl = await createPayPalOrder(user.id);
-    return NextResponse.redirect(approveUrl);
-  } catch (error: any) {
-    console.error("PayPal Checkout Error:", error);
+    return NextResponse.json({ approveUrl });
+  } catch {
     return NextResponse.json(
-      { error: error.message || "创建支付失败" },
-      { status: 500 }
+      { error: "PayPal 暂时不可用，请稍后重试" },
+      { status: 503, headers: { "Retry-After": "2" } }
     );
   }
 }

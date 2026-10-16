@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, setUserSession } from "@/lib/user-auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { retryAsync } from "@/lib/retry";
 
 // 预设管理员邮箱列表
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
@@ -32,9 +33,9 @@ export async function POST(request: Request) {
     const normalizedEmail = email.toLowerCase().trim();
 
     // 查找用户
-    const user = await prisma.user.findUnique({
+    const user = await retryAsync(() => prisma.user.findUnique({
       where: { email: normalizedEmail },
-    });
+    }));
 
     if (!user) {
       return Response.json(
@@ -76,11 +77,10 @@ export async function POST(request: Request) {
       success: true,
       user: userSession,
     });
-  } catch (error) {
-    console.error("登录接口异常:", error);
+  } catch {
     return Response.json(
-      { error: "服务器内部错误，请稍后重试" },
-      { status: 500 }
+      { error: "登录服务暂时不可用，请稍后重试" },
+      { status: 503, headers: { "Retry-After": "2" } }
     );
   }
 }

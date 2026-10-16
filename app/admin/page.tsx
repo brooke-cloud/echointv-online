@@ -2,11 +2,40 @@
 
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { retryAsync } from "@/lib/retry";
 
 export const dynamic = "force-dynamic";
-import SyncJobsButton from "@/components/admin/SyncJobsButton";
+
+async function loadDashboardData() {
+  return retryAsync(
+    () =>
+      Promise.all([
+        prisma.user.count(),
+        prisma.user.count({ where: { role: "PRO" } }),
+        prisma.problem.count(),
+        prisma.post.count(),
+        prisma.user.findMany({
+          take: 5,
+          orderBy: { createdAt: "desc" },
+          select: { id: true, email: true, name: true, role: true, createdAt: true },
+        }),
+        prisma.problem.findMany({
+          take: 5,
+          orderBy: { createdAt: "desc" },
+          select: { id: true, title: true, company: true, difficulty: true, createdAt: true },
+        }),
+        prisma.post.findMany({
+          take: 5,
+          orderBy: { createdAt: "desc" },
+          select: { id: true, title: true, category: true, date: true, createdAt: true },
+        }),
+      ]),
+    { attempts: 3, delayMs: 500 },
+  );
+}
 
 export default async function AdminDashboardPage() {
+  let databaseUnavailable = false;
   const [
     totalUsers,
     proUsers,
@@ -15,27 +44,10 @@ export default async function AdminDashboardPage() {
     recentUsers,
     recentProblems,
     recentPosts,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { role: "PRO" } }),
-    prisma.problem.count(),
-    prisma.post.count(),
-    prisma.user.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      select: { id: true, email: true, name: true, role: true, createdAt: true },
-    }),
-    prisma.problem.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      select: { id: true, title: true, company: true, difficulty: true, createdAt: true },
-    }),
-    prisma.post.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      select: { id: true, title: true, category: true, date: true, createdAt: true },
-    }),
-  ]);
+  ] = await loadDashboardData().catch(() => {
+    databaseUnavailable = true;
+    return [0, 0, 0, 0, [], [], []] as Awaited<ReturnType<typeof loadDashboardData>>;
+  });
 
   const stats = [
     { title: "注册用户总数", value: totalUsers, desc: "全站注册求职者", icon: "👥" },
@@ -50,6 +62,14 @@ export default async function AdminDashboardPage() {
       
 
     <div className="space-y-8">
+      {databaseUnavailable && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm">
+          <div className="font-bold">数据库连接暂时不可用</div>
+          <p className="mt-1 text-amber-800">
+            Neon 数据库正在唤醒或连接短暂中断。页面已安全加载，请稍后刷新查看最新统计数据。
+          </p>
+        </div>
+      )}
       {/* 顶部标题栏 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

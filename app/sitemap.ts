@@ -8,10 +8,7 @@ const siteUrl =
 
 // 生成网站 Sitemap
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    if (isDatabaseDisabled()) {
-    return [];
-  }
-  const [posts, problems] = await Promise.all([
+  const [posts, problems] = isDatabaseDisabled() ? [[], []] : await Promise.all([
     prisma.post.findMany({
       select: {
         slug: true,
@@ -25,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         updatedAt: true,
       },
     }),
-  ]);
+  ]).catch(() => [[], []] as const);
 
 
   const staticPages: MetadataRoute.Sitemap = [

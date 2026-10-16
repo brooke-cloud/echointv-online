@@ -31,6 +31,11 @@ export default function AdminSidebar() {
       icon: "📝",
     },
     {
+      name: "Interview Import",
+      href: "/admin/ai-import",
+      icon: "✨",
+    },
+    {
       name: "Users (用户与会员)",
       href: "/admin/users",
       icon: "👥",
@@ -57,7 +62,7 @@ export default function AdminSidebar() {
 
         {/* 导航链接列表 */}
         <nav className="space-y-1.5">
-          {navItems.map((item) => {
+          {navItems.filter((item) => item.href !== "/admin/ai-import").map((item) => {
             // 判断当前路径是否激活
             const isActive =
               item.href === "/admin"

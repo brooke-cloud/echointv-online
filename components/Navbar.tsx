@@ -14,6 +14,7 @@ import {
   Sparkles,
   Code2,
 } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 interface UserSession {
   id: string;
   email: string;
@@ -32,22 +33,22 @@ export default function Navbar() {
     setMobileMenuOpen(false);
   }, [pathname]);
   useEffect(() => {
+    let active = true;
+
     async function checkAuth() {
       try {
-        const res = await fetch("/api/auth/me", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user || null);
-        } else {
-          setUser(null);
-        }
+        const data = await fetchJson<{ user: UserSession | null }>("/api/auth/me");
+        if (active) setUser(data.user || null);
       } catch {
-        setUser(null);
+        if (active) setUser(null);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
     checkAuth();
+    return () => {
+      active = false;
+    };
   }, [pathname]);
   const handleLogout = async () => {
     try {

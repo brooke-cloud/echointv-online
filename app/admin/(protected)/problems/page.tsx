@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { deleteProblem } from "./actions";
+import { deleteProblem, deleteProblems } from "./actions";
 import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
+import BulkDeleteControls, { BULK_DELETE_FORM_ID } from "./BulkDeleteControls";
 
 type AdminProblemsPageProps = {
   searchParams: Promise<{
@@ -125,7 +126,9 @@ export default async function AdminProblemsPage({
         )}
 
         {/* Problem 数据表 */}
-        <section className="mt-8 overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <BulkDeleteControls action={deleteProblems} total={problems.length} />
+
+        <section className="mt-4 overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
 
           {/* 表格 */}
           <table className="min-w-[800px] w-full text-left">
@@ -133,6 +136,7 @@ export default async function AdminProblemsPage({
             {/* 表头 */}
             <thead className="bg-gray-50 text-sm text-gray-500">
               <tr>
+                <th className="w-12 px-4 py-4">Select</th>
                 <th className="px-6 py-4">ID</th>
                 <th className="px-6 py-4">Title</th>
                 <th className="px-6 py-4">Company</th>
@@ -150,6 +154,16 @@ export default async function AdminProblemsPage({
                     key={problem.id}
                     className="transition hover:bg-gray-50"
                   >
+                    <td className="px-4 py-5">
+                      <input
+                        type="checkbox"
+                        name="problemIds"
+                        value={problem.id}
+                        form={BULK_DELETE_FORM_ID}
+                        aria-label={`Select ${problem.title}`}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                      />
+                    </td>
                     {/* ID */}
                     <td className="px-6 py-5 text-gray-500">
                       {problem.id}
@@ -212,7 +226,7 @@ export default async function AdminProblemsPage({
               ) : (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-6 py-16 text-center"
                   >
                     <p className="font-medium text-gray-900">

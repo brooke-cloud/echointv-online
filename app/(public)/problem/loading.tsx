@@ -4,7 +4,7 @@ export default function ProblemLoading() {
     <main className="bg-white py-16">
 
       {/* Loading 容器 */}
-      <div className="mx-auto max-w-7xl px-5 sm:px-6">
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-10 2xl:px-14">
 
         {/* 标题 */}
         <div className="h-10 w-72 animate-pulse rounded-lg bg-gray-200" />
@@ -16,7 +16,7 @@ export default function ProblemLoading() {
         <div className="mt-10 h-12 w-full animate-pulse rounded-xl bg-gray-200" />
 
         {/* Problem 卡片 */}
-        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 
           {Array.from({
             length: 6,

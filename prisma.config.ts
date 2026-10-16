@@ -12,8 +12,8 @@ export default defineConfig({
   },
 
   datasource: {
+    // Keep Neon/libpq SSL semantics intact for the Prisma schema engine.
+    // The application adapter performs its own pg-specific normalization.
     url: env("DATABASE_URL"),
-    
   },
-  
 });

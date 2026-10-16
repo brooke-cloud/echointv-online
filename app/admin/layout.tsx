@@ -47,6 +47,7 @@ export default async function AdminLayout({
     { name: "数据大盘", href: "/admin", icon: "📊" },
     { name: "题库管理", href: "/admin/problems", icon: "📚" },
     { name: "面经管理", href: "/admin/posts", icon: "📝" },
+    { name: "Interview Import", href: "/admin/ai-import", icon: "📥" },
     { name: "用户管理", href: "/admin/users", icon: "👥" }, // 🌟 新增用户与会员管理菜单
   ];
 
@@ -66,7 +67,7 @@ export default async function AdminLayout({
           </div>
 
           <nav className="p-4 space-y-1">
-            {navItems.map((item) => (
+            {navItems.filter((item) => item.href !== "/admin/ai-import").map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

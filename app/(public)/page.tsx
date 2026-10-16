@@ -4,6 +4,10 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { isDatabaseDisabled } from "@/lib/db-mode";
 import type { Metadata } from "next";
+import { problems as fallbackProblems } from "@/data/problems";
+import { posts as fallbackPosts } from "@/data/posts";
+import { retryAsync } from "@/lib/retry";
+import HomeLanding from "@/components/HomeLanding";
 
 export const dynamic = "force-dynamic";
 
@@ -13,16 +17,24 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
+  const fallbackData = [
+    fallbackProblems.length,
+    fallbackPosts.length,
+    [...new Set(fallbackProblems.map((problem) => problem.company))].map((company) => ({ company })),
+    fallbackProblems.slice(0, 6),
+    fallbackPosts.slice(0, 6).map((post, index) => ({ id: index + 1, ...post })),
+  ] as const;
+
   const [totalProblems, totalPosts, distinctCompanies, freeProblems, freePosts] =
   isDatabaseDisabled()
-    ? [0, 0, [], [], []]
-    : await Promise.all([
-        prisma.problem.count(),
-        prisma.post.count(),
-        prisma.problem.findMany({ select: { company: true }, distinct: ["company"] }),
-        prisma.problem.findMany({ take: 6, orderBy: { id: "asc" } }),
-        prisma.post.findMany({ take: 6, orderBy: { id: "asc" } }),
-      ]);
+    ? fallbackData
+      : await retryAsync(() => Promise.all([
+          prisma.problem.count(),
+          prisma.post.count(),
+          prisma.problem.findMany({ select: { company: true }, distinct: ["company"] }),
+          prisma.problem.findMany({ take: 6, orderBy: { id: "asc" } }),
+          prisma.post.findMany({ take: 6, orderBy: { id: "asc" } }),
+        ])).catch(() => fallbackData);
 const companyList = distinctCompanies.map((c) => c.company).filter(Boolean);
 const stats = [
   { value: `${totalProblems}`, label: "Interview Problems" },
@@ -31,9 +43,35 @@ const stats = [
 ];
 
   return (
+    <HomeLanding
+      totalProblems={totalProblems}
+      totalPosts={totalPosts}
+      companyCount={companyList.length}
+      questions={freeProblems.map((problem) => ({
+        id: problem.id,
+        slug: problem.slug || String(problem.id),
+        title: problem.title,
+        company: problem.company,
+        difficulty: problem.difficulty,
+        category: problem.category,
+        description: problem.description,
+      }))}
+      experiences={freePosts.map((post) => ({
+        id: post.id,
+        slug: post.slug,
+        title: post.title,
+        company: "company" in post ? post.company : undefined,
+        category: post.category,
+        description: post.description,
+        date: post.date,
+      }))}
+    />
+  );
+
+  void (
     <main className="min-h-screen bg-white">
       {/* 🌟 1. Hero 视觉区与核心数据横幅 */}
-      <section className="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center space-y-8">
+      <section className="mx-auto w-full space-y-8 px-4 pb-12 pt-20 text-center sm:px-6 lg:px-10 2xl:px-14">
         <div>
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold border border-blue-100 shadow-sm">
             ✨ 2026 北美与全球科技大厂面试真题库
@@ -78,7 +116,7 @@ const stats = [
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
             COMPANIES · 收录目标名企高频考题
           </span>
-          <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto">
+          <div className="mx-auto flex w-full flex-wrap items-center justify-center gap-2">
             {companyList.map((company) => (
               <Link
                 key={company}
@@ -93,7 +131,7 @@ const stats = [
         </div>
 
         {/* 📊 核心数据统计横幅 */}
-        <div className="pt-6 max-w-5xl mx-auto">
+        <div className="mx-auto w-full pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {stats.map((stat, idx) => (
               <div key={idx} className="bg-white rounded-2xl p-8 border border-gray-200/80 shadow-sm text-center space-y-2">
@@ -107,7 +145,7 @@ const stats = [
 
       {/* 🌟 2. WHY ECHOINTV 核心特性 */}
       <section className="py-20 bg-gray-50/60 border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+        <div className="mx-auto w-full space-y-4 px-4 text-center sm:px-6 lg:px-10 2xl:px-14">
           <span className="text-xs font-bold tracking-widest text-blue-600 uppercase">
             WHY ECHOINTV 为什么选择 ECHOINTV
           </span>
@@ -169,7 +207,7 @@ const stats = [
 
       {/* 🌟 3. Free Interview Problems (固定展示前 6 道经典题目) */}
       <section className="py-16 bg-white border-t border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="mx-auto w-full space-y-8 px-4 sm:px-6 lg:px-10 2xl:px-14">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -187,7 +225,7 @@ const stats = [
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3">
             {freeProblems.map((p, index) => {
               const isOA =
                 (p as any).stage?.toUpperCase() === "OA" ||
@@ -247,7 +285,7 @@ const stats = [
 
       {/* 🌟 4. Free Articles (固定展示前 6 篇经典文章) */}
       <section className="py-16 bg-gray-50/50 border-t border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="mx-auto w-full space-y-8 px-4 sm:px-6 lg:px-10 2xl:px-14">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Learn</span>

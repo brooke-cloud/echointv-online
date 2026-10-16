@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "OaExam" ALTER COLUMN "status" SET DEFAULT 'PUBLISHED';

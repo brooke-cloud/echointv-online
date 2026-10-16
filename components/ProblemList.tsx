@@ -232,7 +232,7 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
       </div>
 
       {/* 题目卡片网格 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+      <div className="grid grid-cols-1 gap-6 pt-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {filteredProblems.map((problem) => {
           const isOA = isProblemOA(problem);
 

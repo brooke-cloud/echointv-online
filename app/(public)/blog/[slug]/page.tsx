@@ -19,6 +19,7 @@ import {
 type Props = {
   params: Promise<{ slug: string }>;
 };
+export const dynamic = "force-dynamic";
 // 开启 ISR 增量静态再生
 export async function generateStaticParams() {
   if (process.env.SKIP_DATABASE === "true") {
@@ -26,7 +27,7 @@ export async function generateStaticParams() {
   }
   const posts = await prisma.post.findMany({
     select: { slug: true },
-  });
+  }).catch(() => []);
   return posts.map((post) => ({ slug: post.slug }));
 }
 // 动态生成博客详情页 SEO 元数据

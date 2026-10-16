@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { retryAsync } from "@/lib/retry";
 
 const SESSION_SECRET =
   process.env.SESSION_SECRET ||
@@ -111,7 +112,7 @@ export async function getCurrentUser() {
     if (!payload) return null;
 
     // 从数据库二次验证用户仍然存在
-    const user = await prisma.user.findUnique({
+    const user = await retryAsync(() => prisma.user.findUnique({
       where: { id: payload.id },
       select: {
         id: true,
@@ -120,7 +121,7 @@ export async function getCurrentUser() {
         role: true,
         createdAt: true,
       },
-    });
+    }));
 
     return user;
   } catch {

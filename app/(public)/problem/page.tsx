@@ -2,6 +2,8 @@ import ProblemList from "@/components/ProblemList";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import { isDatabaseDisabled } from '@/lib/db-mode';
+import { problems as fallbackProblems } from "@/data/problems";
+import { retryAsync } from "@/lib/retry";
 
 
 export const metadata: Metadata = {
@@ -14,16 +16,19 @@ export const metadata: Metadata = {
 };
 
 export default async function ProblemsPage() {
-  if (isDatabaseDisabled()) {
-    return null;
-  }
-  const problems = await prisma.problem.findMany({
-    orderBy: { id: "asc" },
-  });
+  const offlineProblems = fallbackProblems.map((problem) => ({
+    ...problem,
+    slug: problem.slug ?? String(problem.id),
+  }));
+  const problems = isDatabaseDisabled()
+    ? offlineProblems
+    : await retryAsync(() => prisma.problem.findMany({
+        orderBy: { id: "asc" },
+      })).catch(() => offlineProblems);
 
   return (
     <main className="min-h-screen bg-gray-50 py-16">
-      <div className="mx-auto max-w-7xl px-6">
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-10 2xl:px-14">
         <section>
           <h1 className="text-5xl font-bold tracking-tight text-gray-900">
             面试真题

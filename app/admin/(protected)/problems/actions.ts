@@ -1,7 +1,4 @@
-// app/admin/(protected)/problems/actions.ts
-
 "use server";
-
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -11,180 +8,23 @@ import { getFormString } from "@/lib/validation";
 import { resolveSolution } from "@/lib/solution-language";
 
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
-
-// 管理员权限校验
-async function requireAdmin() {
-  const session = await getCurrentUser();
-  if (!session) {
-    throw new Error("请先登录管理员账号");
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.id },
-  });
-
-  const isEmailAdmin =
-    user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
-  const isAdmin = user?.role === "ADMIN" || isEmailAdmin;
-
-  if (!isAdmin) {
-    throw new Error("无管理员操作权限");
-  }
-}
-
-// 1. 创建 Problem
-export async function createProblem(formData: FormData) {
+async function requireAdmin() { const session = await getCurrentUser(); if (!session) throw new Error("请先登录管理员账号"); const user = await prisma.user.findUnique({ where: { id: session.id } }); if (user?.role !== "ADMIN" && !ADMIN_EMAILS.includes(user?.email?.toLowerCase().trim() || "")) throw new Error("无管理员操作权限"); }
+type Example = { input: string; output: string; explanation: string };
+function readExamples(value: string): Example[] { try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed.filter((item) => item && typeof item.input === "string" && typeof item.output === "string").slice(0, 10).map((item) => ({ input: item.input.slice(0, 10000), output: item.output.slice(0, 10000), explanation: typeof item.explanation === "string" ? item.explanation.slice(0, 10000) : "" })) : []; } catch { return []; } }
+function readWorkspace(formData: FormData) { const examples = readExamples(getFormString(formData, "examplesJson", 100000)); const constraints = getFormString(formData, "constraintsText", 10000).split(/\r?\n/).map((value) => value.replace(/^[-•]\s*/, "").trim()).filter(Boolean).slice(0, 30); return { examples: examples.length ? examples : undefined, functionName: getFormString(formData, "functionName", 200) || undefined, functionParameters: getFormString(formData, "functionParameters", 5000) || undefined, returnDescription: getFormString(formData, "returnDescription", 5000) || undefined, constraints, approachHowToThink: getFormString(formData, "approachHowToThink", 20000) || undefined, approachObservations: getFormString(formData, "approachObservations", 20000) || undefined, approachSteps: getFormString(formData, "approachSteps", 20000) || undefined, solutionPython: getFormString(formData, "solutionPython", 30000) || undefined, solutionJava: getFormString(formData, "solutionJava", 30000) || undefined, solutionCpp: getFormString(formData, "solutionCpp", 30000) || undefined, aiInterviewFocus: getFormString(formData, "aiInterviewFocus", 10000) || undefined, aiKeyConcepts: getFormString(formData, "aiKeyConcepts", 10000) || undefined, aiCommonMistakes: getFormString(formData, "aiCommonMistakes", 10000) || undefined, aiFollowUpQuestions: getFormString(formData, "aiFollowUpQuestions", 10000) || undefined, aiBetterStrategy: getFormString(formData, "aiBetterStrategy", 10000) || undefined }; }
+function readBase(formData: FormData) { const topics = getFormString(formData, "topics", 1000).split(",").map((topic) => topic.trim()).filter(Boolean).slice(0, 30); const solutionInput = getFormString(formData, "solution", 30000) || getFormString(formData, "solutionPython", 30000); const { code: solution, language: solutionLanguage } = resolveSolution(solutionInput, getFormString(formData, "solutionLanguage", 30)); const approach = getFormString(formData, "approach", 20000) || getFormString(formData, "approachSteps", 20000); return { title: getFormString(formData, "title", 200), company: getFormString(formData, "company", 100), role: getFormString(formData, "role", 100) || "Software Engineer", difficulty: getFormString(formData, "difficulty", 20) || "Medium", stage: getFormString(formData, "stage", 20) || "VO", category: getFormString(formData, "category", 100), description: getFormString(formData, "description", 10000), example: getFormString(formData, "example", 10000), approach, solution, solutionLanguage, timeComplexity: getFormString(formData, "timeComplexity", 5000), spaceComplexity: getFormString(formData, "spaceComplexity", 5000), topics, similarProblems: getFormString(formData, "similarProblems", 2000) || "" }; }
+function validate(base: ReturnType<typeof readBase>) { if (!base.title) throw new Error("请填写题目标题 (Title)"); if (!base.company) throw new Error("请填写目标公司 (Company)"); if (!base.category) throw new Error("请填写题目分类 (Category)"); if (!base.description) throw new Error("请填写题目描述 (Problem Description)"); }
+function refresh(slug?: string) { revalidatePath("/"); revalidatePath("/problem"); revalidatePath("/admin/problems"); if (slug) revalidatePath(`/problem/${slug}`); }
+export async function deleteProblems(formData: FormData) {
   await requireAdmin();
-
-  const title = getFormString(formData, "title", 200);
-  const company = getFormString(formData, "company", 100);
-  const role = getFormString(formData, "role", 100) || "Software Engineer"; // 🌟 选填
-  const difficulty = getFormString(formData, "difficulty", 20) || "Medium";
-  const stage = getFormString(formData, "stage", 20) || "VO";
-  const category = getFormString(formData, "category", 100);
-  const description = getFormString(formData, "description", 10000);
-  const example = getFormString(formData, "example", 10000);
-  const approach = getFormString(formData, "approach", 20000);
-  const { code: solution, language: solutionLanguage } = resolveSolution(
-    getFormString(formData, "solution", 30000),
-    getFormString(formData, "solutionLanguage", 30)
-  );
-  const timeComplexity = getFormString(formData, "timeComplexity", 5000);
-  const spaceComplexity = getFormString(formData, "spaceComplexity", 5000);
-  const topicsValue = getFormString(formData, "topics", 1000);
-  const similarProblems = getFormString(formData, "similarProblems", 2000) || "";
-
-  const topics = topicsValue
-    ? topicsValue.split(",").map((topic) => topic.trim()).filter(Boolean).slice(0, 30)
-    : [];
-
-  if (!title) {
-    throw new Error("请填写题目标题 (Title)");
-  }
-  if (!company) {
-    throw new Error("请填写目标公司 (Company)");
-  }
-  if (!category) {
-    throw new Error("请填写题目分类 (Category)");
-  }
-  if (!description) {
-    throw new Error("请填写题目描述 (Problem Description)");
-  }
-
-  const slug = await createUniqueProblemSlug(title);
-
-  await prisma.problem.create({
-    data: {
-      slug,
-      title,
-      company,
-      role,
-      difficulty,
-      stage,
-      category,
-      description,
-      example,
-      approach,
-      solution,
-      solutionLanguage,
-      timeComplexity,
-      spaceComplexity,
-      topics,
-      similarProblems,
-    },
-  });
-
-  revalidatePath("/");
-  revalidatePath("/problem");
-  revalidatePath("/admin/problems");
-
-  redirect("/admin/problems?success=created");
+  const problemIds = [...new Set(formData.getAll("problemIds").map(Number).filter((id) => Number.isInteger(id) && id > 0))].slice(0, 500);
+  if (!problemIds.length) return;
+  const problems = await prisma.problem.findMany({ where: { id: { in: problemIds } }, select: { id: true, slug: true } });
+  if (!problems.length) return;
+  await prisma.problem.deleteMany({ where: { id: { in: problems.map((problem) => problem.id) } } });
+  refresh();
+  for (const problem of problems) revalidatePath(`/problem/${problem.slug}`);
 }
-
-// 2. 更新 Problem
-export async function updateProblem(problemId: number, formData: FormData) {
-  await requireAdmin();
-
-  const title = getFormString(formData, "title", 200);
-  const company = getFormString(formData, "company", 100);
-  const role = getFormString(formData, "role", 100) || "Software Engineer";
-  const difficulty = getFormString(formData, "difficulty", 20) || "Medium";
-  const stage = getFormString(formData, "stage", 20) || "VO";
-  const category = getFormString(formData, "category", 100);
-  const description = getFormString(formData, "description", 10000);
-  const example = getFormString(formData, "example", 10000);
-  const approach = getFormString(formData, "approach", 20000);
-  const solution = getFormString(formData, "solution", 30000);
-  const solutionLanguage = getFormString(formData, "solutionLanguage", 30) || "python";
-  const timeComplexity = getFormString(formData, "timeComplexity", 5000);
-  const spaceComplexity = getFormString(formData, "spaceComplexity", 5000);
-  const topicsValue = getFormString(formData, "topics", 1000);
-  const similarProblems = getFormString(formData, "similarProblems", 2000) || "";
-
-  const topics = topicsValue
-    ? topicsValue.split(",").map((topic) => topic.trim()).filter(Boolean).slice(0, 30)
-    : [];
-
-  if (!title) throw new Error("请填写题目标题");
-  if (!company) throw new Error("请填写目标公司");
-  if (!category) throw new Error("请填写分类");
-  if (!description) throw new Error("请填写题目描述");
-
-  const existingProblem = await prisma.problem.findUnique({
-    where: { id: problemId },
-  });
-
-  if (!existingProblem) {
-    throw new Error("题目不存在");
-  }
-
-  await prisma.problem.update({
-    where: { id: problemId },
-    data: {
-      title,
-      company,
-      role,
-      difficulty,
-      stage,
-      category,
-      description,
-      example,
-      approach,
-      solution,
-      solutionLanguage,
-      timeComplexity,
-      spaceComplexity,
-      topics,
-      similarProblems,
-    },
-  });
-
-  revalidatePath("/");
-  revalidatePath("/problem");
-  revalidatePath(`/problem/${existingProblem.slug}`);
-  revalidatePath("/admin/problems");
-
-  redirect("/admin/problems?success=updated");
-}
-
-// 3. 删除 Problem
-export async function deleteProblem(problemId: number) {
-  await requireAdmin();
-
-  const problem = await prisma.problem.findUnique({
-    where: { id: problemId },
-  });
-
-  if (!problem) {
-    throw new Error("题目不存在");
-  }
-
-  await prisma.problem.delete({
-    where: { id: problemId },
-  });
-
-  revalidatePath("/");
-  revalidatePath("/problem");
-  revalidatePath(`/problem/${problem.slug}`);
-  revalidatePath("/admin/problems");
-}
+export async function createProblem(formData: FormData) { await requireAdmin(); const base = readBase(formData); validate(base); const slug = await createUniqueProblemSlug(base.title); await prisma.problem.create({ data: { ...base, slug, ...readWorkspace(formData) } }); refresh(slug); redirect("/admin/problems?success=created"); }
+export async function updateProblem(problemId: number, formData: FormData) { await requireAdmin(); const base = readBase(formData); validate(base); const existing = await prisma.problem.findUnique({ where: { id: problemId } }); if (!existing) throw new Error("题目不存在"); const workspace = formData.has("examplesJson") ? readWorkspace(formData) : {}; await prisma.problem.update({ where: { id: problemId }, data: { ...base, ...workspace } }); refresh(existing.slug); redirect("/admin/problems?success=updated"); }
+export async function deleteProblem(problemId: number) { await requireAdmin(); const problem = await prisma.problem.findUnique({ where: { id: problemId } }); if (!problem) throw new Error("题目不存在"); await prisma.problem.delete({ where: { id: problemId } }); refresh(problem.slug); }

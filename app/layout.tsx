@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import SaaSNavbar from "@/components/SaaSNavbar";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.echointv.shop";
@@ -80,7 +80,7 @@ export default function RootLayout({
           </>
         )}
 
-        <Navbar />
+        <SaaSNavbar />
         {children}
       </body>
     </html>

@@ -1,65 +1,35 @@
 // app/(public)/checkout/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
+import { fetchJson, HttpError } from "@/lib/fetch-json";
 
 export default function CheckoutPage() {
-  const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState<"paypal" | "wechat" | "alipay">("paypal");
-  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => setUser(data.user));
-  }, []);
+  const [error, setError] = useState("");
 
   // PayPal 支付处理（使用新价格 $6.90）
   const handlePayPalPayment = async () => {
     if (isProcessing) return;
+    setError("");
     setIsProcessing(true);
 
     try {
-      const response = await fetch("/api/paypal", {
+      const { approveUrl } = await fetchJson<{ approveUrl: string }>("/api/checkout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // ✅ 价格改为 6.90
-        body: JSON.stringify({ price: "6.90", currency: "USD" }),
       });
-
-      const order = await response.json();
-
-      if (!response.ok) {
-        throw new Error(order.error || "创建 PayPal 订单失败");
+      window.location.assign(approveUrl);
+    } catch (paymentError) {
+      if (paymentError instanceof HttpError && paymentError.status === 401) {
+        window.location.assign("/login?redirect=/checkout");
+        return;
       }
-
-      // 从 PayPal 返回的 links 中找到 approve 链接
-      const approveLink = order.links?.find((link: any) => link.rel === "approve");
-      if (approveLink) {
-        window.location.href = approveLink.href;
-      } else {
-        const isSandbox = process.env.NEXT_PUBLIC_PAYPAL_SANDBOX === "true";
-        const baseUrl = isSandbox
-          ? "https://www.sandbox.paypal.com"
-          : "https://www.paypal.com";
-        window.location.href = `${baseUrl}/checkoutnow?token=${order.id}`;
-      }
-    } catch (error) {
-      console.error("支付启动失败:", error);
-      alert("支付启动失败，请稍后重试。");
-    } finally {
+      setError(paymentError instanceof Error ? paymentError.message : "暂时无法连接 PayPal，请稍后重试");
       setIsProcessing(false);
     }
   };
-
-  // 微信/支付宝 的爱发电链接（保留你的原有逻辑）
-  const afdianBaseUrl = process.env.NEXT_PUBLIC_AFDIAN_URL || "https://afdian.com";
-  const afdianCheckoutUrl = `${afdianBaseUrl}?remark=${encodeURIComponent(user?.email || "")}&custom_order_id=${user?.id || ""}`;
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
@@ -107,90 +77,39 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* 右侧：支付方式选择 */}
+          {/* 右侧：唯一支付方式 */}
           <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-sm space-y-6">
-            <h2 className="text-lg font-bold text-gray-900">选择支付方式</h2>
-
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                onClick={() => setSelectedMethod("paypal")}
-                className={`p-3 rounded-2xl border text-center transition ${
-                  selectedMethod === "paypal"
-                    ? "border-blue-600 bg-blue-50/40 text-blue-700 font-bold ring-1 ring-blue-600"
-                    : "border-gray-200 hover:border-gray-300 text-gray-700"
-                }`}
-              >
-                <div className="text-xl mb-1">💳</div>
-                <div className="text-xs font-semibold">PayPal</div>
-              </button>
-
-              <button
-                onClick={() => setSelectedMethod("wechat")}
-                className={`p-3 rounded-2xl border text-center transition ${
-                  selectedMethod === "wechat"
-                    ? "border-emerald-600 bg-emerald-50/40 text-emerald-700 font-bold ring-1 ring-emerald-600"
-                    : "border-gray-200 hover:border-gray-300 text-gray-700"
-                }`}
-              >
-                <div className="text-xl mb-1">💬</div>
-                <div className="text-xs font-semibold">微信支付</div>
-              </button>
-
-              <button
-                onClick={() => setSelectedMethod("alipay")}
-                className={`p-3 rounded-2xl border text-center transition ${
-                  selectedMethod === "alipay"
-                    ? "border-sky-600 bg-sky-50/40 text-sky-700 font-bold ring-1 ring-sky-600"
-                    : "border-gray-200 hover:border-gray-300 text-gray-700"
-                }`}
-              >
-                <div className="text-xl mb-1">🟦</div>
-                <div className="text-xs font-semibold">支付宝</div>
-              </button>
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">💳</div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">PayPal 安全支付</h2>
+                <p className="text-xs text-gray-500">支持 PayPal 余额、信用卡和借记卡</p>
+              </div>
             </div>
 
-            <div className="pt-2">
-              {selectedMethod === "paypal" ? (
-                <div className="p-6 rounded-2xl bg-gray-50 border border-gray-200 text-center space-y-4">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-gray-900">PayPal 国际安全支付</h3>
-                    <p className="text-xs text-gray-500">支持信用卡、借记卡、PayPal 余额及本地支付方式</p>
-                  </div>
+            <div className="p-6 rounded-2xl bg-gray-50 border border-gray-200 text-center space-y-4">
+              <ShieldCheck className="mx-auto h-8 w-8 text-emerald-600" />
+              <p className="text-sm text-gray-600">付款将在 PayPal 官方页面完成，本站不会接触或保存您的银行卡信息。</p>
 
-                  <button
-                    onClick={handlePayPalPayment}
-                    disabled={isProcessing}
-                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 text-sm"
-                  >
-                    {/* ✅ 按钮文案改为 $6.90 USD */}
-                    {isProcessing ? "正在跳转 PayPal..." : "💳 使用 PayPal 支付 ($6.90 USD) →"}
-                  </button>
-                </div>
-              ) : (
-                <div className="p-6 rounded-2xl bg-gray-50 border border-gray-200 text-center space-y-4">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-gray-900">
-                      {selectedMethod === "wechat" ? "💬 微信扫码支付 (¥46.00)" : "🟦 支付宝扫码支付 (¥46.00)"}
-                    </h3>
-                    <p className="text-xs text-emerald-600 font-semibold">⚡ 支持扫码自动识别，付款后 1 秒全自动开通</p>
-                  </div>
-
-                  <div className="py-2">
-                    <a
-                      href={afdianCheckoutUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-md transition text-sm text-center"
-                    >
-                      前往收银台扫码付款 (¥46) →
-                    </a>
-                  </div>
-
-                  <p className="text-[11px] text-gray-400">
-                    当前账号：<span className="font-mono text-gray-600">{user?.email}</span>（付款后系统将自动为此账号开通 Pro 权限）
-                  </p>
+              {error && (
+                <div aria-live="polite" className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-left text-sm text-rose-700">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
+
+              <button
+                type="button"
+                onClick={handlePayPalPayment}
+                disabled={isProcessing}
+                className="flex w-full items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition disabled:cursor-not-allowed disabled:opacity-60 text-sm"
+              >
+                {isProcessing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> 正在连接 PayPal...</>
+                ) : (
+                  "使用 PayPal 支付 $6.90 USD →"
+                )}
+              </button>
             </div>
           </div>
         </div>

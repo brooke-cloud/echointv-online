@@ -1,0 +1,13 @@
+ALTER TABLE "InterviewImportDraft"
+ADD COLUMN "notionDate" TEXT,
+ADD COLUMN "rawContent" TEXT NOT NULL DEFAULT '',
+ADD COLUMN "sourceSnapshot" JSONB,
+ADD COLUMN "missingFields" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN "validationError" TEXT,
+ADD COLUMN "importedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN "reviewedAt" TIMESTAMP(3),
+ADD COLUMN "rejectedAt" TIMESTAMP(3),
+ADD COLUMN "publishedAt" TIMESTAMP(3);
+
+ALTER TABLE "InterviewImportDraft"
+ALTER COLUMN "status" SET DEFAULT 'DRAFT';

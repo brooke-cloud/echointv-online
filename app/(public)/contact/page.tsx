@@ -90,7 +90,7 @@ export default function ContactPage() {
           {/* Wechat */}
           <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-6 sm:p-8 hover:shadow-sm transition space-y-3">
             <h2 className="text-xl font-bold text-gray-900">
-              Wechat ：<span className="text-blue-600 font-mono">lububu611</span>
+              Wechat ：<span className="text-blue-600 font-mono">echointv</span>
             </h2>
 
             <p className="text-sm text-gray-600">

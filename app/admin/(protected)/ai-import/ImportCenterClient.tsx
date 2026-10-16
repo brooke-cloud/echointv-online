@@ -1,0 +1,36 @@
+"use client";
+
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import { confirmImportAction, previewImportAction } from "./actions";
+import type { ImportQuestion } from "@/lib/interview-import-schema";
+
+type Source = { pageId: string; title: string; company: string; date: string };
+type Draft = { id: number; notionPageId: string; status: string; missingFields: string[]; importedAt: string; problemId: number | null };
+type Preview = { source: Source; rawContent: string; question: ImportQuestion; valid: boolean; missingFields: string[] };
+const statusStyle: Record<string, string> = { DRAFT: "bg-blue-50 text-blue-700", REVIEWING: "bg-amber-50 text-amber-700", PUBLISHED: "bg-emerald-50 text-emerald-700", REJECTED: "bg-rose-50 text-rose-700", FAILED: "bg-red-50 text-red-700" };
+
+function importStatus(draft?: Draft) {
+  if (!draft) return { label: "READY", style: "bg-blue-50 text-blue-700" };
+  if (draft.status === "PUBLISHED") return { label: "PUBLISHED", style: "bg-emerald-50 text-emerald-700" };
+  if (draft.status === "FAILED" || draft.status === "REJECTED") return { label: "FAILED", style: "bg-red-50 text-red-700" };
+  return { label: "IMPORTED", style: statusStyle[draft.status] || "bg-amber-50 text-amber-700" };
+}
+
+export default function ImportCenterClient({ sources, drafts }: { sources: Source[]; drafts: Draft[] }) {
+  const [preview, setPreview] = useState<Preview | null>(null); const [message, setMessage] = useState(""); const [pending, startTransition] = useTransition(); const draftByPage = new Map(drafts.map((item) => [item.notionPageId, item]));
+  const loadPreview = (pageId: string) => startTransition(async () => { try { setMessage(""); const result = await previewImportAction(pageId); if (!result.ok) { setMessage(result.error); return; } setPreview(result.data); } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to preview this Notion page."); } });
+  const confirm = () => { if (!preview) return; startTransition(async () => { try { const result = await confirmImportAction(preview.source.pageId); setMessage(`Draft saved with status ${result.status}.`); setPreview(null); } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to save the draft."); } }); };
+  return <div className="space-y-7">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-black text-slate-950">Notion Interview Database</h2><p className="mt-1 text-sm text-slate-500">Read only. Every record is available for preview and import.</p></div><span className="text-sm font-bold text-slate-500">{sources.length} records</span></div>
+      <div className="mt-5 overflow-x-auto"><table className="min-w-full text-left text-sm"><thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><tr><th className="px-3 py-3">Title</th><th className="px-3 py-3">Company</th><th className="px-3 py-3">Date</th><th className="px-3 py-3">Import Status</th><th className="px-3 py-3" /></tr></thead><tbody>{sources.map((source) => { const draft = draftByPage.get(source.pageId); const status = importStatus(draft); return <tr key={source.pageId} className="border-b border-slate-50"><td className="px-3 py-4 font-semibold text-slate-800">{source.title}</td><td className="px-3 py-4 text-slate-600">{source.company}</td><td className="px-3 py-4 text-slate-600">{source.date || "—"}</td><td className="px-3 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${status.style}`}>{status.label}</span></td><td className="px-3 py-4 text-right">{draft ? <div className="flex items-center justify-end gap-2"><button type="button" disabled={pending || draft.status === "PUBLISHED"} onClick={() => loadPreview(source.pageId)} title="Read the latest content from Notion and update this draft after confirmation" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50">Re-import</button><Link href={`/admin/ai-import/${draft.id}`} className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-50">Review Draft</Link></div> : <button disabled={pending} onClick={() => loadPreview(source.pageId)} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50">Preview Import</button>}</td></tr>; })}</tbody></table></div>
+    </section>
+    {preview && <section className="rounded-2xl border border-blue-200 bg-blue-50/30 p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-extrabold uppercase tracking-wider text-blue-600">Import Preview</p><h2 className="mt-1 text-xl font-black text-slate-950">{preview.question.title || preview.source.title}</h2><p className="mt-1 text-sm text-slate-500">{preview.source.company} · {preview.source.date || "No date"}</p></div><button onClick={() => setPreview(null)} className="text-sm font-bold text-slate-500">Close</button></div>
+      <div className="mt-5 grid gap-5 lg:grid-cols-2"><div className="rounded-xl border border-slate-200 bg-white p-4"><h3 className="font-bold text-slate-900">Parsed Question</h3><dl className="mt-3 grid grid-cols-[130px_1fr] gap-x-3 gap-y-2 text-sm"><dt className="text-slate-400">Role</dt><dd>{preview.question.role || "—"}</dd><dt className="text-slate-400">Difficulty</dt><dd>{preview.question.difficulty || "—"}</dd><dt className="text-slate-400">Stage</dt><dd>{preview.question.stage || "—"}</dd><dt className="text-slate-400">Category</dt><dd>{preview.question.category || "—"}</dd><dt className="text-slate-400">Examples</dt><dd>{preview.question.examples.length}</dd><dt className="text-slate-400">Constraints</dt><dd>{preview.question.constraints.length}</dd><dt className="text-slate-400">Solution</dt><dd>{preview.question.solution ? "Detected" : "Missing"}</dd></dl></div><div className="rounded-xl border border-slate-200 bg-white p-4"><h3 className="font-bold text-slate-900">Notion Content</h3><pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap text-xs leading-6 text-slate-600">{preview.rawContent || "No page blocks found."}</pre></div></div>
+      <div className={`mt-5 rounded-xl border p-4 text-sm ${preview.valid ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>{preview.valid ? "All publishing fields were detected." : <><b>Missing fields can be completed during review:</b><div className="mt-2 flex flex-wrap gap-2">{preview.missingFields.map((field) => <span key={field} className="rounded-full bg-white px-2.5 py-1 text-xs font-bold">{field}</span>)}</div></>}</div>
+      <button disabled={pending} onClick={confirm} className="mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">{pending ? "Saving…" : "Confirm and Create Draft"}</button>
+    </section>}
+    {message && <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700">{message}</div>}
+  </div>;
+}

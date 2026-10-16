@@ -1,36 +1,49 @@
 generator client {
   provider = "prisma-client-js"
-  
 }
 
 datasource db {
   provider = "postgresql"
-  
 }
 
 model Problem {
-  id               Int      @id @default(autoincrement())
-  slug             String   @unique
-  title            String
-  company          String
-  role             String
-  difficulty       String
-  stage            String   @default("VO")
-  category         String
-  description      String
-  example          String
-  approach         String
-  solution         String
-  solutionLanguage String   @default("python")
-  similarProblems  String?
-  timeComplexity   String
-  spaceComplexity  String
-  topics           String[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  progress        UserProblemProgress[]
-  favorites       Favorite[]
+  id                   Int                   @id @default(autoincrement())
+  title                String
+  company              String
+  role                 String
+  difficulty           String
+  category             String
+  description          String
+  example              String
+  approach             String
+  solution             String
+  timeComplexity       String
+  spaceComplexity      String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  topics               String[]
+  slug                 String                @unique
+  similarProblems      String?
+  stage                String                @default("VO")
+  solutionLanguage     String                @default("python")
+  examples             Json?
+  functionName         String?
+  functionParameters   String?
+  returnDescription    String?
+  constraints          String[]              @default([])
+  approachHowToThink   String?
+  approachObservations String?
+  approachSteps        String?
+  solutionPython       String?
+  solutionJava         String?
+  solutionCpp          String?
+  aiInterviewFocus     String?
+  aiKeyConcepts        String?
+  aiCommonMistakes     String?
+  aiFollowUpQuestions  String?
+  aiBetterStrategy     String?
+  favorites            Favorite[]
+  progress             UserProblemProgress[]
 
   @@index([company])
   @@index([category])
@@ -38,11 +51,39 @@ model Problem {
   @@index([createdAt])
 }
 
+model InterviewImportDraft {
+  id                          Int       @id @default(autoincrement())
+  notionPageId                String    @unique
+  notionTitle                 String?
+  notionName                  String
+  notionCompany               String?
+  notionStatus                String?
+  hasCode                     Boolean   @default(false)
+  notionPublishedPropertyType String?
+  payload                     Json
+  status                      String    @default("READY")
+  problemId                   Int?      @unique
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+  notionDate                  String?
+  rawContent                  String    @default("")
+  sourceSnapshot              Json?
+  parsedPayload               Json?
+  missingFields               String[]  @default([])
+  validationError             String?
+  importedAt                  DateTime  @default(now())
+  reviewedAt                  DateTime?
+  rejectedAt                  DateTime?
+  publishedAt                 DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
+
 model Post {
   id          Int      @id @default(autoincrement())
   slug        String   @unique
   title       String
-  company     String?  // 🌟 新增：独立目标公司字段 (如 IBM, Google, Meta)
   description String
   content     String?
   category    String
@@ -50,25 +91,25 @@ model Post {
   readingTime String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  company     String?
 
   @@index([category])
   @@index([createdAt])
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String   // 加密后的密码哈希
-  role      String   @default("USER") // USER 或 ADMIN
-  proStartedAt DateTime? // 🌟 会员开通/购买时间
-  proExpiresAt DateTime? // 🌟 会员到期时间
-  isVip     Boolean  @default(false)  // 🌟 新增：VIP 会员状态标识（true: VIP, false: 普通用户）
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  progress  UserProblemProgress[]
-  favorites Favorite[]
+  id           String                @id @default(cuid())
+  email        String                @unique
+  name         String?
+  password     String
+  proExpiresAt DateTime?
+  role         String                @default("USER")
+  isVip        Boolean               @default(false)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  proStartedAt DateTime?
+  favorites    Favorite[]
+  progress     UserProblemProgress[]
 
   @@index([email])
 }
@@ -80,9 +121,8 @@ model UserProblemProgress {
   status    String   @default("SOLVED")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, problemId])
   @@index([userId])
@@ -94,15 +134,13 @@ model Favorite {
   userId    String
   problemId Int
   createdAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problem   Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, problemId])
   @@index([userId])
   @@index([problemId])
 }
-
 
 model VerificationCode {
   id        String   @id @default(cuid())
@@ -114,4 +152,22 @@ model VerificationCode {
   @@index([email])
 }
 
+model OaExam {
+  id                  Int      @id @default(autoincrement())
+  slug                String   @unique
+  title               String
+  company             String
+  difficulty          String   @default("Medium")
+  status              String   @default("PUBLISHED")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime
+  constraints         String?
+  example             String?
+  functionDescription String?
+  questionDescription String   @default("")
 
+  @@index([company])
+  @@index([createdAt])
+  @@index([difficulty])
+  @@index([status])
+}

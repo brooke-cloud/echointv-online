@@ -1,0 +1,17 @@
+ALTER TABLE "Problem"
+  ADD COLUMN "examples" JSONB,
+  ADD COLUMN "functionName" TEXT,
+  ADD COLUMN "functionParameters" TEXT,
+  ADD COLUMN "returnDescription" TEXT,
+  ADD COLUMN "constraints" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  ADD COLUMN "approachHowToThink" TEXT,
+  ADD COLUMN "approachObservations" TEXT,
+  ADD COLUMN "approachSteps" TEXT,
+  ADD COLUMN "solutionPython" TEXT,
+  ADD COLUMN "solutionJava" TEXT,
+  ADD COLUMN "solutionCpp" TEXT,
+  ADD COLUMN "aiInterviewFocus" TEXT,
+  ADD COLUMN "aiKeyConcepts" TEXT,
+  ADD COLUMN "aiCommonMistakes" TEXT,
+  ADD COLUMN "aiFollowUpQuestions" TEXT,
+  ADD COLUMN "aiBetterStrategy" TEXT;

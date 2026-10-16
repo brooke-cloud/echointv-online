@@ -21,3 +21,201 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.practice-page-dark .site-navbar {
+  background: rgba(15, 23, 42, 0.96);
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.practice-page-dark .site-navbar .text-slate-950,
+.practice-page-dark .site-navbar .text-slate-900,
+.practice-page-dark .site-navbar .text-slate-700,
+.practice-page-dark .site-navbar .text-slate-600,
+.practice-page-dark .site-navbar .text-slate-500 {
+  color: #e2e8f0;
+}
+
+.practice-page-dark .site-navbar .text-slate-400 {
+  color: #94a3b8;
+}
+
+.practice-page-dark .site-navbar .bg-white,
+.practice-page-dark .site-navbar .bg-white\/85,
+.practice-page-dark .site-navbar .bg-slate-50\/80,
+.practice-page-dark .site-navbar .bg-slate-100 {
+  background: #1e293b;
+}
+
+.practice-page-dark .site-navbar .border-slate-100,
+.practice-page-dark .site-navbar .border-slate-200,
+.practice-page-dark .site-navbar .border-slate-200\/70 {
+  border-color: #475569;
+}
+
+.practice-page-dark .site-navbar a:hover,
+.practice-page-dark .site-navbar button:hover {
+  background-color: #334155;
+}
+
+.practice-workspace-dark .practice-surface {
+  background: #0f172a;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+.practice-workspace-dark .practice-muted-surface {
+  background: #111827;
+  border-color: #334155;
+}
+
+.practice-workspace-dark .practice-content h1,
+.practice-workspace-dark .practice-content h2,
+.practice-workspace-dark .practice-content h3,
+.practice-workspace-dark .practice-content code,
+.practice-workspace-dark .practice-content .text-slate-950,
+.practice-workspace-dark .practice-content .text-slate-900 {
+  color: #f8fafc;
+}
+
+.practice-workspace-dark .practice-content .text-slate-700,
+.practice-workspace-dark .practice-content .text-slate-600,
+.practice-workspace-dark .practice-content .text-slate-500 {
+  color: #cbd5e1;
+}
+
+.practice-workspace-dark .practice-content .border-slate-100,
+.practice-workspace-dark .practice-content .border-slate-200 {
+  border-color: #334155;
+}
+
+.practice-workspace-dark .practice-content .bg-white,
+.practice-workspace-dark .practice-content .bg-slate-50,
+.practice-workspace-dark .practice-content .bg-slate-100 {
+  background: #111827;
+}
+
+.practice-workspace-dark .practice-content input,
+.practice-workspace-dark .practice-content textarea,
+.practice-workspace-dark .practice-content select {
+  background: #111827;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+/* Dark mode owns the complete workspace, including highlighted content cards. */
+.practice-workspace-dark .practice-content .border-blue-100.bg-blue-50\/50,
+.practice-workspace-dark .practice-content .border-violet-100.bg-violet-50\/40,
+.practice-workspace-dark .practice-content .border-blue-100.bg-blue-50\/50,
+.practice-workspace-dark .practice-content .border-violet-100.bg-violet-50\/50,
+.practice-workspace-dark .practice-content .border-violet-200.bg-violet-50\/60 {
+  background: #111827;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.practice-workspace-dark .practice-content button.bg-blue-50 {
+  background: #172554;
+  border-color: #2563eb;
+  color: #dbeafe;
+}
+
+.practice-workspace-dark .practice-content button.bg-blue-50:hover {
+  background: #1e3a8a;
+}
+
+.practice-workspace-dark .practice-content,
+.practice-workspace-dark .practice-content * {
+  scrollbar-color: #475569 #0f172a;
+  scrollbar-width: thin;
+}
+
+.practice-workspace-dark .practice-content::-webkit-scrollbar,
+.practice-workspace-dark .practice-content *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.practice-workspace-dark .practice-content::-webkit-scrollbar-track,
+.practice-workspace-dark .practice-content *::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.practice-workspace-dark .practice-content::-webkit-scrollbar-thumb,
+.practice-workspace-dark .practice-content *::-webkit-scrollbar-thumb {
+  background: #475569;
+  border: 2px solid #0f172a;
+  border-radius: 999px;
+}
+
+.practice-workspace-dark .practice-content::-webkit-scrollbar-thumb:hover,
+.practice-workspace-dark .practice-content *::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.practice-workspace {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  -webkit-font-smoothing: auto;
+  text-rendering: geometricPrecision;
+  font-kerning: normal;
+}
+
+.practice-workspace .practice-content {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.75;
+}
+
+.practice-workspace .practice-content h1 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.practice-workspace .practice-content h2,
+.practice-workspace .practice-content h3 {
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.practice-workspace .text-xs {
+  font-size: 13px;
+  line-height: 1.25rem;
+}
+
+.practice-workspace [class*="text-[11px]"] {
+  font-size: 12px;
+  line-height: 1.1rem;
+}
+
+.practice-workspace button,
+.practice-workspace select,
+.practice-workspace input,
+.practice-workspace textarea {
+  font-weight: 600;
+}
+
+.practice-workspace:not(.practice-workspace-dark) .practice-content {
+  color: #000000;
+}
+
+.practice-workspace:not(.practice-workspace-dark) .practice-topbar,
+.practice-workspace:not(.practice-workspace-dark) .practice-topbar a,
+.practice-workspace:not(.practice-workspace-dark) .practice-topbar span {
+  color: #000000;
+}
+
+.practice-workspace:not(.practice-workspace-dark) .practice-content .text-slate-400 {
+  color: #000000;
+}
+
+.practice-workspace:not(.practice-workspace-dark) .practice-content .text-slate-500 {
+  color: #000000;
+}
+
+.practice-workspace:not(.practice-workspace-dark) .practice-content .text-slate-600 {
+  color: #000000;
+}
+
+.practice-workspace:not(.practice-workspace-dark) .practice-content .text-slate-700 {
+  color: #000000;
+}

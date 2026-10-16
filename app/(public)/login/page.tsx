@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Lock, Mail, AlertCircle, Loader2 } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
@@ -13,6 +14,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const requestedRedirect = searchParams.get("redirect");
+  const redirectTo =
+    requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+      ? requestedRedirect
+      : "/";
 
   // 监听 URL 中返回的错误信息（如 Google 登录返回的错误）
   useEffect(() => {
@@ -28,21 +34,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      await fetchJson<{ success: true }>("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "登录失败，请检查邮箱和密码");
-      }
-
-      // 登录成功强制进入首页并刷新会话
-      window.location.href = "/";
-    } catch (err: any) {
-      setError(err.message || "登录异常，请稍后重试");
+      // 登录成功后返回用户原本要访问的站内页面，并刷新服务端会话。
+      window.location.href = redirectTo;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "登录异常，请稍后重试");
       setLoading(false);
     }
   };
@@ -66,14 +67,17 @@ export default function LoginPage() {
 
         {/* 错误提示 */}
         {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-rose-900/60 bg-rose-950/60 p-4 text-sm text-rose-400">
+          <div aria-live="polite" className="flex items-center gap-2 rounded-xl border border-rose-900/60 bg-rose-950/60 p-4 text-sm text-rose-400">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{error}</span>
+            <span className="flex-1">{error}</span>
+            <button type="submit" form="login-form" className="font-semibold text-white underline" disabled={loading}>
+              重试
+            </button>
           </div>
         )}
 
         {/* 账号密码登录表单 */}
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form id="login-form" className="space-y-4" onSubmit={handleSubmit}>
           {/* 邮箱 */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
