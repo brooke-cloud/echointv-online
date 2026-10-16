@@ -182,7 +182,7 @@ export default function NewPostPage() {
           action={createPost}
           className="mt-10 space-y-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8"
         >
-          {/* Title */}
+          {/* Title /}
           <div>
             <label htmlFor="title" className="font-medium text-gray-900">
               Title

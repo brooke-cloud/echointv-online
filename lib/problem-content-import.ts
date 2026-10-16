@@ -25,10 +25,10 @@ const aliases: Record<Section, string[]> = {
   algorithmSteps: ["algorithm steps", "step-by-step approach", "steps", "算法步骤", "解题步骤"],
   whyWorks: ["why this works", "why it works", "correctness", "key observations", "为什么可行", "正确性", "关键观察"],
   edgeCases: ["edge cases", "edge case", "边界情况", "特殊情况"],
-  solution: ["solution", "code", "reference solution", "代码", "参考代码", "解法"],
-  python: ["python solution", "python code", "python 代码", "python 解法"],
-  java: ["java solution", "java code", "java 代码", "java 解法"],
-  cpp: ["c++ solution", "cpp solution", "c++ code", "cpp code", "c++ 代码", "cpp 代码"],
+  solution: ["solution", "solutions", "code", "reference solution", "代码", "参考代码", "解法"],
+  python: ["python", "python solution", "python code", "python 代码", "python 解法"],
+  java: ["java", "java solution", "java code", "java 代码", "java 解法"],
+  cpp: ["c++", "cpp", "cxx", "c++ solution", "cpp solution", "c++ code", "cpp code", "c++ 代码", "cpp 代码"],
   time: ["time complexity", "时间复杂度"],
   space: ["space complexity", "空间复杂度"],
   interviewIntent: ["interview intent", "interview focus", "what interviewer is testing", "面试意图", "考察意图", "面试重点"],
@@ -41,9 +41,24 @@ const aliases: Record<Section, string[]> = {
 const cleanLabel = (value: string) => value.toLowerCase().replace(/^\s*#{1,6}\s*/, "").replace(/[*_`]/g, "").replace(/^\d+[.)、]\s*/, "").replace(/[：:]\s*$/, "").replace(/\s+/g, " ").trim();
 const splitList = (value: string) => value.split(/\r?\n|[,，;；]/).map((item) => item.replace(/^\s*(?:[-*•]|\d+[.)、])\s*/, "").trim()).filter(Boolean);
 const splitLines = (value: string) => value.split(/\r?\n/).map((item) => item.replace(/^\s*(?:[-*•]\s+|\d+[.)、]\s*)/, "").trim()).filter(Boolean);
+const normalizeImportedCode = (value: string, language: "python" | "java" | "cpp") => {
+  let code = value.replace(/<br\s*\/?>/gi, "\n").replace(/\\r\\n|\\n|\\r/g, "\n").replace(/\u00a0/g, " ").trim();
+  if (language !== "python" || code.includes("\n") || code.length < 120) return code;
+  code = code.replace(/\s{2,}(?=(?:class\s+|def\s+|async\s+def\s+|@\w+|from\s+\S+\s+import\s+|import\s+|if\s+|elif\s+|else\s*:|for\s+|while\s+|try\s*:|except\b|finally\s*:|with\s+|return\b|raise\b|pass\b|break\b|continue\b|self\.|#))/g, (spacing) => `\n${spacing.slice(0, 16)}`);
+  return code;
+};
 const sectionFor = (label: string): Section | undefined => {
   const normalized = cleanLabel(label).replace(/\s+\d+$/, "");
   return (Object.keys(aliases) as Section[]).find((section) => aliases[section].some((alias) => cleanLabel(alias) === normalized));
+};
+const isSectionBoundary = (line: string) => {
+  const heading = cleanLabel(line);
+  const plainContainerHeading = ["basic information", "function description", "ai analysis", "solutions"].includes(heading);
+  if (plainContainerHeading) return true;
+  const isMarkdownHeading = /^\s*#{1,6}\s+/.test(line);
+  const isBoldHeading = /^\s*\*\*[^*]+\*\*\s*[:：]?\s*$/.test(line);
+  if (!isMarkdownHeading && !isBoldHeading) return false;
+  return Boolean(sectionFor(heading)) || ["basic information", "function description", "ai analysis"].includes(heading);
 };
 
 function parseExamples(text: string) {
@@ -60,7 +75,7 @@ function parseExamples(text: string) {
   for (const originalLine of text.split(/\r?\n/)) {
     const trimmed = originalLine.trim();
     if (/^#{1,2}\s*\d+[.)]?\s*(?:Examples?|示例|样例)\s*$/i.test(trimmed)) { inExamples = true; continue; }
-    if (inExamples && /^#{1,2}\s*\d+[.)]?\s+/.test(trimmed)) break;
+    if (inExamples && isSectionBoundary(trimmed) && !/^(?:#{1,6}\s*)?(?:Example|Examples|示例|样例)\b/i.test(trimmed)) break;
     if (/^(?:#{1,6}\s*)?(?:Example|示例|样例)\s*\d*\s*[:：]?\s*$/i.test(trimmed)) {
       if (!inExamples) inExamples = true;
       save();
@@ -162,7 +177,7 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     functionDescription: { functionName: get("functionName"), parameters: parseParameters(get("parameters")), returnDescription: get("returnDescription") },
     constraints: splitLines(get("constraints")),
     approach: { coreIdea: get("coreIdea"), algorithmSteps: get("algorithmSteps"), whyWorks: get("whyWorks"), edgeCases: get("edgeCases") },
-    solution: { python: get("python") || get("solution"), java: get("java"), cpp: get("cpp") },
+    solution: { python: normalizeImportedCode(get("python") || get("solution"), "python"), java: normalizeImportedCode(get("java"), "java"), cpp: normalizeImportedCode(get("cpp"), "cpp") },
     complexity: { time: get("time"), space: get("space") },
     aiAnalysis: { interviewIntent: get("interviewIntent"), keyConcepts: get("keyConcepts"), commonMistakes: get("commonMistakes"), followUpQuestions: get("followUpQuestions"), betterStrategy: get("betterStrategy") },
   });

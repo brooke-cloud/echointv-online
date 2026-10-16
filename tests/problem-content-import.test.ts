@@ -108,6 +108,91 @@ assert.deepEqual(standaloneParsed.functionDescription.parameters, [
 ]);
 assert.equal(standaloneParsed.functionDescription.returnDescription, "Return up to k pairs.");
 
+const boundedSections = parseProblemImportText(`# 3. Examples
+Example 1
+Input
+s = "aab"
+Output
+"aba"
+Explanation
+The characters can be rearranged.
+
+## Function Description
+### Function Name
+reorganizeString
+
+## Step-by-step Approach
+Use a frequency map and always choose the most frequent valid character.
+
+## Solutions
+### Python
+\`\`\`python
+def reorganizeString(s):
+    return s
+\`\`\``);
+assert.equal(boundedSections.examples[0].explanation, "The characters can be rearranged.");
+assert.equal(boundedSections.examples[0].explanation.includes("Function Description"), false);
+assert.equal(boundedSections.approach.algorithmSteps, "Use a frequency map and always choose the most frequent valid character.");
+assert.equal(boundedSections.approach.algorithmSteps.includes("Solutions"), false);
+assert.equal(boundedSections.solution.python, "def reorganizeString(s):\n    return s");
+
+const boldFunctionBoundary = parseProblemImportText(`# 3. Examples
+Example 1
+Input
+pizzas = 2
+Output
+total = 27
+Explanation
+The subtotal is 27.
+The final total is also 27.
+
+**Function Description**
+**Function Name:** calculateTotal`);
+assert.equal(boldFunctionBoundary.examples[0].explanation, "The subtotal is 27.\nThe final total is also 27.");
+assert.equal(boldFunctionBoundary.examples[0].explanation.includes("Function Description"), false);
+
+const flattenedPython = parseProblemImportText(`## Solutions
+### Python
+class LogStreamProcessor:        def __init__(self):            self.user_partners = {}        def add_interaction(self, sender_username, receiver_username):            self.user_partners[sender_username] = receiver_username        return True`);
+assert.equal(flattenedPython.solution.python, "class LogStreamProcessor:\n        def __init__(self):\n            self.user_partners = {}\n        def add_interaction(self, sender_username, receiver_username):\n            self.user_partners[sender_username] = receiver_username\n        return True");
+
+const escapedPython = parseProblemImportText(`Python Solution: class Solver:\\n    def solve(self):\\n        return True`);
+assert.equal(escapedPython.solution.python, "class Solver:\n    def solve(self):\n        return True");
+
+const plainFunctionBoundary = parseProblemImportText(`# 3. Examples
+Example 1
+Input
+tree one
+Output
+2
+Explanation
+First explanation.
+
+Example 2
+Input
+tree two
+Output
+1
+Explanation
+Second explanation.
+
+Example 3
+Input
+tree three
+Output
+2
+Explanation
+Third explanation stays here.
+
+Function Description
+Function Name
+countIslands
+Parameters
+root | TreeNode | Root node`);
+assert.equal(plainFunctionBoundary.examples.length, 3);
+assert.equal(plainFunctionBoundary.examples[2].explanation, "Third explanation stays here.");
+assert.equal(plainFunctionBoundary.examples[2].explanation.includes("Function Description"), false);
+
 const tableParsed = parseProblemImportText(`# 4. Function Description
 Function Name: sigmoid, fit_q1, predict_q1
 
