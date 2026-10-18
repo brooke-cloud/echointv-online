@@ -51,7 +51,7 @@ export default function ProblemWorkspace({ problem, canAccess }: Props) {
   const practiceFunctionName = primaryFunctionName(problem.functionDescription.functionName);
   const visibleParameters = problem.functionDescription.parameters.filter((parameter) => parameter.name.trim() || parameter.type.trim() || parameter.description.trim());
   const categoryKey = problem.category.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-  const hidesFunctionContract = /^(?:ood|object oriented design|system design)$/.test(categoryKey);
+  const hidesFunctionContract = categoryKey === "system design";
   const timeComplexity = splitComplexity(problem.timeComplexity, "O(n + m)", "Complexity explanation has not been added yet.");
   const spaceComplexity = splitComplexity(problem.spaceComplexity, "O(1) auxiliary", "Complexity explanation has not been added yet.");
   useEffect(() => setNotes(window.localStorage.getItem(notesKey) || ""), [notesKey]);

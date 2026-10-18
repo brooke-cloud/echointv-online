@@ -5,6 +5,7 @@ type AvailableSolutions = { solution?: string | null; solutionLanguage?: string 
 
 const clean = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const safeIdentifier = (value: string, fallback: string) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(value) ? value : fallback;
+const hasNoFixedFunctionName = (value: string) => clean(value).replace(/`/g, "").toLowerCase() === "no fixed function name";
 
 export function primaryFunctionName(value: string) {
   const names = functionNames(value);
@@ -96,6 +97,14 @@ function cppType(type: string) {
 }
 
 export function createPracticeTemplates(description: ProblemFunctionDescription, references?: { python?: string | null; java?: string | null; cpp?: string | null }): Record<PracticeLanguage, string> {
+  if (hasNoFixedFunctionName(description.functionName)) {
+    return {
+      "Python 3": "# Write your solution here\n",
+      Java: "// Write your solution here\n",
+      "C++": "// Write your solution here\n",
+    };
+  }
+
   const declaredNames = functionNames(description.functionName);
   const namesToRender = declaredNames.length ? declaredNames : ["solve"];
   const names = description.parameters.map((parameter, index) => safeIdentifier(parameter.name, `arg${index + 1}`));

@@ -177,7 +177,7 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* OOD and System Design questions do not use a coding-function contract. */
+/* System Design questions do not use a coding-function contract. */
 .practice-non-coding-problem .practice-content > div.flex-1 > .space-y-6 > section:nth-child(3),
 .practice-non-coding-problem .practice-content > div.flex-1 > .space-y-6 > section:nth-child(4),
 .practice-non-coding-problem .practice-content > div.flex-1 > .space-y-6 > section:nth-child(5) {

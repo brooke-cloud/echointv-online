@@ -193,6 +193,19 @@ assert.equal(plainFunctionBoundary.examples.length, 3);
 assert.equal(plainFunctionBoundary.examples[2].explanation, "Third explanation stays here.");
 assert.equal(plainFunctionBoundary.examples[2].explanation.includes("Function Description"), false);
 
+const indentedTree = parseProblemImportText(`# 3. Examples
+Example 1
+Input
+    1
+   / \\
+  2   3
+Output
+    6
+Explanation
+The tree indentation must be preserved.`);
+assert.equal(indentedTree.examples[0].input, "    1\n   / \\\n  2   3");
+assert.equal(indentedTree.examples[0].output, "    6");
+
 const tableParsed = parseProblemImportText(`# 4. Function Description
 Function Name: sigmoid, fit_q1, predict_q1
 

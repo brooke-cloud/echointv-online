@@ -24,6 +24,16 @@ assert.doesNotMatch(templates.Java, /\bsolve\s*\(/);
 assert.doesNotMatch(templates["C++"], /\bsolve\s*\(/);
 assert.match(templates["C++"], /^#include <bits\/stdc\+\+\.h>\nusing namespace std;/);
 assert.doesNotMatch(templates["C++"], /class\s+Solution/);
+
+const noFixedFunctionTemplates = createPracticeTemplates(normalizeProblemFunctionDescription({
+  functionName: "No fixed function name",
+  parameters: [],
+}));
+assert.equal(noFixedFunctionTemplates["Python 3"], "# Write your solution here\n");
+assert.equal(noFixedFunctionTemplates.Java, "// Write your solution here\n");
+assert.equal(noFixedFunctionTemplates["C++"], "// Write your solution here\n");
+assert.doesNotMatch(noFixedFunctionTemplates["Python 3"], /def\s+solve|\bpass\b/);
+
 assert.equal(preferredSolutionLanguage({ solutionCpp: "#include <vector>" }), "C++");
 assert.equal(preferredSolutionLanguage({ solutionJava: "class Solution {}" }), "Java");
 assert.equal(preferredSolutionLanguage({ solutionPython: "def solve(): pass", solutionJava: "class Solution {}", solutionCpp: "#include <vector>" }), "Python 3");

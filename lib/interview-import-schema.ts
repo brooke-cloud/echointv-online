@@ -48,6 +48,7 @@ export type ImportQuestion = {
 };
 
 const stringValue = (value: unknown) => typeof value === 'string' ? value.trim() : '';
+const multilineValue = (value: unknown) => typeof value === 'string' ? value.replace(/\r\n/g, '\n').replace(/^\n+|\n+$/g, '') : '';
 const objectValue = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const stringArray = (value: unknown) => Array.isArray(value) ? value.map(stringValue).filter(Boolean) : stringValue(value).split(/[,;\n]/).map((item) => item.trim()).filter(Boolean);
 
@@ -55,7 +56,7 @@ function normalizeExamples(value: unknown): ImportExample[] {
   if (!Array.isArray(value)) return [];
   return value.map((entry) => {
     const item = objectValue(entry);
-    return { input: stringValue(item.input), output: stringValue(item.output), explanation: stringValue(item.explanation) };
+    return { input: multilineValue(item.input), output: multilineValue(item.output), explanation: multilineValue(item.explanation) };
   }).filter((item) => item.input || item.output || item.explanation);
 }
 
