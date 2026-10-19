@@ -222,4 +222,31 @@ assert.deepEqual(tableParsed.functionDescription.parameters, [
   { name: "lr", type: "float", description: "Learning rate used by logistic regression" },
 ]);
 
+const plainAiAnalysisBoundary = parseProblemImportText(`Complexity
+
+Time Complexity
+
+O(n log n) Sorting the events dominates the running time.
+
+Space Complexity
+
+O(n) The event list stores two events per interval.
+
+AI Analysis
+
+Interview Focus
+
+This problem evaluates sweep-line reasoning and tie-breaking.
+
+Key Concepts
+
+Sweep Line Algorithm
+Event Sorting`);
+assert.equal(plainAiAnalysisBoundary.complexity.time, "O(n log n) Sorting the events dominates the running time.");
+assert.equal(plainAiAnalysisBoundary.complexity.space, "O(n) The event list stores two events per interval.");
+assert.equal(plainAiAnalysisBoundary.complexity.time.includes("AI Analysis"), false);
+assert.equal(plainAiAnalysisBoundary.complexity.space.includes("AI Analysis"), false);
+assert.equal(plainAiAnalysisBoundary.aiAnalysis.interviewIntent, "This problem evaluates sweep-line reasoning and tie-breaking.");
+assert.equal(plainAiAnalysisBoundary.aiAnalysis.keyConcepts, "Sweep Line Algorithm\nEvent Sorting");
+
 console.log("problem-content-import tests passed");

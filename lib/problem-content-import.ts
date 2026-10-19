@@ -156,7 +156,11 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
 
     const inline = line.match(/^\s*(?:#{1,6}\s*)?(?:\*\*)?([^:：*]{1,60})(?:\*\*)?\s*[:：]\s*(.*)$/);
     const headingText = line.replace(/^\s*#{1,6}\s*/, "").replace(/^\*\*(.*?)\*\*$/, "$1").trim();
-    if (/^\d+[.)]?\s*AI Analysis$/i.test(headingText)) { current = undefined; continue; }
+    const containerHeading = cleanLabel(headingText).replace(/^\d+[.)]?\s*/, "");
+    if (["basic information", "function description", "complexity", "ai analysis", "solutions"].includes(containerHeading)) {
+      current = undefined;
+      continue;
+    }
     const contextualLabel = cleanLabel(inline?.[1] || headingText);
     if (current === "parameters" && /^(name|type|description|名称|类型|描述)$/.test(contextualLabel)) { add("parameters", originalLine); continue; }
     if (current === "returnDescription" && /^(description|描述)$/.test(contextualLabel)) continue;
