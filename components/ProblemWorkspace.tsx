@@ -38,6 +38,34 @@ function runPython(code: string, input: string, functionName: string, parameters
   });
 }
 
+async function runJudge0(
+  language: "Java" | "C++",
+  code: string,
+  input: string,
+  functionName: string,
+  parameters: { name: string; type: string }[],
+) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 22_000);
+  try {
+    const response = await fetch("/api/code/execute", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      signal: controller.signal,
+      body: JSON.stringify({ language, code, input, functionName, parameters }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(typeof result.error === "string" ? result.error : "Code execution failed.");
+    return result as { output: string; success: boolean; status: string };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw new Error("Judge0 execution timed out.");
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 export default function ProblemWorkspace({ problem, canAccess }: Props) {
   const defaultSolutionLanguage = preferredSolutionLanguage(problem);
   const practiceTemplates = useMemo(() => createPracticeTemplates(problem.functionDescription, {
@@ -69,7 +97,7 @@ export default function ProblemWorkspace({ problem, canAccess }: Props) {
     document.documentElement.classList.toggle("practice-page-dark", dark);
     return () => document.documentElement.classList.remove("practice-page-dark");
   }, [dark]);
-  const reset = () => { setCode(practiceTemplates[language]); setCompleted(false); setOutputMessage(""); setConsoleTab("Examples"); }; const run = async () => { if (!code.trim() || running) return; setCompleted(false); setRunning(true); setConsoleTab("Output"); setOutputMessage(`Loading the ${language} practice runtime…`); try { if (language !== "Python 3") throw new Error(`${language} browser execution is not available yet. Switch to Python 3 or connect a self-hosted compiler service.`); const input = consoleTab === "Custom Test" ? customInput : selected.input; const result = await runPython(code, input, practiceFunctionName, problem.functionDescription.parameters.map((parameter) => parameter.name)); setOutputMessage(result.output); setCompleted(result.success); } catch (error) { setOutputMessage(error instanceof Error ? error.message : "Unable to run code."); } finally { setRunning(false); } }; const changeLanguage = (next: PracticeLanguage) => { setLanguage(next); setCode(practiceTemplates[next]); setCompleted(false); setOutputMessage(""); setConsoleTab("Examples"); }; const copySolution = async () => { await navigator.clipboard?.writeText(solution); setCopied(true); window.setTimeout(() => setCopied(false), 1500); }; const saveNotes = () => { window.localStorage.setItem(notesKey, notes); setSaved(true); window.setTimeout(() => setSaved(false), 1600); };
+  const reset = () => { setCode(practiceTemplates[language]); setCompleted(false); setOutputMessage(""); setConsoleTab("Examples"); }; const run = async () => { if (!code.trim() || running) return; setCompleted(false); setRunning(true); setConsoleTab("Output"); setOutputMessage(`Loading the ${language} practice runtime…`); try { const input = consoleTab === "Custom Test" ? customInput : selected.input; const result = language === "Python 3" ? await runPython(code, input, practiceFunctionName, problem.functionDescription.parameters.map((parameter) => parameter.name)) : await runJudge0(language, code, input, practiceFunctionName, problem.functionDescription.parameters); setOutputMessage(result.output); setCompleted(result.success); } catch (error) { setOutputMessage(error instanceof Error ? error.message : "Unable to run code."); } finally { setRunning(false); } }; const changeLanguage = (next: PracticeLanguage) => { setLanguage(next); setCode(practiceTemplates[next]); setCompleted(false); setOutputMessage(""); setConsoleTab("Examples"); }; const copySolution = async () => { await navigator.clipboard?.writeText(solution); setCopied(true); window.setTimeout(() => setCopied(false), 1500); }; const saveNotes = () => { window.localStorage.setItem(notesKey, notes); setSaved(true); window.setTimeout(() => setSaved(false), 1600); };
   const startResize = (event: React.PointerEvent<HTMLDivElement>) => {
     const bounds = workspaceRef.current?.getBoundingClientRect();
     if (!bounds) return;
