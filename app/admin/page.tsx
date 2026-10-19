@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { retryAsync } from "@/lib/retry";
+import { isPaywallEnabled } from "@/lib/site-settings";
+import PaywallToggle from "@/components/admin/PaywallToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +50,7 @@ export default async function AdminDashboardPage() {
     databaseUnavailable = true;
     return [0, 0, 0, 0, [], [], []] as Awaited<ReturnType<typeof loadDashboardData>>;
   });
+  const paywallEnabled = await isPaywallEnabled();
 
   const stats = [
     { title: "注册用户总数", value: totalUsers, desc: "全站注册求职者", icon: "👥" },
@@ -106,6 +109,15 @@ export default async function AdminDashboardPage() {
           </div>
         ))}
       </div>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-5">
+          <p className="text-xs font-bold uppercase tracking-wider text-blue-600">付费设置</p>
+          <h2 className="mt-1 text-lg font-bold text-gray-900">全站付费内容开关</h2>
+          <p className="mt-1 text-sm text-gray-500">控制题目答案和面经文章是否需要 Pro 会员。</p>
+        </div>
+        <PaywallToggle enabled={paywallEnabled} />
+      </section>
 
       {/* 3 列数据列表（保持原版清爽卡片样式） */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

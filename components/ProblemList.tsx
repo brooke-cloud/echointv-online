@@ -19,7 +19,13 @@ interface Problem {
   isFree?: boolean;
 }
 
-export default function ProblemList({ problems }: { problems: Problem[] }) {
+export default function ProblemList({
+  problems,
+  paywallEnabled = true,
+}: {
+  problems: Problem[];
+  paywallEnabled?: boolean;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
@@ -237,12 +243,12 @@ export default function ProblemList({ problems }: { problems: Problem[] }) {
           const isOA = isProblemOA(problem);
 
           const originalIndex = problems.findIndex((p) => p.id === problem.id);
-          const isFree =
-            typeof problem.isFree === "boolean"
+          const isFree = !paywallEnabled ||
+            (typeof problem.isFree === "boolean"
               ? problem.isFree
               : originalIndex !== -1
               ? originalIndex < 6
-              : true;
+              : true);
 
           return (
             <Link

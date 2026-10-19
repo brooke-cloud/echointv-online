@@ -6,6 +6,12 @@ datasource db {
   provider = "postgresql"
 }
 
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 model Problem {
   id                   Int                   @id @default(autoincrement())
   title                String
@@ -110,8 +116,90 @@ model User {
   proStartedAt DateTime?
   favorites    Favorite[]
   progress     UserProblemProgress[]
+  billingPayments      BillingPayment[]
+  billingSubscriptions BillingSubscription[]
+  membershipGrants     MembershipGrant[]
 
   @@index([email])
+}
+
+model BillingPayment {
+  id                    String    @id @default(cuid())
+  userId                String
+  provider              String
+  providerOrderId       String
+  providerTransactionId String?
+  planCode              String
+  amount                Int
+  currency              String    @default("USD")
+  status                String    @default("PENDING")
+  idempotencyKey        String    @unique
+  metadata              Json?
+  paidAt                DateTime?
+  refundedAt            DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerOrderId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model BillingSubscription {
+  id                     String    @id @default(cuid())
+  userId                 String
+  provider               String
+  providerSubscriptionId String
+  providerCustomerId     String?
+  planCode               String
+  status                 String
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  cancelAtPeriodEnd      Boolean   @default(false)
+  canceledAt             DateTime?
+  metadata               Json?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerSubscriptionId])
+  @@index([userId])
+  @@index([status])
+  @@index([currentPeriodEnd])
+}
+
+model BillingWebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String
+  eventType   String
+  payloadHash String
+  status      String    @default("PROCESSING")
+  error       String?
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@unique([provider, eventId])
+  @@index([status])
+  @@index([receivedAt])
+}
+
+model MembershipGrant {
+  id        String    @id @default(cuid())
+  userId    String
+  source    String    @default("ADMIN")
+  note      String?
+  startsAt  DateTime  @default(now())
+  expiresAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model UserProblemProgress {

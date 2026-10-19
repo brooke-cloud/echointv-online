@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { isPaywallEnabled } from "@/lib/site-settings";
+import PaywallToggle from "@/components/admin/PaywallToggle";
 
 // Admin Dashboard
 export default async function AdminPage() {
@@ -10,6 +12,7 @@ export default async function AdminPage() {
     categories,
     recentProblems,
     recentPosts,
+    paywallEnabled,
   ] = await Promise.all([
     prisma.problem.count(),
 
@@ -42,6 +45,8 @@ export default async function AdminPage() {
       },
       take: 5,
     }),
+
+    isPaywallEnabled(),
   ]);
 
   return (
@@ -147,6 +152,14 @@ export default async function AdminPage() {
             </p>
           </div>
 
+        </section>
+
+        <section className="mt-10 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-5">
+            <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Monetization</p>
+            <h2 className="mt-1 text-xl font-bold text-gray-900">Paid content access</h2>
+          </div>
+          <PaywallToggle enabled={paywallEnabled} />
         </section>
 
 

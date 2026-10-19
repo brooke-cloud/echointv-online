@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { handlePaddleWebhook } from "@/lib/billing/paddle-webhook";
 
 // 验证 Paddle 签名
 function verifyPaddleSignature(
@@ -32,7 +33,7 @@ function verifyPaddleSignature(
   return timingSafeEqual(Buffer.from(h1), Buffer.from(expectedH1));
 }
 
-export async function POST(req: Request) {
+async function legacyPOST(req: Request) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get("paddle-signature") || "";
@@ -74,3 +75,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Webhook 处理失败" }, { status: 500 });
   }
 }
+
+export const POST = handlePaddleWebhook;

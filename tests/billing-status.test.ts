@@ -1,0 +1,11 @@
+import assert from "node:assert/strict";
+import { grantProvidesAccess, subscriptionProvidesAccess } from "../lib/billing/status";
+const hour = 60 * 60 * 1000;
+assert.equal(subscriptionProvidesAccess({ status: "ACTIVE" }), true);
+assert.equal(subscriptionProvidesAccess({ status: "PAST_DUE" }), false);
+assert.equal(subscriptionProvidesAccess({ status: "CANCELED", currentPeriodEnd: new Date(Date.now() + hour) }), true);
+assert.equal(subscriptionProvidesAccess({ status: "CANCELED", currentPeriodEnd: new Date(Date.now() - hour) }), false);
+assert.equal(subscriptionProvidesAccess({ status: "CANCELLED", currentPeriodEnd: new Date(Date.now() + hour) }), true);
+assert.equal(grantProvidesAccess({ startsAt: new Date(Date.now() - hour), expiresAt: null }), true);
+assert.equal(grantProvidesAccess({ startsAt: new Date(Date.now() - hour), revokedAt: new Date() }), false);
+console.log("billing status tests passed");

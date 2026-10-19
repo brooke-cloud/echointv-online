@@ -97,8 +97,10 @@ function extractAllTags(rawCategory?: string): string[] {
 
 export default function BlogList({
   posts = [],
+  paywallEnabled = true,
 }: {
   posts?: Post[];
+  paywallEnabled?: boolean;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("All");
@@ -258,7 +260,7 @@ export default function BlogList({
           </div>
         ) : (
           filteredPosts.map((post, index) => {
-            const isFree = typeof post.isFree === "boolean" ? post.isFree : index < 6;
+            const isFree = !paywallEnabled || (typeof post.isFree === "boolean" ? post.isFree : index < 6);
             const comp = detectCompany(post);
 
             // 🌟 提取该文章包含的所有标签

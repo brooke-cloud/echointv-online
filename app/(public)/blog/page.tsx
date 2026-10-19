@@ -6,6 +6,7 @@ import BlogList from "@/components/BlogList";
 import type { Metadata } from "next";
 import { posts as fallbackPosts } from "@/data/posts";
 import { retryAsync } from "@/lib/retry";
+import { isPaywallEnabled } from "@/lib/site-settings";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default async function BlogPage() {
     readingTime: post.readingTime || "5 min read",
     isFree: index < 6,
   }));
+  const paywallEnabled = await isPaywallEnabled();
 
   return (
     // 🌟 核心修改：使用 bg-white 纯白通透背景，去除沉闷的暗灰底色
@@ -55,7 +57,7 @@ export default async function BlogPage() {
 
         {/* 渲染列表与筛选区 */}
         <section className="mt-8">
-          <BlogList posts={posts} />
+          <BlogList posts={posts} paywallEnabled={paywallEnabled} />
         </section>
       </div>
     </main>

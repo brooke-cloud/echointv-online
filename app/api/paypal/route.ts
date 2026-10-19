@@ -27,7 +27,7 @@ async function getPayPalAccessToken(): Promise<string> {
 }
 
 // POST: 创建订单
-export async function POST(request: NextRequest) {
+async function legacyPOST(request: NextRequest) {
   try {
     const { price, currency = 'USD' } = await request.json();
 
@@ -85,4 +85,8 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function POST() {
+  return NextResponse.json({ error: "This endpoint has moved to /api/billing/checkout." }, { status: 410 });
 }

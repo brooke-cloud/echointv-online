@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { isDatabaseDisabled } from '@/lib/db-mode';
 import { problems as fallbackProblems } from "@/data/problems";
 import { retryAsync } from "@/lib/retry";
+import { isPaywallEnabled } from "@/lib/site-settings";
 
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default async function ProblemsPage() {
     : await retryAsync(() => prisma.problem.findMany({
         orderBy: { id: "asc" },
       })).catch(() => offlineProblems);
+  const paywallEnabled = await isPaywallEnabled();
 
   return (
     <main className="min-h-screen bg-gray-50 py-16">
@@ -39,7 +41,7 @@ export default async function ProblemsPage() {
         </section>
 
         <section className="mt-10">
-          <ProblemList problems={problems} />
+          <ProblemList problems={problems} paywallEnabled={paywallEnabled} />
         </section>
       </div>
     </main>

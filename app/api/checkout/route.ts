@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { createPayPalOrder } from "@/lib/paypal";
 import { getCurrentUser } from "@/lib/user-auth";
 
-export async function POST() {
+async function legacyPOST() {
   try {
     const user = await getCurrentUser();
 
@@ -20,4 +20,8 @@ export async function POST() {
       { status: 503, headers: { "Retry-After": "2" } }
     );
   }
+}
+
+export async function POST() {
+  return NextResponse.json({ error: "This endpoint has moved to /api/billing/checkout." }, { status: 410 });
 }

@@ -4,8 +4,10 @@ import Link from "next/link";
 import { capturePayPalOrder } from "@/lib/paypal";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/user-auth";
+import { redirect } from "next/navigation";
+import PaymentStatus from "@/components/checkout/PaymentStatus";
 
-export default async function CheckoutSuccessPage({
+async function LegacyCheckoutSuccessPage({
   searchParams,
 }: {
   searchParams: Promise<{ token?: string }>;
@@ -65,4 +67,10 @@ export default async function CheckoutSuccessPage({
       </div>
     </div>
   );
+}
+
+export default async function CheckoutSuccessPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login?redirect=/checkout/success");
+  return <PaymentStatus />;
 }

@@ -6,6 +6,8 @@ import { getCurrentUser } from "@/lib/user-auth";
 import PaywallCard from "@/components/PaywallCard";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import ExportPdfButton from "@/components/ExportPdfButton";
+import { hasProAccess } from "@/lib/billing/entitlements";
+import { isPaywallEnabled } from "@/lib/site-settings";
 import {
   Calendar,
   Clock,
@@ -88,8 +90,7 @@ export default async function BlogDetailPage({ params }: Props) {
     const isEmailAdmin =
       session.email &&
       ADMIN_EMAILS.includes(session.email.toLowerCase().trim());
-    isMember =
-      isEmailAdmin || user?.role === "PRO" || user?.role === "ADMIN";
+    isMember = isEmailAdmin || Boolean(user && await hasProAccess(user.id));
   }
   const isAdmin =
     Boolean(
@@ -106,7 +107,8 @@ export default async function BlogDetailPage({ params }: Props) {
     isRoleAdmin = user?.role === "ADMIN";
   }
   const canExportPdf = isAdmin || isRoleAdmin;
-  const canAccess = isFree || isMember;
+  const paywallEnabled = await isPaywallEnabled();
+  const canAccess = !paywallEnabled || isFree || isMember;
   // 并行查询上一篇、下一篇与相关推荐文章
   const [prevPost, nextPost, relatedPosts] = await Promise.all([
     prisma.post.findFirst({

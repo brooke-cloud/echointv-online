@@ -1,12 +1,13 @@
 // app/(public)/checkout/page.tsx
 "use client";
+import CheckoutClient from "@/components/checkout/CheckoutClient";
 
 import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
 import { fetchJson, HttpError } from "@/lib/fetch-json";
 
-export default function CheckoutPage() {
+function LegacyCheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
 
@@ -117,3 +118,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+export default CheckoutClient;

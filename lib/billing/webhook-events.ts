@@ -1,0 +1,6 @@
+import "server-only";
+import { createHash } from "node:crypto";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+export async function beginWebhookEvent(provider: string, eventId: string, eventType: string, raw: string) { try { await prisma.billingWebhookEvent.create({ data: { provider, eventId, eventType, payloadHash: createHash("sha256").update(raw).digest("hex") } }); return true; } catch (error) { if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") { const existing = await prisma.billingWebhookEvent.findUnique({ where: { provider_eventId: { provider, eventId } } }); if (existing?.status === "FAILED") { await prisma.billingWebhookEvent.update({ where: { provider_eventId: { provider, eventId } }, data: { status: "PROCESSING", error: null } }); return true; } return false; } throw error; } }
+export async function finishWebhookEvent(provider: string, eventId: string, error?: unknown) { await prisma.billingWebhookEvent.update({ where: { provider_eventId: { provider, eventId } }, data: error ? { status: "FAILED", error: error instanceof Error ? error.message : String(error) } : { status: "PROCESSED", processedAt: new Date(), error: null } }); }

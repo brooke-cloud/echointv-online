@@ -10,6 +10,8 @@ import { parseNotionInterviewQuestion } from "@/lib/interview-import-parser";
 import type { NotionContentBlock } from "@/lib/notion-interviews";
 import { normalizeProblemFunctionDescription } from "@/lib/problem-function";
 import ProblemWorkspace from "@/components/ProblemWorkspace";
+import { hasProAccess } from "@/lib/billing/entitlements";
+import { isPaywallEnabled } from "@/lib/site-settings";
 
 type Props = { params: Promise<{ slug: string }> };
 export const dynamic = "force-dynamic";
@@ -49,10 +51,10 @@ export default async function ProblemDetailPage({ params }: Props) {
   const freeProblems = isDatabaseDisabled() ? [] : await retryAsync(() => prisma.problem.findMany({ take: 6, orderBy: { id: "asc" }, select: { id: true } })).catch(() => []);
   const isFree = typeof (problem as { isFree?: boolean }).isFree === "boolean" ? Boolean((problem as { isFree?: boolean }).isFree) : freeProblems.some((item) => item.id === problem.id);
   const session = await getCurrentUser();
-  const user = session ? await retryAsync(() => prisma.user.findUnique({ where: { id: session.id }, select: { role: true, isVip: true } })).catch(() => null) : null;
   const adminEmails = ["admin@echointv.com", "shihaoy74@gmail.com"];
   const isAdmin = Boolean(session?.email && adminEmails.includes(session.email.toLowerCase().trim()));
-  const canAccess = isFree || isAdmin || user?.role === "PRO" || user?.role === "ADMIN" || Boolean(user?.isVip);
+  const paywallEnabled = await isPaywallEnabled();
+  const canAccess = !paywallEnabled || isFree || isAdmin || Boolean(session && await hasProAccess(session.id));
 
   return <ProblemWorkspace problem={{
     slug: problem.slug || slug,
@@ -64,7 +66,7 @@ export default async function ProblemDetailPage({ params }: Props) {
     example: problem.example,
     approach: problem.approach,
     solution: problem.solution,
-    solutionLanguage: problem.solutionLanguage,
+    solutionLanguage: "solutionLanguage" in problem ? problem.solutionLanguage : undefined,
     topics: problem.topics || [],
     timeComplexity: problem.timeComplexity,
     spaceComplexity: problem.spaceComplexity,
