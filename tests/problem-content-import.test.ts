@@ -156,6 +156,22 @@ const flattenedPython = parseProblemImportText(`## Solutions
 class LogStreamProcessor:        def __init__(self):            self.user_partners = {}        def add_interaction(self, sender_username, receiver_username):            self.user_partners[sender_username] = receiver_username        return True`);
 assert.equal(flattenedPython.solution.python, "class LogStreamProcessor:\n        def __init__(self):\n            self.user_partners = {}\n        def add_interaction(self, sender_username, receiver_username):\n            self.user_partners[sender_username] = receiver_username\n        return True");
 
+const flattenedPythonWithComments = parseProblemImportText(`Solutions
+Python
+\`\`\`
+class Solution:    # Find the answer.    def solve(self, nums: list[int]) -> int:        # Store the running total.        total = 0        # Add every value.        for value in nums:            total += value        # Return the result.        return total# Create a solution instance.solution = Solution()# Define sample values.nums = [1, 2]# Calculate and print.print(solution.solve(nums))
+\`\`\``);
+assert.equal(flattenedPythonWithComments.solution.python, `class Solution:
+    # Find the answer.
+    def solve(self, nums: list[int]) -> int:
+        # Store the running total.
+        total = 0
+        # Add every value.
+        for value in nums:
+            total += value
+        # Return the result.
+        return total`);
+
 const escapedPython = parseProblemImportText(`Python Solution: class Solver:\\n    def solve(self):\\n        return True`);
 assert.equal(escapedPython.solution.python, "class Solver:\n    def solve(self):\n        return True");
 

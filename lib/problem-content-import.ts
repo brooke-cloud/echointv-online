@@ -44,8 +44,21 @@ const splitLines = (value: string) => value.split(/\r?\n/).map((item) => item.re
 const normalizeImportedCode = (value: string, language: "python" | "java" | "cpp") => {
   let code = value.replace(/<br\s*\/?>/gi, "\n").replace(/\\r\\n|\\n|\\r/g, "\n").replace(/\u00a0/g, " ").trim();
   if (language !== "python" || code.includes("\n") || code.length < 120) return code;
-  code = code.replace(/\s{2,}(?=(?:class\s+|def\s+|async\s+def\s+|@\w+|from\s+\S+\s+import\s+|import\s+|if\s+|elif\s+|else\s*:|for\s+|while\s+|try\s*:|except\b|finally\s*:|with\s+|return\b|raise\b|pass\b|break\b|continue\b|self\.|#))/g, (spacing) => `\n${spacing.slice(0, 16)}`);
-  return code;
+  // Some pasted sources preserve indentation as runs of spaces while losing every newline.
+  // Split before both Python keywords and common executable statements so code does not
+  // remain swallowed by the preceding comment.
+  code = code.replace(
+    /\s{2,}(?=(?:#|class\s+|def\s+|async\s+def\s+|@\w+|from\s+\S+\s+import\s+|import\s+|if\s+|elif\s+|else\s*:|for\s+|while\s+|try\s*:|except\b|finally\s*:|with\s+|return\b|raise\b|pass\b|break\b|continue\b|print\s*\(|[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*(?:\[[^\]]+\])*\s*(?:=|\+=|-=|\*=|\/=|\.\w+\s*\()))/g,
+    (spacing) => `\n${spacing.slice(0, 20)}`,
+  );
+  code = code.replace(/(?<=\S)(#\s*(?:Create|Run|Define|Calculate|Print|Example|Sample)\b)/g, "\n$1");
+
+  // Reference solutions should contain the implementation, not pasted demo/bootstrap code.
+  const demoStart = code.search(/^\s*#\s*(?:Create (?:a |the )?(?:solution|solver)|Run (?:a |the )?sample|Define sample|Example usage|Sample usage)\b/im);
+  if (demoStart >= 0) code = code.slice(0, demoStart).trimEnd();
+  const mainGuard = code.search(/^\s*if\s+__name__\s*==\s*["']__main__["']\s*:/m);
+  if (mainGuard >= 0) code = code.slice(0, mainGuard).trimEnd();
+  return code.trim();
 };
 const sectionFor = (label: string): Section | undefined => {
   const normalized = cleanLabel(label).replace(/\s+\d+$/, "");
