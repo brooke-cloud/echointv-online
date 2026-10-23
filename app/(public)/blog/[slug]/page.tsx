@@ -8,6 +8,7 @@ import MarkdownRenderer from "@/components/MarkdownRenderer";
 import ExportPdfButton from "@/components/ExportPdfButton";
 import { hasProAccess } from "@/lib/billing/entitlements";
 import { isPaywallEnabled } from "@/lib/site-settings";
+import { retryAsync } from "@/lib/retry";
 import {
   Calendar,
   Clock,
@@ -109,35 +110,42 @@ export default async function BlogDetailPage({ params }: Props) {
   const canExportPdf = isAdmin || isRoleAdmin;
   const paywallEnabled = await isPaywallEnabled();
   const canAccess = !paywallEnabled || isFree || isMember;
-  // 并行查询上一篇、下一篇与相关推荐文章
+  // These links are supplementary. A transient database disconnect must not
+  // take down the article page after the post itself has already loaded.
   const [prevPost, nextPost, relatedPosts] = await Promise.all([
-    prisma.post.findFirst({
-      where: { createdAt: { lt: post.createdAt } },
-      orderBy: { createdAt: "desc" },
-      select: { slug: true, title: true },
-    }),
-    prisma.post.findFirst({
-      where: { createdAt: { gt: post.createdAt } },
-      orderBy: { createdAt: "asc" },
-      select: { slug: true, title: true },
-    }),
-    prisma.post.findMany({
-      where: {
-        id: { not: post.id },
-        category: post.category,
-      },
-      take: 3,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        description: true,
-        category: true,
-        date: true,
-        readingTime: true,
-      },
-    }),
+    retryAsync(() =>
+      prisma.post.findFirst({
+        where: { createdAt: { lt: post.createdAt } },
+        orderBy: { createdAt: "desc" },
+        select: { slug: true, title: true },
+      }),
+    ).catch(() => null),
+    retryAsync(() =>
+      prisma.post.findFirst({
+        where: { createdAt: { gt: post.createdAt } },
+        orderBy: { createdAt: "asc" },
+        select: { slug: true, title: true },
+      }),
+    ).catch(() => null),
+    retryAsync(() =>
+      prisma.post.findMany({
+        where: {
+          id: { not: post.id },
+          category: post.category,
+        },
+        take: 3,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          description: true,
+          category: true,
+          date: true,
+          readingTime: true,
+        },
+      }),
+    ).catch(() => []),
   ]);
   const readingTimeText = getReadingTime(
     post.content || "",

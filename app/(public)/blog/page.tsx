@@ -1,5 +1,4 @@
 // app/(public)/blog/page.tsx
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { isDatabaseDisabled } from "@/lib/db-mode";
 import BlogList from "@/components/BlogList";
@@ -7,6 +6,7 @@ import type { Metadata } from "next";
 import { posts as fallbackPosts } from "@/data/posts";
 import { retryAsync } from "@/lib/retry";
 import { isPaywallEnabled } from "@/lib/site-settings";
+import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {

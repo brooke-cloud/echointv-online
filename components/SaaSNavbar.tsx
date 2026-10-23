@@ -96,12 +96,12 @@ export default function SaaSNavbar() {
           ) : (
             <>
               <Link href="/login" className="px-2 text-xs font-bold text-slate-700">{copy.signIn}</Link>
-              <Link href="/register" className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">{copy.signUp}</Link>
+              <Link href="/register" className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700">{copy.signUp}</Link>
             </>
           ))}
         </div>
 
-        <button onClick={() => setMenuOpen((open) => !open)} className="fixed right-4 top-3 rounded-xl border border-slate-200 bg-white p-2 shadow-sm md:hidden" aria-label="Toggle navigation">
+        <button onClick={() => setMenuOpen((open) => !open)} className="fixed right-4 top-3 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm md:hidden" aria-label="Toggle navigation">
           {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>

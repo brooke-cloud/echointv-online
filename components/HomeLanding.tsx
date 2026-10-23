@@ -99,20 +99,20 @@ export default function HomeLanding({ totalProblems, totalPosts, companyCount, q
   const visibleQuestions = [...questions, ...fallbackQuestions].slice(0, 4);
 
   return (
-    <main className="home-landing w-full max-w-[100vw] overflow-hidden bg-white text-slate-950">
+    <main className="w-full max-w-[100vw] overflow-hidden bg-white text-slate-950">
       <section className="relative w-full max-w-[100vw] overflow-hidden border-b border-slate-100 bg-[radial-gradient(circle_at_82%_18%,rgba(99,102,241,0.16),transparent_30%),radial-gradient(circle_at_12%_8%,rgba(59,130,246,0.11),transparent_30%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)]">
         <div className="mx-auto grid w-full max-w-[1840px] min-w-0 grid-cols-[minmax(0,1fr)] gap-12 px-5 pb-12 pt-14 sm:px-8 lg:grid-cols-[minmax(0,.88fr)_minmax(0,1.12fr)] lg:items-center lg:gap-14 lg:px-12 lg:pb-16 lg:pt-20 xl:px-16 2xl:px-20">
           <div className="flex w-full min-w-0 max-w-[calc(100vw-40px)] flex-col justify-center sm:max-w-none">
             <div className="mb-7 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50/80 px-4 py-2 text-xs font-bold text-blue-700 shadow-sm">
-              <Sparkles className="h-3.5 w-3.5" /> {copy.badge}
+              <Sparkles className="h-4 w-4" /> {copy.badge}
             </div>
-            <h1 className="max-w-[760px] break-words text-[44px] font-black leading-[1.03] tracking-[-0.058em] text-slate-950 sm:text-6xl lg:text-[clamp(3.6rem,3.45vw,4.15rem)]">
+            <h1 className="max-w-[760px] break-words text-[44px] font-black leading-[.96] tracking-[-0.045em] text-slate-950 sm:text-6xl lg:text-[clamp(3.6rem,4.4vw,5.4rem)]">
               {copy.titleA}<br /><span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">{copy.titleB}</span>
             </h1>
             <p className="mt-7 w-full min-w-0 max-w-[650px] break-words text-base leading-8 text-slate-600 sm:text-[1.08rem]">{copy.subtitle}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/problem" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-4 text-sm font-bold text-white shadow-xl shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700">{copy.primary}<ArrowRight className="h-4 w-4" /></Link>
-              <Link href="/blog" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-bold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200"><FileText className="h-4 w-4 text-blue-600" />{copy.secondary}</Link>
+              <Link href="/problem" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700">{copy.primary}<ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/blog" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-bold text-slate-800 shadow-sm transition hover:border-blue-200 hover:text-blue-700"><FileText className="h-4 w-4" />{copy.secondary}</Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-xs font-medium text-slate-600">
               {copy.benefits.map((benefit) => <span key={benefit} className="flex items-center gap-1.5"><Check className="h-4 w-4 text-blue-600" />{benefit}</span>)}
@@ -123,7 +123,7 @@ export default function HomeLanding({ totalProblems, totalPosts, companyCount, q
         </div>
 
         <div className="mx-auto w-full max-w-[1840px] px-5 pb-14 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
-          <p className="mb-5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-500">{copy.companies}</p>
+          <p className="mb-5 text-[11px] font-black uppercase tracking-[.18em] text-slate-500">{copy.companies}</p>
           <div className="flex flex-wrap items-center justify-between gap-5">
             {topCompanies.map((company) => <div key={company} className="flex items-center gap-2 text-sm font-bold text-slate-700"><span className={`text-lg font-black ${companyStyle[company]}`}>{company === "Meta" ? "∞" : company[0]}</span>{company}</div>)}
           </div>
@@ -131,7 +131,7 @@ export default function HomeLanding({ totalProblems, totalPosts, companyCount, q
            <div className="mt-11 grid gap-4 sm:grid-cols-3">
             {[[`${totalProblems || 73}+`, copy.stats[0], FileText], [`${totalPosts || 30}+`, copy.stats[1], MessageCircle], [`${companyCount || 16}+`, copy.stats[2], Building2]].map(([value, label, Icon]) => {
               const StatIcon = Icon as typeof FileText;
-               return <div key={String(label)} className="flex min-h-[108px] items-center gap-5 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_14px_44px_rgba(15,23,42,0.055)]"><span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><StatIcon className="h-7 w-7" /></span><div><div className="text-3xl font-black tracking-tight">{value as string}</div><div className="mt-1 text-sm text-slate-500">{label as string}</div></div></div>;
+               return <div key={String(label)} className="flex min-h-[108px] items-center gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><StatIcon className="h-7 w-7" /></span><div><div className="text-3xl font-black tabular-nums tracking-tight">{value as string}</div><div className="mt-1 text-sm text-slate-500">{label as string}</div></div></div>;
             })}
           </div>
         </div>
@@ -140,14 +140,15 @@ export default function HomeLanding({ totalProblems, totalPosts, companyCount, q
       <section className="bg-[#06142e] text-white">
         <div className="mx-auto grid w-full max-w-[1840px] gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[.9fr_1.6fr] lg:px-12 xl:px-16 2xl:px-20">
           <div className="flex flex-col justify-center">
-            <p className="text-xs font-extrabold tracking-[0.16em] text-cyan-400">{copy.why}</p>
+            <p className="text-xs font-black uppercase tracking-[.18em] text-cyan-300">{copy.why}</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{copy.more}</h2>
             <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300">{copy.whyDesc}</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {copy.features.map(([title, description], index) => {
               const icons = [FileText, WandSparkles, Target]; const Icon = icons[index];
-              return <article key={title} className="rounded-2xl border border-white/10 bg-white/[0.055] p-5 shadow-2xl"><span className={`flex h-11 w-11 items-center justify-center rounded-xl ${index === 0 ? "bg-blue-500" : index === 1 ? "bg-violet-500" : "bg-emerald-500"}`}><Icon className="h-5 w-5" /></span><h3 className="mt-5 text-base font-bold">{title}</h3><p className="mt-2 text-xs leading-6 text-slate-300">{description}</p></article>;
+              const colors = ["bg-blue-500", "bg-violet-500", "bg-emerald-500"];
+              return <article key={title} className="rounded-2xl border border-white/10 bg-white/[0.07] p-5"><span className={`flex h-11 w-11 items-center justify-center rounded-xl ${colors[index]}`}><Icon className="h-5 w-5" /></span><h3 className="mt-5 text-base font-bold">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-300">{description}</p></article>;
             })}
           </div>
         </div>
@@ -171,10 +172,10 @@ export default function HomeLanding({ totalProblems, totalPosts, companyCount, q
             </div>
           </div>
 
-          <div className="mt-20 flex flex-col items-center gap-7 rounded-3xl border border-blue-100 bg-[linear-gradient(120deg,#eef2ff,#f8fbff_55%,#e8f5ff)] px-7 py-10 text-center shadow-sm lg:flex-row lg:text-left">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-white text-blue-600 shadow-lg"><BriefcaseBusiness className="h-10 w-10" /></div>
-            <div className="flex-1"><p className="text-xs font-extrabold tracking-[0.14em] text-blue-600">{copy.ctaEyebrow}</p><h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{copy.cta}</h2><p className="mt-2 text-sm text-slate-500">{copy.ctaDesc}</p></div>
-            <Link href="/register" className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-blue-600 px-7 py-4 text-sm font-bold text-white shadow-xl shadow-blue-600/20 hover:bg-blue-700">{copy.ctaButton}<ArrowRight className="h-4 w-4" /></Link>
+          <div className="mt-20 flex flex-col items-center gap-7 rounded-3xl border border-blue-100 bg-gradient-to-r from-blue-50 to-sky-50 px-7 py-10 text-center shadow-sm lg:flex-row lg:text-left">
+            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-white text-blue-600 shadow-lg"><BriefcaseBusiness className="h-10 w-10" /></span>
+            <div className="flex-1"><p className="text-xs font-black uppercase tracking-[.18em] text-blue-600">{copy.ctaEyebrow}</p><h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{copy.cta}</h2><p className="mt-2 text-sm text-slate-500">{copy.ctaDesc}</p></div>
+            <Link href="/register" className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-blue-600 px-7 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700">{copy.ctaButton}<ArrowRight className="h-4 w-4" /></Link>
           </div>
         </div>
       </section>
@@ -216,7 +217,7 @@ function SectionHeading({ title, description, action, href }: { title: string; d
 }
 
 function QuestionCard({ question }: { question: QuestionPreview }) {
-  return <Link href={`/problem/${question.slug}`} className="group flex min-h-[270px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/5">
+  return <Link href={`/problem/${question.slug}`} className="group flex min-h-[270px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl">
     <CompanyMark company={question.company} />
     <h3 className="mt-5 text-base font-black text-slate-900 group-hover:text-blue-600">{question.title}</h3>
     <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold"><span className="rounded-md bg-slate-100 px-2 py-1 text-slate-600">{question.category}</span><span className="rounded-md bg-blue-50 px-2 py-1 text-blue-600">{question.company}</span><span className="rounded-md bg-amber-50 px-2 py-1 text-amber-700">{question.difficulty}</span></div>
@@ -227,7 +228,7 @@ function QuestionCard({ question }: { question: QuestionPreview }) {
 
 function ExperienceCard({ experience }: { experience: ExperiencePreview }) {
   const company = experience.company || experience.title.split(" ")[0] || "Tech";
-  return <Link href={`/blog/${experience.slug}`} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/5">
+  return <Link href={`/blog/${experience.slug}`} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl">
     <div className="flex items-center gap-3"><CompanyMark company={company} /><div><h3 className="font-black text-slate-900 group-hover:text-blue-600">{experience.title}</h3><p className="mt-0.5 text-xs text-slate-400">{company}</p></div></div>
     <div className="mt-5 flex flex-wrap gap-2 text-[10px] font-semibold"><span className="rounded-md bg-slate-100 px-2 py-1 text-slate-600">{experience.category}</span><span className="rounded-md bg-blue-50 px-2 py-1 text-blue-600">4–5 Rounds</span><span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-700">Real Experience</span></div>
     <p className="mt-4 line-clamp-3 text-xs leading-6 text-slate-500">{experience.description}</p>

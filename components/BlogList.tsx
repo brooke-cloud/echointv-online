@@ -201,7 +201,7 @@ export default function BlogList({
               <button
                 key={comp}
                 onClick={() => setSelectedCompany(comp)}
-                className={`px-4 py-2 text-xs font-semibold rounded-xl transition ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition ${
                   selectedCompany.toLowerCase() === comp.toLowerCase()
                     ? "bg-blue-600 text-white shadow-sm"
                     : "border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-600"
@@ -224,7 +224,7 @@ export default function BlogList({
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl transition ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition ${
                 selectedCategory.toLowerCase() === cat.toLowerCase()
                   ? "bg-blue-600 text-white shadow-sm"
                   : "border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-600"
@@ -244,7 +244,7 @@ export default function BlogList({
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="text-xs px-3.5 py-1.5 rounded-xl border border-gray-200 text-gray-600 bg-white hover:bg-gray-50 transition font-medium"
+            className="text-xs text-blue-600 font-semibold hover:underline"
           >
             Clear Filters
           </button>
@@ -275,7 +275,7 @@ export default function BlogList({
                 {/* 顶部标签行：公司 + 🌟完整展示所有标签（如两个标签都显示） + 免费/付费 */}
                 <div className="flex flex-wrap items-center gap-2">
                   {comp && (
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                       🏢 {comp}
                     </span>
                   )}
@@ -284,7 +284,7 @@ export default function BlogList({
                   {tags.map((tag, idx) => (
                     <span
                       key={idx}
-                      className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-gray-100 text-gray-700"
+                      className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200"
                     >
                       {tag}
                     </span>
@@ -309,13 +309,13 @@ export default function BlogList({
 
                 {/* 摘要 */}
                 {post.description && (
-                  <div className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                  <div className="text-sm text-gray-600 leading-relaxed line-clamp-2">
                     <MarkdownRenderer content={post.description} />
                   </div>
                 )}
 
                 {/* 底部时间与链接 */}
-                <div className="pt-2 flex items-center justify-between text-xs text-gray-400 border-t border-gray-50">
+                <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
                   <div>
                     {post.date} · 预计阅读 {post.readingTime}
                   </div>

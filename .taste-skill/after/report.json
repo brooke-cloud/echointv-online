@@ -1,0 +1,2498 @@
+{
+ "url": "http://localhost:3000",
+ "at": "2026-10-23T18:11:02.980Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 3,
+   "filled": [
+    0.58,
+    0.93,
+    1
+   ],
+   "motion": {
+    "elements": 32,
+    "css": 32,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 2641,
+     "screens": 2.9,
+     "words": 865,
+     "img": 1,
+     "video": 0,
+     "canvas": 0,
+     "svg": 60,
+     "sections": 3,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 1,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 1,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+     "words": 8,
+     "chars": 50,
+     "lines": 4,
+     "size": 63,
+     "vw": 4.4,
+     "font": "Segoe UI Variable",
+     "weight": 600,
+     "tracking": -0.06,
+     "leading": 0.96,
+     "top": 136,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+     "words": 8,
+     "lines": 4,
+     "size": 63.4,
+     "font": "Segoe UI Variable"
+    },
+    "headings": [
+     {
+      "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+      "words": 8,
+      "chars": 50,
+      "lines": 4,
+      "size": 63.4,
+      "vw": 4.4,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.058,
+      "leading": 0.96,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.38,
+      "top": 136,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "60+",
+      "words": 1,
+      "chars": 3,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.11,
+      "top": 860,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "30+",
+      "words": 1,
+      "chars": 3,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.13,
+      "top": 860,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "9+",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.09,
+      "top": 860,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "More Than Just a Question Bank",
+      "words": 6,
+      "chars": 30,
+      "lines": 2,
+      "size": 36,
+      "vw": 2.5,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.11,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.32,
+      "top": 1092,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Explore Real Interview Content",
+      "words": 4,
+      "chars": 30,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.32,
+      "top": 1416,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Interview Experiences",
+      "words": 2,
+      "chars": 21,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.39,
+      "top": 1917,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Join EchoINTV and Get Closer to Your Dream Offer",
+      "words": 9,
+      "chars": 48,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.66,
+      "top": 2457,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 8,
+     "maxLines": 4,
+     "over2Lines": 1,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 2,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Segoe UI Variable",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      17,
+      18,
+      20,
+      30,
+      36,
+      63
+     ],
+     "sizeCount": 11,
+     "notLoaded": [
+      "Segoe UI Variable"
+     ],
+     "body": {
+      "font": "Segoe UI Variable",
+      "size": 12,
+      "leading": 2,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 4.8
+     },
+     "measureChars": 46,
+     "max": {
+      "size": 63.4,
+      "vw": 4.4,
+      "font": "Segoe UI Variable",
+      "text": "Master Big Tech Interviews."
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 3,
+     "microLabelShare": 0.012,
+     "microSamples": [
+      "Trusted interview data from top companie",
+      "WHY ECHOINTV",
+      "READY TO START?"
+     ],
+     "upperShare": 0.02,
+     "centerShare": 0,
+     "smallText": 31
+    },
+    "eyebrows": [
+     {
+      "text": "Google",
+      "above": "60+",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 14,
+      "top": 764
+     },
+     {
+      "text": "Apple",
+      "above": "30+",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 14,
+      "top": 764
+     },
+     {
+      "text": "Databricks",
+      "above": "9+",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 14,
+      "top": 764
+     },
+     {
+      "text": "WHY ECHOINTV",
+      "above": "More Than Just a Question Bank",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 12,
+      "top": 1064
+     },
+     {
+      "text": "READY TO START?",
+      "above": "Join EchoINTV and Get Closer to Your Dre",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 12,
+      "top": 2433
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f2f4f7",
+     "bodyBgHsl": {
+      "h": 216,
+      "s": 0.24,
+      "l": 0.96
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 56,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f2f4f7",
+       "top": 56,
+       "hsl": {
+        "h": 216,
+        "s": 0.24,
+        "l": 0.96
+       }
+      },
+      {
+       "color": "#06142e",
+       "top": 1000,
+       "hsl": {
+        "h": 219,
+        "s": 0.77,
+        "l": 0.1
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#62748e",
+       "share": 0.62
+      },
+      {
+       "color": "#45556c",
+       "share": 0.13
+      },
+      {
+       "color": "#cad5e2",
+       "share": 0.06
+      },
+      {
+       "color": "#0f172b",
+       "share": 0.05
+      },
+      {
+       "color": "#020618",
+       "share": 0.04
+      }
+     ],
+     "button": {
+      "bg": "#020618",
+      "hsl": {
+       "h": 229,
+       "s": 0.85,
+       "l": 0.05
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": [
+      {
+       "text": "Solution",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 10,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Discussion",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 10,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "AI Analysis",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 10,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Microsoft",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Google",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Amazon",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      }
+     ]
+    },
+    "buttons": {
+     "count": 5,
+     "inHero": 4,
+     "radius": 6,
+     "height": 36,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Search",
+      "Sign Up",
+      "Explore Interview Questions",
+      "View Solution →"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 17,
+     "boxRadius": 6,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 836
+      },
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 1064
+      },
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 1512
+      },
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 2013
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 8,
+     "fixed": true,
+     "height": 56,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 2641,
+    "margins": {
+     "left": 64,
+     "right": 88
+    },
+    "sections": [
+     {
+      "sel": "section.relative.w-full",
+      "tag": "section",
+      "top": 56,
+      "height": 944,
+      "words": 142,
+      "media": 0,
+      "middle": 64,
+      "heading": {
+       "text": "Master Big Tech Interviews.",
+       "size": 63,
+       "tag": "h1"
+      },
+      "left": 64,
+      "right": 60,
+      "textLeft": 64,
+      "textRight": 60,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "section.bg-[#06142e].text-white",
+      "tag": "section",
+      "top": 1000,
+      "height": 336,
+      "words": 73,
+      "media": 0,
+      "middle": 85,
+      "heading": {
+       "text": "More Than Just a Question Bank",
+       "size": 36,
+       "tag": "h2"
+      },
+      "left": 64,
+      "right": 94,
+      "textLeft": 64,
+      "textRight": 94,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "section.bg-slate-50/70",
+      "tag": "section",
+      "top": 1336,
+      "height": 1305,
+      "words": 694,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Explore Real Interview Content",
+       "size": 30,
+       "tag": "h2"
+      },
+      "left": 64,
+      "right": 86,
+      "textLeft": 64,
+      "textRight": 86,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+      "size": 63,
+      "top": 136,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 64,
+      "n": 9
+     },
+     {
+      "x": 574,
+      "n": 3
+     },
+     {
+      "x": 160,
+      "n": 2
+     },
+     {
+      "x": 859,
+      "n": 2
+     },
+     {
+      "x": 1135,
+      "n": 2
+     },
+     {
+      "x": 84,
+      "n": 1
+     },
+     {
+      "x": 126,
+      "n": 1
+     },
+     {
+      "x": 417,
+      "n": 1
+     },
+     {
+      "x": 750,
+      "n": 1
+     },
+     {
+      "x": 1012,
+      "n": 1
+     },
+     {
+      "x": 1083,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 24,
+    "bodySize": 12,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0.08,
+    "voidBox": {
+     "x": 600,
+     "y": 540,
+     "w": 600,
+     "h": 180
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": false,
+    "ground": "#f2f4f7",
+    "sidebar": null,
+    "topbar": {
+     "h": 56
+    },
+    "canvas": {
+     "left": 64,
+     "right": 64
+    },
+    "hero": {
+     "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+     "words": 8,
+     "chars": 50,
+     "lines": 4,
+     "size": 63,
+     "vw": 4.4,
+     "font": "Segoe UI Variable",
+     "weight": 600,
+     "tracking": -0.06,
+     "leading": 0.96,
+     "top": 136,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 5,
+     "firstScreen": 4,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 6,
+     "radii": [
+      [
+       6,
+       5
+      ],
+      [
+       8,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 2,
+     "hues": 2,
+     "samples": [
+      {
+       "hue": 221,
+       "size": 28,
+       "radius": "8px"
+      },
+      {
+       "hue": 265,
+       "size": 28,
+       "radius": "8px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.72,
+     "tiny": 34,
+     "tinySamples": [
+      "INTERVIEW INTELLIGENCE 10px",
+      "Question 10px",
+      "Solution 10px",
+      "Discussion 10px"
+     ],
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      17,
+      20,
+      30,
+      36,
+      63
+     ]
+    },
+    "title": {
+     "text": "Master Big Tech Interviews.\nLand Your Dream Offer.",
+     "size": 63,
+     "top": 136
+    },
+    "colourShare": 0.013
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 5,
+   "filled": [
+    0.72,
+    0.76,
+    1,
+    1,
+    1
+   ],
+   "motion": {
+    "elements": 32,
+    "css": 32,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 4389,
+     "screens": 4.3,
+     "words": 865,
+     "img": 1,
+     "video": 0,
+     "canvas": 0,
+     "svg": 60,
+     "sections": 3,
+     "horizontalOverflow": 95,
+     "overflowCulprits": [
+      "a.px-2.text-xs (+11px)",
+      "a.rounded-xl.bg-slate-950 (+95px)"
+     ],
+     "uiFragments": 1,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 1,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+     "words": 8,
+     "chars": 50,
+     "lines": 2,
+     "size": 60,
+     "vw": 7.8,
+     "font": "Segoe UI Variable",
+     "weight": 600,
+     "tracking": -0.06,
+     "leading": 0.96,
+     "top": 112,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+     "words": 8,
+     "lines": 2,
+     "size": 60,
+     "font": "Segoe UI Variable"
+    },
+    "headings": [
+     {
+      "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+      "words": 8,
+      "chars": 50,
+      "lines": 2,
+      "size": 60,
+      "vw": 7.8,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.058,
+      "leading": 0.96,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 112,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "60+",
+      "words": 1,
+      "chars": 3,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.17,
+      "top": 1294,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "30+",
+      "words": 1,
+      "chars": 3,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.17,
+      "top": 1294,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "9+",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.16,
+      "top": 1304,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "More Than Just a Question Bank",
+      "words": 6,
+      "chars": 30,
+      "lines": 1,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.11,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 1546,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Explore Real Interview Content",
+      "words": 4,
+      "chars": 30,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.61,
+      "top": 2074,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Interview Experiences",
+      "words": 2,
+      "chars": 21,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.7,
+      "top": 2895,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Join EchoINTV and Get Closer to Your Dream Offer",
+      "words": 9,
+      "chars": 48,
+      "lines": 2,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.84,
+      "top": 4089,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 8,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 1,
+     "medianWords": 2,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Segoe UI Variable",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      17,
+      18,
+      20,
+      30,
+      36,
+      60
+     ],
+     "sizeCount": 11,
+     "notLoaded": [
+      "Segoe UI Variable"
+     ],
+     "body": {
+      "font": "Segoe UI Variable",
+      "size": 12,
+      "leading": 2,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 4.8
+     },
+     "measureChars": 50,
+     "max": {
+      "size": 60,
+      "vw": 7.8,
+      "font": "Segoe UI Variable",
+      "text": "Master Big Tech Interviews."
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 3,
+     "microLabelShare": 0.012,
+     "microSamples": [
+      "Trusted interview data from top companie",
+      "WHY ECHOINTV",
+      "READY TO START?"
+     ],
+     "upperShare": 0.02,
+     "centerShare": 0.03,
+     "smallText": 31
+    },
+    "eyebrows": [
+     {
+      "text": "Databricks",
+      "above": "60+",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 14,
+      "top": 1198
+     },
+     {
+      "text": "Snowflake",
+      "above": "30+",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 14,
+      "top": 1198
+     },
+     {
+      "text": "WHY ECHOINTV",
+      "above": "More Than Just a Question Bank",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 12,
+      "top": 1518
+     },
+     {
+      "text": "READY TO START?",
+      "above": "Join EchoINTV and Get Closer to Your Dre",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 12,
+      "top": 4065
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f2f4f7",
+     "bodyBgHsl": {
+      "h": 216,
+      "s": 0.24,
+      "l": 0.96
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 56,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f2f4f7",
+       "top": 56,
+       "hsl": {
+        "h": 216,
+        "s": 0.24,
+        "l": 0.96
+       }
+      },
+      {
+       "color": "#06142e",
+       "top": 1454,
+       "hsl": {
+        "h": 219,
+        "s": 0.77,
+        "l": 0.1
+       }
+      },
+      {
+       "color": "#e8eef7",
+       "top": 3957,
+       "hsl": {
+        "h": 216,
+        "s": 0.48,
+        "l": 0.94
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#62748e",
+       "share": 0.62
+      },
+      {
+       "color": "#45556c",
+       "share": 0.13
+      },
+      {
+       "color": "#cad5e2",
+       "share": 0.06
+      },
+      {
+       "color": "#0f172b",
+       "share": 0.05
+      },
+      {
+       "color": "#020618",
+       "share": 0.04
+      }
+     ],
+     "button": {
+      "bg": "#020618",
+      "hsl": {
+       "h": 229,
+       "s": 0.85,
+       "l": 0.05
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": [
+      {
+       "text": "Solution",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 10,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Discussion",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 10,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "AI Analysis",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 10,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Microsoft",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Google",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Amazon",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      }
+     ]
+    },
+    "buttons": {
+     "count": 5,
+     "inHero": 4,
+     "radius": 6,
+     "height": 36,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Search",
+      "Sign Up",
+      "Explore Interview Questions",
+      "View Solution →"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 17,
+     "boxRadius": 6,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 1270
+      },
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 1698
+      },
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 2170
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 8,
+     "fixed": true,
+     "height": 56,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 4389,
+    "margins": {
+     "left": 32,
+     "right": 52
+    },
+    "sections": [
+     {
+      "sel": "section.relative.w-full",
+      "tag": "section",
+      "top": 56,
+      "height": 1398,
+      "words": 142,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Master Big Tech Interviews.",
+       "size": 60,
+       "tag": "h1"
+      },
+      "left": 32,
+      "right": 28,
+      "textLeft": 32,
+      "textRight": 28,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "section.bg-[#06142e].text-white",
+      "tag": "section",
+      "top": 1454,
+      "height": 540,
+      "words": 73,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "More Than Just a Question Bank",
+       "size": 36,
+       "tag": "h2"
+      },
+      "left": 32,
+      "right": 62,
+      "textLeft": 32,
+      "textRight": 62,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "section.bg-slate-50/70",
+      "tag": "section",
+      "top": 1994,
+      "height": 2395,
+      "words": 694,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Explore Real Interview Content",
+       "size": 30,
+       "tag": "h2"
+      },
+      "left": 32,
+      "right": 53,
+      "textLeft": 32,
+      "textRight": 53,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+      "size": 60,
+      "top": 112,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 32,
+      "n": 9
+     },
+     {
+      "x": 52,
+      "n": 4
+     },
+     {
+      "x": 108,
+      "n": 3
+     },
+     {
+      "x": 292,
+      "n": 2
+     },
+     {
+      "x": 414,
+      "n": 2
+     },
+     {
+      "x": 532,
+      "n": 2
+     }
+    ],
+    "leftBlocks": 22,
+    "bodySize": 12,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": false,
+    "ground": "#f2f4f7",
+    "sidebar": null,
+    "topbar": {
+     "h": 56
+    },
+    "canvas": {
+     "left": 32,
+     "right": 32
+    },
+    "hero": {
+     "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+     "words": 8,
+     "chars": 50,
+     "lines": 2,
+     "size": 60,
+     "vw": 7.8,
+     "font": "Segoe UI Variable",
+     "weight": 600,
+     "tracking": -0.06,
+     "leading": 0.96,
+     "top": 112,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 5,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 6,
+     "radii": [
+      [
+       6,
+       5
+      ],
+      [
+       8,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 2,
+     "hues": 2,
+     "samples": [
+      {
+       "hue": 221,
+       "size": 28,
+       "radius": "8px"
+      },
+      {
+       "hue": 265,
+       "size": 28,
+       "radius": "8px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.72,
+     "tiny": 34,
+     "tinySamples": [
+      "INTERVIEW INTELLIGENCE 10px",
+      "Question 10px",
+      "Solution 10px",
+      "Discussion 10px"
+     ],
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      17,
+      20,
+      30,
+      36,
+      60
+     ]
+    },
+    "title": {
+     "text": "Master Big Tech Interviews.\nLand Your Dream Offer.",
+     "size": 60,
+     "top": 112
+    },
+    "colourShare": 0.019
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 8,
+   "filled": [
+    0.44,
+    0.73,
+    0.92,
+    1,
+    1,
+    0.99,
+    0.99,
+    0.99
+   ],
+   "motion": {
+    "elements": 32,
+    "css": 32,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 6218,
+     "screens": 7.4,
+     "words": 833,
+     "img": 1,
+     "video": 0,
+     "canvas": 0,
+     "svg": 60,
+     "sections": 3,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 1,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 1,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+     "words": 8,
+     "chars": 50,
+     "lines": 4,
+     "size": 44,
+     "vw": 11.3,
+     "font": "Segoe UI Variable",
+     "weight": 600,
+     "tracking": -0.06,
+     "leading": 0.96,
+     "top": 112,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+     "words": 8,
+     "lines": 4,
+     "size": 44,
+     "font": "Segoe UI Variable"
+    },
+    "headings": [
+     {
+      "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+      "words": 8,
+      "chars": 50,
+      "lines": 4,
+      "size": 44,
+      "vw": 11.3,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.058,
+      "leading": 0.96,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 112,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "60+",
+      "words": 1,
+      "chars": 3,
+      "lines": 1,
+      "size": 30,
+      "vw": 7.7,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.39,
+      "top": 1548,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "30+",
+      "words": 1,
+      "chars": 3,
+      "lines": 1,
+      "size": 30,
+      "vw": 7.7,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.49,
+      "top": 1672,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "9+",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 7.7,
+      "font": "Segoe UI Variable",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.32,
+      "top": 1796,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "More Than Just a Question Bank",
+      "words": 6,
+      "chars": 30,
+      "lines": 2,
+      "size": 30,
+      "vw": 7.7,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 2028,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Explore Real Interview Content",
+      "words": 4,
+      "chars": 30,
+      "lines": 2,
+      "size": 30,
+      "vw": 7.7,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 2896,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Interview Experiences",
+      "words": 2,
+      "chars": 21,
+      "lines": 1,
+      "size": 30,
+      "vw": 7.7,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 4450,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Join EchoINTV and Get Closer to Your Dream Offer",
+      "words": 9,
+      "chars": 48,
+      "lines": 3,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Segoe UI Variable",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.75,
+      "top": 5874,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 8,
+     "maxLines": 4,
+     "over2Lines": 2,
+     "statements": 0,
+     "centered": 1,
+     "medianWords": 2,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Segoe UI Variable",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      18,
+      20,
+      24,
+      30,
+      44
+     ],
+     "sizeCount": 10,
+     "notLoaded": [
+      "Segoe UI Variable"
+     ],
+     "body": {
+      "font": "Segoe UI Variable",
+      "size": 12,
+      "leading": 2,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 4.8
+     },
+     "measureChars": 52,
+     "max": {
+      "size": 44,
+      "vw": 11.3,
+      "font": "Segoe UI Variable",
+      "text": "Master Big Tech Interviews."
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 3,
+     "microLabelShare": 0.012,
+     "microSamples": [
+      "Trusted interview data from top companie",
+      "WHY ECHOINTV",
+      "READY TO START?"
+     ],
+     "upperShare": 0.02,
+     "centerShare": 0.03,
+     "smallText": 28
+    },
+    "eyebrows": [
+     {
+      "text": "Snowflake",
+      "above": "60+",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 14,
+      "top": 1452
+     },
+     {
+      "text": "WHY ECHOINTV",
+      "above": "More Than Just a Question Bank",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 12,
+      "top": 2000
+     },
+     {
+      "text": "READY TO START?",
+      "above": "Join EchoINTV and Get Closer to Your Dre",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 12,
+      "top": 5850
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f2f4f7",
+     "bodyBgHsl": {
+      "h": 216,
+      "s": 0.24,
+      "l": 0.96
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 56,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f2f4f7",
+       "top": 56,
+       "hsl": {
+        "h": 216,
+        "s": 0.24,
+        "l": 0.96
+       }
+      },
+      {
+       "color": "#06142e",
+       "top": 1936,
+       "hsl": {
+        "h": 219,
+        "s": 0.77,
+        "l": 0.1
+       }
+      },
+      {
+       "color": "#e8eef7",
+       "top": 5742,
+       "hsl": {
+        "h": 216,
+        "s": 0.48,
+        "l": 0.94
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#62748e",
+       "share": 0.64
+      },
+      {
+       "color": "#45556c",
+       "share": 0.11
+      },
+      {
+       "color": "#cad5e2",
+       "share": 0.07
+      },
+      {
+       "color": "#0f172b",
+       "share": 0.05
+      },
+      {
+       "color": "#020618",
+       "share": 0.04
+      }
+     ],
+     "button": {
+      "bg": "#020618",
+      "hsl": {
+       "h": 229,
+       "s": 0.85,
+       "l": 0.05
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": [
+      {
+       "text": "Solution",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 10,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Discussion",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 10,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "AI Analysis",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 10,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Microsoft",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Google",
+       "ratio": 2.6,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#90a1b9",
+       "bg": "#ffffff"
+      },
+      {
+       "text": "Trusted interview data from top companie",
+       "ratio": 4.3,
+       "need": 4.5,
+       "size": 11,
+       "fg": "#62748e",
+       "bg": "#f2f4f7"
+      }
+     ]
+    },
+    "buttons": {
+     "count": 3,
+     "inHero": 1,
+     "radius": 6,
+     "height": 52,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Explore Interview Questions"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 16,
+     "boxRadius": 6,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 1524
+      },
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 2240
+      },
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 3084
+      },
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 4602
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": true,
+     "height": 56,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 6218,
+    "margins": {
+     "left": 20,
+     "right": 20
+    },
+    "sections": [
+     {
+      "sel": "div.mx-auto.grid",
+      "tag": "div",
+      "top": 56,
+      "height": 1263,
+      "words": 96,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Master Big Tech Interviews.",
+       "size": 44,
+       "tag": "h1"
+      },
+      "left": 20,
+      "right": 21,
+      "textLeft": 20,
+      "textRight": 21,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.mx-auto.w-full",
+      "tag": "div",
+      "top": 1319,
+      "height": 617,
+      "words": 28,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "60+",
+       "size": 30,
+       "tag": "div"
+      },
+      "left": 20,
+      "right": 20,
+      "textLeft": 20,
+      "textRight": 20,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "section.bg-[#06142e].text-white",
+      "tag": "section",
+      "top": 1936,
+      "height": 880,
+      "words": 73,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "More Than Just a Question Bank",
+       "size": 30,
+       "tag": "h2"
+      },
+      "left": 20,
+      "right": 31,
+      "textLeft": 20,
+      "textRight": 31,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "section.bg-slate-50/70",
+      "tag": "section",
+      "top": 2816,
+      "height": 3402,
+      "words": 694,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Explore Real Interview Content",
+       "size": 30,
+       "tag": "h2"
+      },
+      "left": 20,
+      "right": 29,
+      "textLeft": 20,
+      "textRight": 29,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+      "size": 44,
+      "top": 112,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 40,
+      "n": 10
+     },
+     {
+      "x": 20,
+      "n": 9
+     },
+     {
+      "x": 75,
+      "n": 3
+     }
+    ],
+    "leftBlocks": 22,
+    "bodySize": 12,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": false,
+    "ground": "#f2f4f7",
+    "sidebar": null,
+    "topbar": {
+     "h": 56
+    },
+    "canvas": {
+     "left": 20,
+     "right": 20
+    },
+    "hero": {
+     "text": "Master Big Tech Interviews. Land Your Dream Offer.",
+     "words": 8,
+     "chars": 50,
+     "lines": 4,
+     "size": 44,
+     "vw": 11.3,
+     "font": "Segoe UI Variable",
+     "weight": 600,
+     "tracking": -0.06,
+     "leading": 0.96,
+     "top": 112,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 5,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 5,
+     "radii": [
+      [
+       6,
+       5
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 1,
+     "hues": 1,
+     "samples": [
+      {
+       "hue": 210,
+       "size": 40,
+       "radius": "6px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.72,
+     "tiny": 34,
+     "tinySamples": [
+      "INTERVIEW INTELLIGENCE 10px",
+      "Question 10px",
+      "Solution 10px",
+      "Discussion 10px"
+     ],
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      20,
+      24,
+      30,
+      44
+     ]
+    },
+    "title": {
+     "text": "Master Big Tech Interviews.\nLand Your Dream Offer.",
+     "size": 44,
+     "top": 112
+    },
+    "colourShare": 0.006
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "FAIL",
+   "id": "headline-lines",
+   "width": 1440,
+   "message": "1 headline(s) wrap past two lines at 1440px: \"Master Big Tech Interviews. Land Your Dream Offe\" → 4 lines (8 words, 63.4px)",
+   "fix": "Cut words first (a headline is a title, not a sentence). Then give it a wider measure. Lower the size only as a last resort and never below the scale you chose. A real statement paragraph belongs in a <p> or <blockquote> at 36px or less."
+  },
+  {
+   "level": "FAIL",
+   "id": "micro-label",
+   "width": 1440,
+   "message": "3 tiny uppercase letter-spaced labels (e.g. \"Trusted interview data from top companie\", \"WHY ECHOINTV\", \"READY TO START?\").",
+   "fix": "Use sentence-case text at a readable size, or delete the label.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "contrast",
+   "width": 1440,
+   "message": "Low-contrast text: \"Solution\" 2.6:1 needs 4.5:1; \"Discussion\" 2.6:1 needs 4.5:1; \"AI Analysis\" 2.6:1 needs 4.5:1; \"Microsoft\" 2.6:1 needs 4.5:1",
+   "fix": "Darken or lighten the text colour.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "font-fallback",
+   "width": 1440,
+   "message": "Typeface(s) declared but not loaded, so a fallback is rendering: Segoe UI Variable",
+   "fix": "Fix the font URL / family name, or the screenshots you are judging are not the design.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "tiny-text",
+   "width": 1440,
+   "message": "34 text blocks under 11px: INTERVIEW INTELLIGENCE 10px, Question 10px, Solution 10px, Discussion 10px.",
+   "fix": "Nothing below 11px; secondary text 12px, data 13–14px.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "app-title-size",
+   "width": 1440,
+   "message": "The h1 is 63px (\"Master Big Tech Interviews.\nLand Your Dr\").",
+   "fix": "An app screen is not a landing page: the title is 18-32px (20-24px on a phone).",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "overflow",
+   "width": 768,
+   "message": "Page scrolls sideways by 95px at 768px. Widest offenders: a.px-2.text-xs (+11px), a.rounded-xl.bg-slate-950 (+95px).",
+   "fix": "Constrain the element that is wider than the viewport (max-width: 100%, or overflow: clip on its section)."
+  },
+  {
+   "level": "FAIL",
+   "id": "headline-lines",
+   "width": 390,
+   "message": "2 headline(s) wrap past two lines at 390px: \"Master Big Tech Interviews. Land Your Dream Offe\" → 4 lines (8 words, 44px); \"Join EchoINTV and Get Closer to Your Dream Offer\" → 3 lines (9 words, 24px)",
+   "fix": "Cut words first (a headline is a title, not a sentence). Then give it a wider measure. Lower the size only as a last resort and never below the scale you chose. A real statement paragraph belongs in a <p> or <blockquote> at 24px or less."
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "F:\\Desktop\\echo\\.taste-skill\\after\\desktop-fold.jpg",
+   "pages": [
+    "F:\\Desktop\\echo\\.taste-skill\\after\\desktop-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "F:\\Desktop\\echo\\.taste-skill\\after\\tablet-fold.jpg",
+   "pages": [
+    "F:\\Desktop\\echo\\.taste-skill\\after\\tablet-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "F:\\Desktop\\echo\\.taste-skill\\after\\mobile-fold.jpg",
+   "pages": [
+    "F:\\Desktop\\echo\\.taste-skill\\after\\mobile-page-01.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

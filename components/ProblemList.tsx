@@ -230,7 +230,7 @@ export default function ProblemList({
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 bg-white hover:bg-gray-50 transition font-medium"
+            className="text-xs text-blue-600 font-semibold hover:underline"
           >
             Clear Filters
           </button>
@@ -292,7 +292,7 @@ export default function ProblemList({
                         problem.difficulty?.toUpperCase() === "EASY"
                           ? "bg-green-50 text-green-700 border border-green-200/80"
                           : problem.difficulty?.toUpperCase() === "MEDIUM"
-                          ? "bg-amber-50 text-amber-800 border border-amber-200/80"
+                          ? "bg-amber-50 text-amber-700 border border-amber-200/80"
                           : "bg-rose-50 text-rose-700 border border-rose-200/80"
                       }`}
                     >
