@@ -80,7 +80,7 @@ export default function LoginPage() {
         <form id="login-form" className="space-y-4" onSubmit={handleSubmit}>
           {/* 邮箱 */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+            <label htmlFor="login-email" className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
               邮箱地址
             </label>
             <div className="relative mt-2">
@@ -88,7 +88,11 @@ export default function LoginPage() {
                 <Mail className="h-4 w-4" />
               </div>
               <input
+                id="login-email"
+                name="email"
                 type="email"
+                autoComplete="email"
+                spellCheck={false}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -100,7 +104,7 @@ export default function LoginPage() {
 
           {/* 密码 */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+            <label htmlFor="login-password" className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
               密码
             </label>
             <div className="relative mt-2">
@@ -108,7 +112,10 @@ export default function LoginPage() {
                 <Lock className="h-4 w-4" />
               </div>
               <input
+                id="login-password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

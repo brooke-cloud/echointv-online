@@ -150,7 +150,7 @@ export default function RegisterPage() {
         <form className="space-y-4" onSubmit={handleSubmit}>
           {/* 昵称 */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+            <label htmlFor="register-name" className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
               昵称 / 姓名 (可选)
             </label>
             <div className="relative mt-2">
@@ -158,7 +158,10 @@ export default function RegisterPage() {
                 <User className="h-4 w-4" />
               </div>
               <input
+                id="register-name"
+                name="name"
                 type="text"
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="例如：Alex"
@@ -169,7 +172,7 @@ export default function RegisterPage() {
 
           {/* 邮箱 + 获取验证码 */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+            <label htmlFor="register-email" className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
               电子邮箱
             </label>
             <div className="relative mt-2">
@@ -177,7 +180,11 @@ export default function RegisterPage() {
                 <Mail className="h-4 w-4" />
               </div>
               <input
+                id="register-email"
+                name="email"
                 type="email"
+                autoComplete="email"
+                spellCheck={false}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -205,7 +212,7 @@ export default function RegisterPage() {
 
           {/* 邮箱验证码 */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+            <label htmlFor="register-code" className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
               邮箱验证码  （如果没收到验证码，请查看垃圾邮件箱）
             </label>
             
@@ -214,7 +221,11 @@ export default function RegisterPage() {
                 <ShieldCheck className="h-4 w-4" />
               </div>
               <input
+                id="register-code"
+                name="verificationCode"
                 type="text"
+                autoComplete="one-time-code"
+                inputMode="numeric"
                 required
                 maxLength={6}
                 value={code}
@@ -227,7 +238,7 @@ export default function RegisterPage() {
 
           {/* 密码 */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+            <label htmlFor="register-password" className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
               设置密码 (至少 6 位)
             </label>
             <div className="relative mt-2">
@@ -235,7 +246,10 @@ export default function RegisterPage() {
                 <Lock className="h-4 w-4" />
               </div>
               <input
+                id="register-password"
+                name="password"
                 type="password"
+                autoComplete="new-password"
                 required
                 minLength={6}
                 value={password}

@@ -48,10 +48,10 @@ export default async function BlogPage() {
         {/* 顶部标题区 */}
         <section className="space-y-2">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-            面试经验
+            Interview Experience
           </h1>
           <p className="text-sm sm:text-base text-gray-500 max-w-3xl leading-relaxed">
-            收录大厂真实面试还原、算法解题套路、系统设计拆解与求职通关经验。
+            Includes real interview scenarios from major companies, algorithm problem-solving techniques, system design dissections, and job hunting success stories.
           </p>
         </section>
 

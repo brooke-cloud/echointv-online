@@ -2,6 +2,7 @@
 import "katex/dist/katex.min.css";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, BookOpen, Code2, Download, FileText, LayoutDashboard, Menu, ShieldCheck, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/user-auth";
 
@@ -44,68 +45,84 @@ export default async function AdminLayout({
 
   // 🌟 侧边栏导航列表（已加入“用户管理”）
   const navItems = [
-    { name: "数据大盘", href: "/admin", icon: "📊" },
-    { name: "题库管理", href: "/admin/problems", icon: "📚" },
-    { name: "面经管理", href: "/admin/posts", icon: "📝" },
-    { name: "Interview Import", href: "/admin/ai-import", icon: "📥" },
-    { name: "用户管理", href: "/admin/users", icon: "👥" }, // 🌟 新增用户与会员管理菜单
+    { name: "数据大盘", href: "/admin", icon: LayoutDashboard },
+    { name: "题库管理", href: "/admin/problems", icon: BookOpen },
+    { name: "面经管理", href: "/admin/posts", icon: FileText },
+    { name: "Interview Import", href: "/admin/ai-import", icon: Download },
+    { name: "用户管理", href: "/admin/users", icon: Users },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="admin-shell flex min-h-screen bg-[var(--surface-muted)]">
       {/* 侧边栏 */}
-      <aside className="w-64 bg-gray-900 text-white flex flex-col justify-between flex-shrink-0">
+      <aside className="hidden w-64 flex-shrink-0 flex-col justify-between bg-gray-900 text-white lg:flex">
         <div>
           <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-800">
-            <span className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-mono font-bold text-sm">
-              &lt;/&gt;
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+              <Code2 className="h-4 w-4" aria-hidden="true" />
             </span>
             <div className="leading-tight">
               <div className="font-bold text-sm tracking-wide">EchoINTV</div>
-              <div className="text-[10px] text-gray-400 font-mono">ADMIN CMS</div>
+              <div className="text-[10px] font-semibold tracking-wide text-gray-400">ADMIN CMS</div>
             </div>
           </div>
 
           <nav className="p-4 space-y-1">
-            {navItems.filter((item) => item.href !== "/admin/ai-import").map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition"
-              >
-                <span>{item.icon}</span>
+            {navItems.filter((item) => item.href !== "/admin/ai-import").map((item) => {
+              const Icon = item.icon;
+              return <Link key={item.href} href={item.href} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition">
+                <Icon className="h-4 w-4" aria-hidden="true" />
                 <span>{item.name}</span>
-              </Link>
-            ))}
+              </Link>;
+            })}
           </nav>
         </div>
 
         <div className="p-4 border-t border-gray-800 space-y-2">
           <div className="px-4 py-2 text-xs text-gray-400">
             当前管理员：<br />
-            <span className="font-mono text-gray-200">{user.email}</span>
+            <span className="break-all text-gray-200">{user.email}</span>
           </div>
           <Link
             href="/"
             className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-200 transition"
           >
-            ← 返回前台网站
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> 返回前台网站
           </Link>
         </div>
       </aside>
 
       {/* 主工作区 */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+        <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-6 lg:px-8">
+          <details className="group relative lg:hidden">
+            <summary className="flex cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 marker:content-none">
+              <Menu className="h-4 w-4" aria-hidden="true" />
+              管理菜单
+            </summary>
+            <nav className="absolute left-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-[var(--radius-panel)] border border-gray-200 bg-white p-2 shadow-[var(--shadow-dialog)]">
+              {navItems.filter((item) => item.href !== "/admin/ai-import").map((item) => {
+                const Icon = item.icon;
+                return <Link key={item.href} href={item.href} className="flex items-center gap-3 rounded-[var(--radius-control)] px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <span>{item.name}</span>
+                </Link>;
+              })}
+              <Link href="/" className="mt-1 flex items-center gap-2 rounded-[var(--radius-control)] border-t border-gray-100 px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100">
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                返回前台网站
+              </Link>
+            </nav>
+          </details>
           <h2 className="text-lg font-bold text-gray-800">控制台管理中心</h2>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-              👑 系统管理员
+            <span className="hidden items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 sm:inline-flex">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> 系统管理员
             </span>
           </div>
         </header>
 
-        <main className="p-8 overflow-y-auto">{children}</main>
+        <main className="admin-main overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

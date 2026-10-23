@@ -65,6 +65,8 @@ export default async function AdminLoginPage({
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
+              spellCheck={false}
               required
               className="
                 mt-2
@@ -98,6 +100,7 @@ export default async function AdminLoginPage({
               id="password"
               name="password"
               type="password"
+              autoComplete="current-password"
               required
               className="
                 mt-2

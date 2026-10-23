@@ -5,21 +5,63 @@
   --foreground: #171717;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: "Segoe UI Variable", "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace; /* taste-skill-ignore: literal code only */
+  --brand-primary: #2563eb;
+  --brand-primary-hover: #1d4ed8;
+  --focus-ring: #2563eb;
+  --surface-primary: #ffffff;
+  --surface-muted: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --border-subtle: #e5e7eb;
+  --radius-control: 0.75rem;
+  --radius-panel: 1rem;
+  --shadow-floating: 0 10px 30px rgb(15 23 42 / 0.12);
+  --shadow-dialog: 0 24px 70px rgb(15 23 42 / 0.24);
+  --duration-press: 140ms;
+  --duration-hover: 180ms;
+  --duration-ui: 240ms;
+  --ease-ui: cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: light;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+:where(a, button, input, textarea, select, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--focus-ring) 72%, white);
+  outline-offset: 2px;
+}
+
+.monaco-editor :focus-visible {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
 }
 
 .practice-page-dark .site-navbar {
@@ -105,10 +147,10 @@ body {
 
 /* Dark mode owns the complete workspace, including highlighted content cards. */
 .practice-workspace-dark .practice-content .border-blue-100.bg-blue-50\/50,
-.practice-workspace-dark .practice-content .border-violet-100.bg-violet-50\/40,
+.practice-workspace-dark .practice-content .border-violet-100.bg-violet-50\/40, /* taste-skill-ignore: existing semantic highlight compatibility */
 .practice-workspace-dark .practice-content .border-blue-100.bg-blue-50\/50,
-.practice-workspace-dark .practice-content .border-violet-100.bg-violet-50\/50,
-.practice-workspace-dark .practice-content .border-violet-200.bg-violet-50\/60 {
+.practice-workspace-dark .practice-content .border-violet-100.bg-violet-50\/50, /* taste-skill-ignore: existing semantic highlight compatibility */
+.practice-workspace-dark .practice-content .border-violet-200.bg-violet-50\/60 { /* taste-skill-ignore: existing semantic highlight compatibility */
   background: #111827;
   border-color: #334155;
   color: #e2e8f0;
@@ -154,7 +196,7 @@ body {
 }
 
 .practice-workspace {
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: auto;
   text-rendering: geometricPrecision;
   font-kerning: normal;
@@ -226,6 +268,40 @@ body {
 
 .practice-workspace:not(.practice-workspace-dark) .practice-content .text-slate-700 {
   color: #000000;
+}
+
+@media (max-width: 1023px) {
+  .practice-workspace {
+    overflow-y: auto;
+  }
+
+  .practice-workspace-shell {
+    height: auto;
+    min-height: 100%;
+  }
+
+  .practice-workspace-panels {
+    flex: none;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow: visible;
+  }
+
+  .practice-workspace-panel {
+    width: 100% !important;
+    height: 75vh;
+    min-height: 34rem;
+    flex: none;
+  }
+
+  .practice-editor-panel {
+    height: 100vh;
+    min-height: 44rem;
+  }
+
+  .practice-workspace-divider {
+    display: none;
+  }
 }
 
 /* Preserve the paragraph and blank-line formatting authored in Admin content. */

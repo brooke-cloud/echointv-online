@@ -64,8 +64,8 @@ export default async function AdminUsersPage() {
       </div>
 
       {/* 用户数据表（对齐第二张图样式，并加入会员起止时间） */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-100 text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <table className="w-full min-w-[820px] divide-y divide-gray-100 text-sm">
           <thead className="bg-gray-50/80 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <tr>
               <th className="px-6 py-4 text-left">USER / EMAIL</th>

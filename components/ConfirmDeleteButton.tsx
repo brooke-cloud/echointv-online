@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 type ConfirmDeleteButtonProps = {
@@ -41,11 +41,55 @@ export default function ConfirmDeleteButton({
   itemName = "this item",
 }: ConfirmDeleteButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+
+  const closeDialog = () => setIsOpen(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    cancelRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeDialog();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      triggerRef.current?.focus();
+    };
+  }, [isOpen]);
 
   return (
     <>
       {/* 打开删除确认窗口 */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
         className="font-medium text-red-600 transition hover:text-red-800"
@@ -57,24 +101,34 @@ export default function ConfirmDeleteButton({
       {isOpen && (
         <>
           {/* 页面遮罩 */}
-          <div
-            className="fixed inset-0 z-40 bg-black/40"
-            onClick={() => setIsOpen(false)}
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label="Close delete confirmation"
+            className="fixed inset-0 z-40 cursor-default bg-black/40"
+            onClick={closeDialog}
           />
 
           {/* 删除确认弹窗 */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain px-4 py-8 sm:px-6">
 
             {/* 弹窗内容 */}
-            <div className="w-full max-w-md rounded-2xl bg-white p-7 shadow-xl">
+            <div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
+              aria-describedby={descriptionId}
+              className="pointer-events-auto w-full max-w-md rounded-[var(--radius-panel)] bg-[var(--surface-primary)] p-6 shadow-[var(--shadow-dialog)] sm:p-7"
+            >
 
               {/* 弹窗标题 */}
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 id={titleId} className="text-xl font-bold text-gray-900">
                 Delete Confirmation
               </h2>
 
               {/* 删除提示 */}
-              <p className="mt-3 leading-7 text-gray-600">
+              <p id={descriptionId} className="mt-3 leading-7 text-gray-600">
                 Are you sure you want to delete{" "}
                 <span className="font-medium text-gray-900">
                   {itemName}
@@ -88,8 +142,9 @@ export default function ConfirmDeleteButton({
 
                 {/* 取消删除 */}
                 <button
+                  ref={cancelRef}
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={closeDialog}
                   className="
                     rounded-xl
                     border

@@ -33,10 +33,10 @@ export default async function ProblemsPage() {
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-10 2xl:px-14">
         <section>
           <h1 className="text-5xl font-bold tracking-tight text-gray-900">
-            面试真题
+            Interview Question
           </h1>
           <p className="mt-4 max-w-2xl text-lg leading-8 text-gray-600">
-            整理真实软件工程师面试题，可以按照公司、难度和关键词进行筛选。
+            Practice real software engineering interview questions, filterable by company, difficulty, and keywords.
           </p>
         </section>
 

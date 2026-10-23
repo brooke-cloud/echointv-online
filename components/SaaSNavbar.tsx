@@ -68,7 +68,7 @@ export default function SaaSNavbar() {
           <Image src="/logo.png" alt="EchoINTV" width={38} height={38} className="h-9 w-9 object-contain" priority />
           <div className="leading-none">
             <div className="text-xl font-black tracking-tight text-slate-950">Echo<span className="text-blue-600">INTV</span></div>
-            <div className="mt-1 text-[9px] font-semibold tracking-wide text-slate-400">INTERVIEW INTELLIGENCE</div>
+            <div className="mt-1 text-[10px] font-semibold tracking-wide text-slate-500">INTERVIEW INTELLIGENCE</div>
           </div>
         </Link>
 
