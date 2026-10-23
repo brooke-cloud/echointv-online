@@ -39,6 +39,10 @@ const aliases: Record<Section, string[]> = {
 };
 
 const cleanLabel = (value: string) => value.toLowerCase().replace(/^\s*#{1,6}\s*/, "").replace(/[*_`]/g, "").replace(/^\d+[.)、]\s*/, "").replace(/[：:]\s*$/, "").replace(/\s+/g, " ").trim();
+const normalizeFencedLanguageLabels = (value: string) => value.replace(
+  /^\s*```\s*\r?\n\s*(Python|Java|C\+\+|CPP|CXX)\s*\r?\n\s*```\s*$/gim,
+  (_match, language: string) => `### ${/^python$/i.test(language) ? "Python" : /^java$/i.test(language) ? "Java" : "C++"}`,
+);
 const splitList = (value: string) => value.split(/\r?\n|[,，;；]/).map((item) => item.replace(/^\s*(?:[-*•]|\d+[.)、])\s*/, "").trim()).filter(Boolean);
 const splitLines = (value: string) => value.split(/\r?\n/).map((item) => item.replace(/^\s*(?:[-*•]\s+|\d+[.)、]\s*)/, "").trim()).filter(Boolean);
 const normalizeImportedCode = (value: string, language: "python" | "java" | "cpp") => {
@@ -141,7 +145,7 @@ function parseParameters(text: string) {
 }
 
 export function parseProblemImportText(raw: string): InterviewImportPayload {
-  const source = raw.trim();
+  const source = normalizeFencedLanguageLabels(raw).trim();
   if (!source) return normalizeInterviewImportPayload({});
   if (source.startsWith("{")) {
     try { return normalizeInterviewImportPayload(JSON.parse(source)); } catch { /* parse as labelled text */ }

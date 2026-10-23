@@ -172,6 +172,32 @@ assert.equal(flattenedPythonWithComments.solution.python, `class Solution:
         # Return the result.
         return total`);
 
+const copiedRenderedCodeBlocks = parseProblemImportText(`Solutions
+
+\`\`\`
+Python
+\`\`\`
+from bisect import bisect_left        def find_target(values, target):            index = bisect_left(values, target)            return index# Create sample values.values = [1, 3, 5]# Print the answer.print(find_target(values, 3))
+
+\`\`\`
+C++
+\`\`\`
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+int findTarget(vector<int> values, int target) {
+    return lower_bound(values.begin(), values.end(), target) - values.begin();
+}
+\`\`\``);
+assert.equal(copiedRenderedCodeBlocks.solution.python, `from bisect import bisect_left
+        def find_target(values, target):
+            index = bisect_left(values, target)
+            return index`);
+assert.equal(copiedRenderedCodeBlocks.solution.python.includes("C++"), false);
+assert.equal(copiedRenderedCodeBlocks.solution.cpp.includes("#include <algorithm>"), true);
+assert.equal(copiedRenderedCodeBlocks.solution.cpp.includes("Python"), false);
+
 const escapedPython = parseProblemImportText(`Python Solution: class Solver:\\n    def solve(self):\\n        return True`);
 assert.equal(escapedPython.solution.python, "class Solver:\n    def solve(self):\n        return True");
 
