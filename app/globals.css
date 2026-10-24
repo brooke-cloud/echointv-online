@@ -145,6 +145,60 @@ select {
   color: #e2e8f0;
 }
 
+/* Markdown and KaTeX use their own color utilities, so keep them readable in
+   the workspace dark theme without changing the public light theme. */
+.practice-workspace-dark .markdown-renderer,
+.practice-workspace-dark .markdown-renderer p,
+.practice-workspace-dark .markdown-renderer li,
+.practice-workspace-dark .markdown-renderer em,
+.practice-workspace-dark .markdown-renderer td {
+  color: #cbd5e1;
+}
+
+.practice-workspace-dark .markdown-renderer h1,
+.practice-workspace-dark .markdown-renderer h2,
+.practice-workspace-dark .markdown-renderer h3,
+.practice-workspace-dark .markdown-renderer h4,
+.practice-workspace-dark .markdown-renderer h5,
+.practice-workspace-dark .markdown-renderer h6,
+.practice-workspace-dark .markdown-renderer strong,
+.practice-workspace-dark .markdown-renderer th,
+.practice-workspace-dark .markdown-renderer .katex {
+  color: #f8fafc;
+}
+
+.practice-workspace-dark .markdown-renderer code:not([class*="language-"]) {
+  border-color: #1e40af;
+  background: #172554;
+  color: #bfdbfe;
+}
+
+.practice-workspace-dark .markdown-renderer blockquote {
+  border-color: #3b82f6;
+  background: rgb(30 58 138 / 0.22);
+  color: #dbeafe;
+}
+
+.practice-workspace-dark .markdown-renderer table,
+.practice-workspace-dark .markdown-renderer th,
+.practice-workspace-dark .markdown-renderer td {
+  border-color: #334155;
+}
+
+.practice-workspace-dark .markdown-renderer thead {
+  background: #1e293b;
+}
+
+.practice-workspace-dark .markdown-renderer tbody {
+  background: #0f172a;
+}
+
+.practice-workspace-dark .markdown-renderer pre,
+.practice-workspace-dark .markdown-renderer pre code {
+  background: #020617;
+  color: #e2e8f0;
+}
+
 /* Dark mode owns the complete workspace, including highlighted content cards. */
 .practice-workspace-dark .practice-content .border-blue-100.bg-blue-50\/50,
 .practice-workspace-dark .practice-content .border-violet-100.bg-violet-50\/40, /* taste-skill-ignore: existing semantic highlight compatibility */
