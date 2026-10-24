@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Lock,
   Mail,
@@ -18,6 +18,11 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedRedirect = searchParams.get("redirect");
+  const redirectTo = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+    ? requestedRedirect
+    : "/problem";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -104,7 +109,7 @@ export default function RegisterPage() {
 
       setSuccessMsg("注册成功！正在为您进入系统...");
       setTimeout(() => {
-        router.push("/problem");
+        router.push(redirectTo);
         router.refresh();
       }, 1000);
     } catch {

@@ -12,6 +12,7 @@ import { normalizeProblemFunctionDescription } from "@/lib/problem-function";
 import ProblemWorkspace from "@/components/ProblemWorkspace";
 import { hasProAccess } from "@/lib/billing/entitlements";
 import { isPaywallEnabled } from "@/lib/site-settings";
+import AccountAccessGate from "@/components/AccountAccessGate";
 
 type Props = { params: Promise<{ slug: string }> };
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProblemDetailPage({ params }: Props) {
   const { slug } = await params;
+  const session = await getCurrentUser();
   const problem = await findProblem(slug);
   if (!problem) notFound();
 
@@ -50,13 +52,12 @@ export default async function ProblemDetailPage({ params }: Props) {
 
   const freeProblems = isDatabaseDisabled() ? [] : await retryAsync(() => prisma.problem.findMany({ take: 6, orderBy: { id: "asc" }, select: { id: true } })).catch(() => []);
   const isFree = typeof (problem as { isFree?: boolean }).isFree === "boolean" ? Boolean((problem as { isFree?: boolean }).isFree) : freeProblems.some((item) => item.id === problem.id);
-  const session = await getCurrentUser();
   const adminEmails = ["admin@echointv.com", "shihaoy74@gmail.com"];
   const isAdmin = Boolean(session?.email && adminEmails.includes(session.email.toLowerCase().trim()));
   const paywallEnabled = await isPaywallEnabled();
   const canAccess = !paywallEnabled || isFree || isAdmin || Boolean(session && await hasProAccess(session.id));
 
-  return <ProblemWorkspace problem={{
+  return <AccountAccessGate isAuthenticated={Boolean(session)} contentType="problem" returnPath={`/problem/${slug}`}><ProblemWorkspace problem={{
     slug: problem.slug || slug,
     title: problem.title,
     company: problem.company,
@@ -84,5 +85,5 @@ export default async function ProblemDetailPage({ params }: Props) {
     aiCommonMistakes: "aiCommonMistakes" in problem ? problem.aiCommonMistakes || undefined : undefined,
     aiFollowUpQuestions: "aiFollowUpQuestions" in problem ? problem.aiFollowUpQuestions || undefined : undefined,
     aiBetterStrategy: "aiBetterStrategy" in problem ? problem.aiBetterStrategy || undefined : undefined,
-  }} canAccess={canAccess} />;
+  }} canAccess={canAccess} /></AccountAccessGate>;
 }

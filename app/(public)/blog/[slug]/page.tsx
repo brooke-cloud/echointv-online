@@ -9,6 +9,7 @@ import ExportPdfButton from "@/components/ExportPdfButton";
 import { hasProAccess } from "@/lib/billing/entitlements";
 import { isPaywallEnabled } from "@/lib/site-settings";
 import { retryAsync } from "@/lib/retry";
+import AccountAccessGate from "@/components/AccountAccessGate";
 import {
   Calendar,
   Clock,
@@ -68,6 +69,7 @@ const getReadingTime = (content: string, customTime?: string | null) => {
 };
 export default async function BlogDetailPage({ params }: Props) {
   const { slug } = await params;
+  const session = await getCurrentUser();
   const post = await prisma.post.findUnique({
     where: { slug },
   });
@@ -81,7 +83,6 @@ export default async function BlogDetailPage({ params }: Props) {
     select: { id: true },
   });
   const isFree = freePosts.some((p) => p.id === post.id);
-  const session = await getCurrentUser();
   let isMember = false;
   const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
   if (session) {
@@ -152,7 +153,7 @@ export default async function BlogDetailPage({ params }: Props) {
     post.readingTime
   );
   return (
-    <>
+    <AccountAccessGate isAuthenticated={Boolean(session)} contentType="experience" returnPath={`/blog/${slug}`}>
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -396,6 +397,6 @@ export default async function BlogDetailPage({ params }: Props) {
           )}
         </div>
       </div>
-    </>
+    </AccountAccessGate>
   );
 }

@@ -11,15 +11,33 @@ interface Props {
   content: string;
 }
 
+function normalizeMathDelimiters(markdown: string) {
+  let inFence = false;
+  return markdown
+    .split("\n")
+    .map((line) => {
+      if (/^\s*```/.test(line)) {
+        inFence = !inFence;
+        return line;
+      }
+      if (inFence) return line;
+      return line
+        .replace(/\\{1,2}\[([\s\S]*?)\\{1,2}\]/g, "$$$$$1$$$$")
+        .replace(/\\{1,2}\(([\s\S]*?)\\{1,2}\)/g, "$$$1$");
+    })
+    .join("\n");
+}
+
 export default function MarkdownRenderer({ content }: Props) {
   if (!content) return null;
+  const normalizedContent = normalizeMathDelimiters(content);
 
   return (
     <div className="markdown-renderer text-gray-800">
       <ReactMarkdown
         remarkPlugins={[
           remarkGfm,
-          [remarkMath, { singleDollarTextMath: false }],
+          [remarkMath, { singleDollarTextMath: true }],
           remarkBreaks,
         ]}
         rehypePlugins={[[rehypeKatex, { output: "html" }]]}
@@ -270,7 +288,7 @@ export default function MarkdownRenderer({ content }: Props) {
           ),
         }}
       >
-        {content}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );
