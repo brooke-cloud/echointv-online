@@ -39,12 +39,56 @@ const aliases: Record<Section, string[]> = {
 };
 
 const cleanLabel = (value: string) => value.toLowerCase().replace(/^\s*#{1,6}\s*/, "").replace(/[*_`]/g, "").replace(/^\d+[.)、]\s*/, "").replace(/[：:]\s*$/, "").replace(/\s+/g, " ").trim();
-const normalizeFencedLanguageLabels = (value: string) => value.replace(
-  /^\s*```\s*\r?\n\s*(Python|Java|C\+\+|CPP|CXX)\s*\r?\n\s*```\s*$/gim,
-  (_match, language: string) => `### ${/^python$/i.test(language) ? "Python" : /^java$/i.test(language) ? "Java" : "C++"}`,
-);
 const splitList = (value: string) => value.split(/\r?\n|[,，;；]/).map((item) => item.replace(/^\s*(?:[-*•]|\d+[.)、])\s*/, "").trim()).filter(Boolean);
 const splitLines = (value: string) => value.split(/\r?\n/).map((item) => item.replace(/^\s*(?:[-*•]\s+|\d+[.)、]\s*)/, "").trim()).filter(Boolean);
+type SolutionLanguage = "python" | "java" | "cpp";
+
+const solutionLanguageFor = (value: string): SolutionLanguage | undefined => {
+  const label = cleanLabel(value).replace(/^solutions?\s+/, "").replace(/\s+(?:solution|code)$/, "");
+  if (/^(?:python|py|python\s*3)$/.test(label)) return "python";
+  if (/^java$/.test(label)) return "java";
+  if (/^(?:c\+\+|cpp|cxx)$/.test(label)) return "cpp";
+  return undefined;
+};
+
+const standaloneSolutionLanguageMarker = (value: string) => {
+  const trimmed = value.trim();
+  if (!/^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:Python(?:\s*3)?|Py|Java|C\+\+|CPP|CXX)(?:\s+(?:Solution|Code))?(?:\*\*)?\s*:?\s*$/i.test(trimmed)) return undefined;
+  return solutionLanguageFor(trimmed.replace(/^\s*#{1,6}\s*/, "").replace(/^\s*\*\*(.*?)\*\*\s*$/, "$1").replace(/:\s*$/, ""));
+};
+
+const detectSolutionLanguage = (code: string, fallback: SolutionLanguage = "python"): SolutionLanguage => {
+  if (/#include\s*[<"]|\busing\s+namespace\s+std\b|\bstd::|\bvector\s*</.test(code)) return "cpp";
+  if (/\bimport\s+java\.|\bpackage\s+[\w.]+\s*;|\bpublic\s+(?:final\s+)?class\b|\bSystem\.out\.|\bList\s*</.test(code)) return "java";
+  if (/\bfrom\s+\S+\s+import\b|\bdef\s+\w+\s*\(|\bself\b/.test(code)) return "python";
+  return fallback;
+};
+
+function splitMultilanguageCodeBlock(value: string, fallback: SolutionLanguage) {
+  const sections: Array<{ language: SolutionLanguage; code: string }> = [];
+  let language: SolutionLanguage | undefined;
+  let lines: string[] = [];
+  let foundLanguageMarker = false;
+  const save = () => {
+    const code = lines.join("\n").trim();
+    if (code) sections.push({ language: language || detectSolutionLanguage(code, fallback), code });
+    lines = [];
+  };
+
+  for (const originalLine of value.split(/\r?\n/)) {
+    const marker = standaloneSolutionLanguageMarker(originalLine);
+    if (marker) {
+      save();
+      language = marker;
+      foundLanguageMarker = true;
+      continue;
+    }
+    lines.push(originalLine);
+  }
+  save();
+  return foundLanguageMarker ? sections : [{ language: detectSolutionLanguage(value, fallback), code: value.trim() }];
+}
+
 const normalizeImportedCode = (value: string, language: "python" | "java" | "cpp") => {
   let code = value.replace(/<br\s*\/?>/gi, "\n").replace(/\\r\\n|\\n|\\r/g, "\n").replace(/\u00a0/g, " ").trim();
   if (language !== "python" || code.includes("\n") || code.length < 120) return code;
@@ -58,7 +102,7 @@ const normalizeImportedCode = (value: string, language: "python" | "java" | "cpp
   code = code.replace(/(?<=\S)(#\s*(?:Create|Run|Define|Calculate|Print|Example|Sample)\b)/g, "\n$1");
 
   // Reference solutions should contain the implementation, not pasted demo/bootstrap code.
-  const demoStart = code.search(/^\s*#\s*(?:Create (?:a |the )?(?:solution|solver)|Run (?:a |the )?sample|Define sample|Example usage|Sample usage)\b/im);
+  const demoStart = code.search(/^\s*#\s*(?:Create (?:a |the )?(?:solution|solver)|Create sample|Run (?:a |the )?sample|Define sample|Example usage|Sample usage)\b/im);
   if (demoStart >= 0) code = code.slice(0, demoStart).trimEnd();
   const mainGuard = code.search(/^\s*if\s+__name__\s*==\s*["']__main__["']\s*:/m);
   if (mainGuard >= 0) code = code.slice(0, mainGuard).trimEnd();
@@ -145,7 +189,10 @@ function parseParameters(text: string) {
 }
 
 export function parseProblemImportText(raw: string): InterviewImportPayload {
-  const source = normalizeFencedLanguageLabels(raw).trim();
+  // Parse the original fence sequence directly. Rewriting a
+  // ``` / Java / ``` sequence is ambiguous: in normal Markdown those two
+  // fences are the previous block's close and the next block's open.
+  const source = raw.trim();
   if (!source) return normalizeInterviewImportPayload({});
   if (source.startsWith("{")) {
     try { return normalizeInterviewImportPayload(JSON.parse(source)); } catch { /* parse as labelled text */ }
@@ -153,6 +200,10 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
 
   const buckets = new Map<Section, string[]>();
   const add = (section: Section, value: string) => { if (value.trim()) buckets.set(section, [...(buckets.get(section) || []), value.trim()]); };
+  const addCodeBlock = (value: string, hintedLanguage: string, section?: Section) => {
+    const fallback = solutionLanguageFor(hintedLanguage) || (section === "java" ? "java" : section === "cpp" ? "cpp" : section === "python" ? "python" : "python");
+    for (const part of splitMultilanguageCodeBlock(value, fallback)) add(part.language, part.code);
+  };
   let current: Section | undefined;
   let codeLanguage = "";
   let contentFence = false;
@@ -164,8 +215,15 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     if (fence) {
       if (contentFence) { contentFence = false; continue; }
       if (!codeLanguage && current && !["solution", "python", "java", "cpp"].includes(current)) { contentFence = true; continue; }
-      if (!codeLanguage) { codeLanguage = fence[1].toLowerCase() || (current === "java" ? "java" : current === "cpp" ? "cpp" : "python"); code = []; }
-      else { add(/^(java)$/.test(codeLanguage) ? "java" : /^(c\+\+|cpp|cxx)$/.test(codeLanguage) ? "cpp" : "python", code.join("\n")); codeLanguage = ""; code = []; }
+      if (!codeLanguage) { codeLanguage = fence[1].toLowerCase() || (current === "java" ? "java" : current === "cpp" ? "cpp" : current === "python" ? "python" : "auto"); code = []; }
+      else {
+        const block = code.join("\n");
+        const renderedLanguageLabel = standaloneSolutionLanguageMarker(block);
+        if (renderedLanguageLabel) current = renderedLanguageLabel;
+        else addCodeBlock(block, codeLanguage, current);
+        codeLanguage = "";
+        code = [];
+      }
       continue;
     }
     if (contentFence) { if (current) add(current, originalLine); continue; }
@@ -186,7 +244,7 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     if (mapped) { current = mapped; if (inline?.[2]) add(mapped, inline[2]); continue; }
     if (current) add(current, originalLine);
   }
-  if (codeLanguage && code.length) add(/^(java)$/.test(codeLanguage) ? "java" : /^(c\+\+|cpp|cxx)$/.test(codeLanguage) ? "cpp" : "python", code.join("\n"));
+  if (codeLanguage && code.length) addCodeBlock(code.join("\n"), codeLanguage, current);
 
   const get = (section: Section) => (buckets.get(section) || []).join("\n").trim();
   const fallbackTitle = source.split(/\r?\n/).map((line) => line.replace(/^#+\s*/, "").trim()).find((line) => line && !sectionFor(line)) || "";

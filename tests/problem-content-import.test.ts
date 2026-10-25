@@ -201,6 +201,42 @@ assert.equal(copiedRenderedCodeBlocks.solution.cpp.includes("Python"), false);
 const escapedPython = parseProblemImportText(`Python Solution: class Solver:\\n    def solve(self):\\n        return True`);
 assert.equal(escapedPython.solution.python, "class Solver:\n    def solve(self):\n        return True");
 
+const singleFenceWithAllLanguages = parseProblemImportText(`## Solutions
+\`\`\`
+### Python
+def solve(nums):
+    return len(nums)
+
+### Java
+public class Solution {
+    public int solve(int[] nums) { return nums.length; }
+}
+
+### C++
+#include <vector>
+using namespace std;
+int solve(vector<int> nums) { return nums.size(); }
+\`\`\``);
+assert.equal(singleFenceWithAllLanguages.solution.python.includes("def solve"), true);
+assert.equal(singleFenceWithAllLanguages.solution.python.includes("public class"), false);
+assert.equal(singleFenceWithAllLanguages.solution.java.includes("public class Solution"), true);
+assert.equal(singleFenceWithAllLanguages.solution.java.includes("#include"), false);
+assert.equal(singleFenceWithAllLanguages.solution.cpp.includes("#include <vector>"), true);
+
+const inferredUnlabelledLanguages = parseProblemImportText(`## Solutions
+\`\`\`
+import java.util.List;
+public class Solution { public int solve(List<Integer> nums) { return nums.size(); } }
+\`\`\`
+
+\`\`\`
+#include <vector>
+using namespace std;
+int solve(vector<int> nums) { return nums.size(); }
+\`\`\``);
+assert.equal(inferredUnlabelledLanguages.solution.java.includes("import java.util.List"), true);
+assert.equal(inferredUnlabelledLanguages.solution.cpp.includes("#include <vector>"), true);
+
 const plainFunctionBoundary = parseProblemImportText(`# 3. Examples
 Example 1
 Input
