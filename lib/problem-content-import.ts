@@ -112,6 +112,13 @@ const sectionFor = (label: string): Section | undefined => {
   const normalized = cleanLabel(label).replace(/\s+\d+$/, "");
   return (Object.keys(aliases) as Section[]).find((section) => aliases[section].some((alias) => cleanLabel(alias) === normalized));
 };
+const parseInlineLabel = (value: string) => {
+  const stripped = value.replace(/^\s*#{1,6}\s*/, "").trim();
+  const bold = stripped.match(/^\*\*\s*([^*:：]{1,60}?)\s*[:：]?\s*\*\*\s*(?:[:：]\s*)?(.*)$/);
+  if (bold) return { label: bold[1].trim(), value: bold[2].trim() };
+  const plain = stripped.match(/^([^:：]{1,60})[:：]\s*(.*)$/);
+  return plain ? { label: plain[1].trim(), value: plain[2].trim() } : undefined;
+};
 const isSectionBoundary = (line: string) => {
   const heading = cleanLabel(line);
   const plainContainerHeading = ["basic information", "function description", "ai analysis", "solutions"].includes(heading);
@@ -263,19 +270,19 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     if (contentFence) { if (current) add(current, originalLine); continue; }
     if (codeLanguage) { code.push(originalLine); continue; }
 
-    const inline = line.match(/^\s*(?:#{1,6}\s*)?(?:\*\*)?([^:：*]{1,60})(?:\*\*)?\s*[:：]\s*(.*)$/);
+    const inline = parseInlineLabel(line);
     const headingText = line.replace(/^\s*#{1,6}\s*/, "").replace(/^\*\*(.*?)\*\*$/, "$1").trim();
     const containerHeading = cleanLabel(headingText).replace(/^\d+[.)]?\s*/, "");
     if (["basic information", "function description", "complexity", "ai analysis", "solutions"].includes(containerHeading)) {
       current = undefined;
       continue;
     }
-    const contextualLabel = cleanLabel(inline?.[1] || headingText);
+    const contextualLabel = cleanLabel(inline?.label || headingText);
     if (current === "parameters" && /^(name|type|description|名称|类型|描述)$/.test(contextualLabel)) { add("parameters", originalLine); continue; }
     if (current === "returnDescription" && /^(description|描述)$/.test(contextualLabel)) continue;
     if (current === "examples" && /^(input|output|explanation|输入|输出|解释|说明)$/.test(contextualLabel)) { add("examples", originalLine); continue; }
-    const mapped = inline ? sectionFor(inline[1]) : sectionFor(headingText);
-    if (mapped) { current = mapped; if (inline?.[2]) add(mapped, inline[2]); continue; }
+    const mapped = inline ? sectionFor(inline.label) : sectionFor(headingText);
+    if (mapped) { current = mapped; if (inline?.value) add(mapped, inline.value); continue; }
     if (current) add(current, originalLine);
   }
   if (codeLanguage && code.length) addCodeBlock(code.join("\n"), codeLanguage, current);

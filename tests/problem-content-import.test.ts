@@ -171,6 +171,17 @@ assert.deepEqual(standaloneParsed.functionDescription.parameters, [
   { name: "k", type: "int", description: "The maximum number of pairs to return." },
 ]);
 assert.equal(standaloneParsed.functionDescription.returnDescription, "Return up to k pairs.");
+assert.equal(standaloneParsed.functionDescription.functionName, "kSmallestPairs");
+
+for (const functionNameBlock of [
+  "**Function Name:**\nmaxDistance(grid)",
+  "**Function Name：**\nmaxDistance(grid)",
+  "**Function Name**: maxDistance(grid)",
+  "Function Name: maxDistance(grid)",
+]) {
+  const parsedFunctionName = parseProblemImportText(`**Function Description**\n\n${functionNameBlock}\n\n**Parameters**`);
+  assert.equal(parsedFunctionName.functionDescription.functionName, "maxDistance(grid)");
+}
 
 const boundedSections = parseProblemImportText(`# 3. Examples
 Example 1
