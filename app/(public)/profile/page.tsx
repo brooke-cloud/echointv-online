@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/user-auth";
+import SubscriptionManager from "@/components/checkout/SubscriptionManager";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function ProfilePage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.id },
+    include: { billingSubscriptions: { orderBy: { updatedAt: "desc" }, take: 1 } },
   });
 
   if (!user) {
@@ -153,6 +155,13 @@ export default async function ProfilePage() {
             </Link>
           </div>
         </div>
+
+        <SubscriptionManager subscription={user.billingSubscriptions[0] ? {
+          provider: user.billingSubscriptions[0].provider,
+          status: user.billingSubscriptions[0].status,
+          currentPeriodEnd: user.billingSubscriptions[0].currentPeriodEnd,
+          cancelAtPeriodEnd: user.billingSubscriptions[0].cancelAtPeriodEnd,
+        } : null} />
 
         {/* 题库大厂真题总览 */}
         <div className="space-y-4">

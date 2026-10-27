@@ -66,6 +66,18 @@ export default function Footer() {
               Contact
             </Link>
 
+            <Link href="/privacy" className="text-sm font-medium text-gray-600 transition hover:text-blue-600">
+              Privacy
+            </Link>
+
+            <Link href="/terms" className="text-sm font-medium text-gray-600 transition hover:text-blue-600">
+              Terms
+            </Link>
+
+            <Link href="/refund-policy" className="text-sm font-medium text-gray-600 transition hover:text-blue-600">
+              Refunds
+            </Link>
+
           </div>
 
         </div>

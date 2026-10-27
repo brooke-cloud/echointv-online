@@ -1,2 +1,7 @@
-export function subscriptionProvidesAccess(subscription: { status: string; currentPeriodEnd?: Date | null }) { const status = subscription.status.toUpperCase(); if (status === "ACTIVE" || status === "TRIALING") return true; return (status === "CANCELED" || status === "CANCELLED") && Boolean(subscription.currentPeriodEnd && subscription.currentPeriodEnd.getTime() > Date.now()); }
+export function subscriptionProvidesAccess(subscription: { status: string; currentPeriodEnd?: Date | null }) {
+  const status = subscription.status.toUpperCase();
+  if (status === "ACTIVE" || status === "TRIALING") return true;
+  return ["PAST_DUE", "CANCELED", "CANCELLED"].includes(status) &&
+    Boolean(subscription.currentPeriodEnd && subscription.currentPeriodEnd.getTime() > Date.now());
+}
 export function grantProvidesAccess(grant: { startsAt: Date; expiresAt?: Date | null; revokedAt?: Date | null }) { const now = Date.now(); return !grant.revokedAt && grant.startsAt.getTime() <= now && (!grant.expiresAt || grant.expiresAt.getTime() > now); }

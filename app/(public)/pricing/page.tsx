@@ -1,13 +1,16 @@
 import { Metadata } from "next";
 import PricingTable from "@/components/PricingTable";
 import FAQ from "@/components/FAQ";
+import PricingPageContent from "@/components/pricing/PricingPageContent";
 
 export const metadata: Metadata = {
   title: "会员方案与定价",
   description: "选择适合您的 EchoINTV 求职备战方案，解锁大厂高频面试真题与 1 对 1 导师辅导。",
 };
 
-export default function PricingPage() {
+export default function PricingPage() { return <PricingPageContent />; }
+
+function LegacyPricingPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-20">

@@ -3,6 +3,7 @@ import { grantProvidesAccess, subscriptionProvidesAccess } from "../lib/billing/
 const hour = 60 * 60 * 1000;
 assert.equal(subscriptionProvidesAccess({ status: "ACTIVE" }), true);
 assert.equal(subscriptionProvidesAccess({ status: "PAST_DUE" }), false);
+assert.equal(subscriptionProvidesAccess({ status: "PAST_DUE", currentPeriodEnd: new Date(Date.now() + hour) }), true);
 assert.equal(subscriptionProvidesAccess({ status: "CANCELED", currentPeriodEnd: new Date(Date.now() + hour) }), true);
 assert.equal(subscriptionProvidesAccess({ status: "CANCELED", currentPeriodEnd: new Date(Date.now() - hour) }), false);
 assert.equal(subscriptionProvidesAccess({ status: "CANCELLED", currentPeriodEnd: new Date(Date.now() + hour) }), true);

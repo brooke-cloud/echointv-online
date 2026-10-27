@@ -46,9 +46,9 @@ export default function PricingTable() {
             <p className="text-sm text-gray-500 mt-2 min-h-[40px] leading-relaxed">
               专为全力冲刺秋招、春招与社招大厂面试的工程师打造，全面扫清考点盲区。
             </p>
-            {/* ✅ 价格改为 $6.90 / 月 */}
+            {/* Monthly Pro subscription */}
             <div className="my-6">
-              <span className="text-4xl sm:text-5xl font-extrabold text-gray-900">$6.90</span>
+              <span className="text-4xl sm:text-5xl font-extrabold text-gray-900">$5.00</span>
               <span className="text-sm text-gray-500 ml-2">/ 月</span>
             </div>
             <div className="space-y-3.5 pt-6 border-t border-gray-100">
@@ -64,10 +64,10 @@ export default function PricingTable() {
           </div>
           <Link
             href="/checkout"
-            // ✅ 按钮文案里的价格也改为 $6.90/月
+            // Monthly checkout
             className="mt-10 w-full py-3.5 px-4 text-center rounded-xl font-bold text-sm transition bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md flex items-center justify-center gap-2"
           >
-            <span>💳 立即开通 Pro（$6.90/月） →</span>
+            <span>💳 立即开通 Pro（$5.00/月） →</span>
           </Link>
         </div>
       </div>

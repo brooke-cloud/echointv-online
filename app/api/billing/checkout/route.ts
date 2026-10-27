@@ -16,6 +16,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ provider, clientToken, environment: process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT === "production" ? "production" : "sandbox", priceId: getPaddlePriceId(), customerEmail: user.email, customData: { userId: user.id, planCode: PRO_MONTHLY_PLAN.code, checkoutReference: randomUUID() }, plan: PRO_MONTHLY_PLAN });
     }
     if (provider === "paypal") {
+      const existing = await prisma.billingSubscription.findFirst({
+        where: { userId: user.id, provider: "PAYPAL", status: { in: ["ACTIVE", "PAST_DUE", "SUSPENDED"] } },
+        orderBy: { updatedAt: "desc" },
+      });
+      if (existing) {
+        return NextResponse.json({ error: "You already have a PayPal subscription. Manage it from your profile." }, { status: 409 });
+      }
+      await prisma.billingSubscription.deleteMany({
+        where: { userId: user.id, provider: "PAYPAL", status: "APPROVAL_PENDING" },
+      });
       const checkout = await createPayPalSubscription(user.id);
       await prisma.billingSubscription.upsert({ where: { provider_providerSubscriptionId: { provider: "PAYPAL", providerSubscriptionId: checkout.subscriptionId } }, create: { userId: user.id, provider: "PAYPAL", providerSubscriptionId: checkout.subscriptionId, planCode: PRO_MONTHLY_PLAN.code, status: "APPROVAL_PENDING" }, update: { userId: user.id, status: "APPROVAL_PENDING" } });
       return NextResponse.json({ provider, ...checkout });
