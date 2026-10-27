@@ -155,6 +155,40 @@ function parseExamples(text: string) {
   return examples;
 }
 
+function parseMarkdownExamples(text: string) {
+  const examples: Array<{ input: string; output: string; explanation: string }> = [];
+  let inExamples = false;
+  let example: { input: string; output: string; explanation: string } | undefined;
+  let field: "input" | "output" | "explanation" | undefined;
+  const heading = (value: string) => value.trim().replace(/^#{1,6}\s*/, "").replace(/^\*\*\s*(.*?)\s*\*\*$/, "$1").replace(/^\d+[.)]?\s*/, "").replace(/[:\uFF1A]\s*$/, "").trim();
+  const isExampleHeading = (value: string) => /^(?:examples?|\u793a\u4f8b|\u6837\u4f8b)(?:\s*\d+)?$/i.test(heading(value));
+  const save = () => {
+    if (example && (example.input || example.output || example.explanation)) examples.push(example);
+    example = undefined;
+    field = undefined;
+  };
+
+  for (const originalLine of text.split(/\r?\n/)) {
+    const trimmed = originalLine.trim();
+    if (isExampleHeading(trimmed)) {
+      inExamples = true;
+      save();
+      example = { input: "", output: "", explanation: "" };
+      continue;
+    }
+    if (inExamples && isSectionBoundary(trimmed)) break;
+    if (!inExamples || /^```/.test(trimmed)) continue;
+
+    const label = heading(trimmed).toLowerCase();
+    if (label === "input" || label === "\u8f93\u5165") { example ||= { input: "", output: "", explanation: "" }; field = "input"; continue; }
+    if (label === "output" || label === "\u8f93\u51fa") { example ||= { input: "", output: "", explanation: "" }; field = "output"; continue; }
+    if (["explanation", "\u89e3\u91ca", "\u8bf4\u660e"].includes(label)) { example ||= { input: "", output: "", explanation: "" }; field = "explanation"; continue; }
+    if (example && field && trimmed) example[field] = [example[field], originalLine.trimEnd()].filter(Boolean).join("\n");
+  }
+  save();
+  return examples;
+}
+
 function parseParameters(text: string) {
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const tableParameters = lines.map((line) => line.replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim())).filter((cells) => cells.length >= 3 && !/^(name|名称)$/i.test(cells[0]) && !cells.every((cell) => /^:?-{2,}:?$/.test(cell))).map((cells) => ({ name: cells[0], type: cells[1], description: cells.slice(2).join(" | ") }));
@@ -252,7 +286,7 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     title: get("title") || fallbackTitle,
     company: get("company"), role: get("role"), difficulty: get("difficulty"), stage: get("stage"),
     category: splitList(get("category")), topics: splitList(get("topics")), problemDescription: get("problemDescription"),
-    examples: parseExamples(source),
+    examples: parseMarkdownExamples(source),
     functionDescription: { functionName: get("functionName"), parameters: parseParameters(get("parameters")), returnDescription: get("returnDescription") },
     constraints: splitLines(get("constraints")),
     approach: { coreIdea: get("coreIdea"), algorithmSteps: get("algorithmSteps"), whyWorks: get("whyWorks"), edgeCases: get("edgeCases") },

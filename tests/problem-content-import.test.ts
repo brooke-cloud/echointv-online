@@ -47,6 +47,70 @@ assert.deepEqual(parsed.constraints, [
   "1 <= k <= 10^4",
 ]);
 
+const boldNumberedExamples = parseProblemImportText(`\u793a\u4f8b\uFF1A
+**Example**
+
+**Example 1**
+
+Input:
+
+\`\`\`python
+intervals = [[9, 10], [9, 11], [10, 12], [11, 13]]
+\`\`\`
+
+Output:
+
+\`\`\`python
+2
+\`\`\`
+
+Explanation\uFF1A
+
+The meetings \`[9, 10]\` and \`[9, 11]\` overlap, so they require two separate rooms.
+
+Therefore, a minimum of two conference rooms is sufficient.
+
+**Example 2**
+
+Input:
+
+\`\`\`python
+intervals = [[0, 30], [5, 10], [15, 20]]
+\`\`\`
+
+Output:
+
+\`\`\`python
+2
+\`\`\`
+
+Explanation\uFF1A
+
+The long meeting overlaps with both shorter meetings. Therefore, two rooms are sufficient.
+
+**Example 3**
+
+Input:
+
+\`\`\`python
+intervals = [[7, 10], [10, 12]]
+\`\`\`
+
+Output:
+
+\`\`\`python
+1
+\`\`\`
+
+Explanation\uFF1A
+
+The first meeting ends exactly when the second starts, so one room is required.`);
+assert.deepEqual(boldNumberedExamples.examples, [
+  { input: "intervals = [[9, 10], [9, 11], [10, 12], [11, 13]]", output: "2", explanation: "The meetings `[9, 10]` and `[9, 11]` overlap, so they require two separate rooms.\nTherefore, a minimum of two conference rooms is sufficient." },
+  { input: "intervals = [[0, 30], [5, 10], [15, 20]]", output: "2", explanation: "The long meeting overlaps with both shorter meetings. Therefore, two rooms are sufficient." },
+  { input: "intervals = [[7, 10], [10, 12]]", output: "1", explanation: "The first meeting ends exactly when the second starts, so one room is required." },
+]);
+
 const standaloneLabels = `# 3. Examples
 
 Example 1
