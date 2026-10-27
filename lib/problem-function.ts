@@ -13,7 +13,26 @@ export function primaryFunctionName(value: string) {
 }
 
 export function functionNames(value: string) {
-  return clean(value).split(/[,，;；\r\n]+/).map((name) => name.replace(/`/g, "").trim()).filter((name) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(name));
+  const entries: string[] = [];
+  let current = "";
+  let parenthesisDepth = 0;
+
+  for (const character of clean(value).replace(/`/g, "")) {
+    if (character === "(") parenthesisDepth += 1;
+    else if (character === ")") parenthesisDepth = Math.max(0, parenthesisDepth - 1);
+
+    if ((character === "," || character === "，" || character === ";" || character === "；" || character === "\n" || character === "\r") && parenthesisDepth === 0) {
+      if (current.trim()) entries.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += character;
+  }
+  if (current.trim()) entries.push(current.trim());
+
+  return entries
+    .map((entry) => entry.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*(?:\(|$)/)?.[1] || "")
+    .filter(Boolean);
 }
 
 export function preferredSolutionLanguage(solutions: AvailableSolutions): PracticeLanguage {

@@ -43,6 +43,18 @@ const multipleFunctionNames = normalizeProblemFunctionDescription({ functionName
 assert.equal(multipleFunctionNames.functionName, "sigmoid, fit_q1, predict_q1, fit_q2, predict_q2");
 assert.equal(primaryFunctionName(multipleFunctionNames.functionName), "sigmoid");
 assert.match(createPracticeTemplates(multipleFunctionNames)["Python 3"], /^def sigmoid\(\):/);
+
+const signatureFunctionName = normalizeProblemFunctionDescription({
+  functionName: "maxDistance(grid)",
+  parameters: [{ name: "grid", type: "integer array", description: "Input grid." }],
+});
+assert.equal(primaryFunctionName(signatureFunctionName.functionName), "maxDistance");
+assert.match(createPracticeTemplates(signatureFunctionName)["Python 3"], /^def maxDistance\(grid\):/);
+assert.doesNotMatch(createPracticeTemplates(signatureFunctionName)["Python 3"], /def solve\(/);
+
+const signatureWithMultipleParameters = normalizeProblemFunctionDescription({ functionName: "calculate(left, right), formatResult(value)", parameters: [] });
+assert.equal(primaryFunctionName(signatureWithMultipleParameters.functionName), "calculate");
+assert.match(createPracticeTemplates(signatureWithMultipleParameters)["Python 3"], /^def calculate\(\):[\s\S]*def formatResult\(\):/);
 const multipleFunctionTemplate = createPracticeTemplates(multipleFunctionNames, {
   python: "def sigmoid(z):\n    return z\n\ndef fit_q1(X, y, lr, n_iters):\n    return None\n\ndef predict_q1(X, model, threshold=0.5):\n    return []",
   cpp: "double sigmoid(double z) { return z; }\nauto fit_q1(vector<vector<double>> X, vector<int> y) { return 0; }",
