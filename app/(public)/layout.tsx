@@ -2,8 +2,6 @@
 
 
 
-import Footer from "@/components/Footer";
-
 type PublicLayoutProps = {
   children: React.ReactNode;
 };
@@ -18,7 +16,6 @@ export default function PublicLayout({
       <main className="flex-1">
         {children}
       </main>
-      <Footer />
     </div>
   );
 }

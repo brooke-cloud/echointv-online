@@ -58,6 +58,13 @@ export default function Footer() {
               Blog
             </Link>
 
+            <Link
+              href="/pricing"
+              className="text-sm font-medium text-gray-600 transition hover:text-blue-600"
+            >
+              Pricing
+            </Link>
+
             {/* Contact */}
             <Link
               href="/contact"

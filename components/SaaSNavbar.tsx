@@ -24,22 +24,23 @@ export default function SaaSNavbar() {
           ["Home", "/"],
           ["Interview Questions", "/problem"],
           ["Interview Experiences", "/blog"],
+          ["Pricing", "/pricing"],
           ["Our Services", "/contact"],
         ],
         search: "Search",
         signIn: "Sign In",
         signUp: "Sign Up",
         dashboard: "Dashboard",
-        profile: "Profile",
+        profile: "Learning",
         logout: "Log out",
       }
     : {
-        links: [["首页", "/"], ["面试真题", "/problem"], ["面试经验", "/blog"], ["我们的服务", "/contact"]],
+        links: [["首页", "/"], ["面试真题", "/problem"], ["面试经验", "/blog"], ["价格", "/pricing"], ["我们的服务", "/contact"]],
         search: "搜索",
         signIn: "登录",
         signUp: "免费注册",
         dashboard: "管理后台",
-        profile: "用户主页",
+        profile: "学习中心",
         logout: "退出",
       };
 
@@ -72,14 +73,14 @@ export default function SaaSNavbar() {
           </div>
         </Link>
 
-        <nav className="mx-auto hidden items-center gap-1 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-1 md:flex">
+        <nav className="mx-auto hidden items-center gap-1 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-1 xl:flex">
           {copy.links.map(([label, href]) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             return <Link key={href} href={href} className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition ${active ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}>{label}</Link>;
           })}
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-2 md:flex">
+        <div className="hidden shrink-0 items-center gap-2 xl:flex">
           <Link href="/problem" className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-500 hover:border-blue-200 hover:text-blue-600">
             <Search className="h-3.5 w-3.5" /> {copy.search}
           </Link>
@@ -101,13 +102,13 @@ export default function SaaSNavbar() {
           ))}
         </div>
 
-        <button onClick={() => setMenuOpen((open) => !open)} className="fixed right-4 top-3 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm md:hidden" aria-label="Toggle navigation">
+        <button onClick={() => setMenuOpen((open) => !open)} className="fixed right-4 top-3 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm xl:hidden" aria-label="Toggle navigation">
           {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
       {menuOpen && (
-        <div className="border-t border-slate-100 bg-white px-4 py-4 md:hidden">
+        <div className="border-t border-slate-100 bg-white px-4 py-4 xl:hidden">
           <nav className="grid gap-1">
             {copy.links.map(([label, href]) => <Link onClick={() => setMenuOpen(false)} key={href} href={href} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{label}</Link>)}
           </nav>

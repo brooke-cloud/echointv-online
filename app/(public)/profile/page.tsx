@@ -1,280 +1,160 @@
-// app/(public)/profile/page.tsx
-
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight, Bookmark, BookOpen, CalendarDays, CheckCircle2, Code2, Shield, Target } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { retryAsync } from "@/lib/retry";
 import { getCurrentUser } from "@/lib/user-auth";
 import SubscriptionManager from "@/components/checkout/SubscriptionManager";
 
 export const dynamic = "force-dynamic";
-
 const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
+
+const difficultyName = (difficulty?: string) => {
+  const value = difficulty?.toLowerCase() || "";
+  if (value === "easy" || value.includes("简")) return "Easy";
+  if (value === "hard" || value.includes("难")) return "Hard";
+  return "Medium";
+};
+const difficultyStyle: Record<string, string> = {
+  Easy: "bg-emerald-50 text-emerald-800",
+  Medium: "bg-amber-50 text-amber-800",
+  Hard: "bg-rose-50 text-rose-800",
+};
 
 export default async function ProfilePage() {
   const session = await getCurrentUser();
-  if (!session) {
-    redirect("/login");
-  }
+  if (!session) redirect("/login");
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.id },
-    include: { billingSubscriptions: { orderBy: { updatedAt: "desc" }, take: 1 } },
-  });
+  // Keep these queries sequential. The profile page is commonly opened right
+  // after authentication, and issuing several remote database requests at once
+  // can exhaust a small connection pool and make the entire page fail.
+  const user = await retryAsync(() => prisma.user.findUnique({
+      where: { id: session.id },
+      include: {
+        billingSubscriptions: { orderBy: { updatedAt: "desc" }, take: 1 },
+        progress: {
+          orderBy: { updatedAt: "desc" },
+          include: { problem: { select: { id: true, slug: true, title: true, company: true, difficulty: true, category: true } } },
+        },
+        favorites: {
+          orderBy: { createdAt: "desc" },
+          include: { problem: { select: { id: true, slug: true, title: true, company: true, difficulty: true, category: true } } },
+        },
+      },
+    }), { attempts: 3, delayMs: 350 });
+  if (!user) redirect("/login");
 
-  if (!user) {
-    redirect("/login");
-  }
+  const allProblems = await retryAsync(() => prisma.problem.findMany({
+      orderBy: { createdAt: "desc" },
+      select: { id: true, slug: true, title: true, company: true, difficulty: true, category: true },
+    }), { attempts: 3, delayMs: 350 }).catch(() => []);
+  const totalPosts = await retryAsync(() => prisma.post.count(), { attempts: 3, delayMs: 350 }).catch(() => 0);
 
   const isEmailAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
   const isAdmin = user.role === "ADMIN" || isEmailAdmin;
-
   if (isEmailAdmin && user.role !== "ADMIN") {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { role: "ADMIN" },
-    });
+    await retryAsync(() => prisma.user.update({ where: { id: user.id }, data: { role: "ADMIN" } }), { attempts: 3, delayMs: 350 });
     user.role = "ADMIN";
   }
 
-  // 1. 查询全部题目并进行大小写与中英文兼容统计
-  const [allProblems, totalPosts] = await Promise.all([
-    prisma.problem.findMany({ select: { difficulty: true } }),
-    prisma.post.count(),
-  ]);
-
-  const totalProblems = allProblems.length;
-
-  const isEasy = (d?: string) => {
-    const s = d?.toLowerCase() || "";
-    return s === "easy" || s.includes("简");
+  const solvedProgress = user.progress.filter((item) => ["SOLVED", "COMPLETED"].includes(item.status.toUpperCase()));
+  const solvedIds = new Set(solvedProgress.map((item) => item.problemId));
+  const completionPercent = allProblems.length ? Math.round((solvedProgress.length / allProblems.length) * 100) : 0;
+  const solvedByDifficulty = {
+    Easy: solvedProgress.filter((item) => difficultyName(item.problem.difficulty) === "Easy").length,
+    Medium: solvedProgress.filter((item) => difficultyName(item.problem.difficulty) === "Medium").length,
+    Hard: solvedProgress.filter((item) => difficultyName(item.problem.difficulty) === "Hard").length,
   };
-  const isMedium = (d?: string) => {
-    const s = d?.toLowerCase() || "";
-    return s === "medium" || s.includes("中");
-  };
-  const isHard = (d?: string) => {
-    const s = d?.toLowerCase() || "";
-    return s === "hard" || s.includes("难");
-  };
-
-  const easyCount = allProblems.filter((p) => isEasy(p.difficulty)).length;
-  const mediumCount = allProblems.filter((p) => isMedium(p.difficulty)).length;
-  const hardCount = allProblems.filter((p) => isHard(p.difficulty)).length;
-
-// 🌟 2. 精准计算 Pro 会员有效期与剩余天数（加入安全断言，消除 TS 报错）
-  let proDetails: { isActive: boolean; text: string } | null = null;
-  const userExpires = (user as any).proExpiresAt;
-
-  if (user.role === "PRO" && userExpires) {
-    const now = Date.now();
-    const expiresTime = new Date(userExpires).getTime();
-    const remainingDays = Math.ceil((expiresTime - now) / (1000 * 60 * 60 * 24));
-
-    if (remainingDays > 0) {
-      proDetails = {
-        isActive: true,
-        text: `有效期至：${new Date(userExpires).toLocaleDateString("zh-CN")}（剩余 ${remainingDays} 天）`,
-      };
-    } else {
-      proDetails = {
-        isActive: false,
-        text: `已于 ${new Date(userExpires).toLocaleDateString("zh-CN")} 到期`,
-      };
-    }
-  }
+  const nextProblem = allProblems.find((problem) => !solvedIds.has(problem.id) && difficultyName(problem.difficulty) === "Medium")
+    || allProblems.find((problem) => !solvedIds.has(problem.id));
+  const recentPractice = user.progress.slice(0, 4);
+  const savedQuestions = user.favorites.slice(0, 4);
+  const latestSubscription = user.billingSubscriptions[0];
+  const memberSince = new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long" }).format(user.createdAt);
+  const proExpiry = user.proExpiresAt && user.proExpiresAt.getTime() > Date.now()
+    ? new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "short", day: "numeric" }).format(user.proExpiresAt)
+    : null;
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* 用户资料卡 */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-blue-600 text-white text-2xl font-bold flex items-center justify-center shadow-inner">
-              {user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}
+    <main className="min-h-screen bg-[#f4f6f9] px-4 py-8 text-slate-950 sm:px-6 lg:px-8 lg:py-10">
+      <div className="mx-auto max-w-[1200px] space-y-5">
+        <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-600">EchoINTV learning workspace</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-[28px]">学习 Dashboard</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">查看真实练习进度、继续上次学习，并管理收藏与会员状态。</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {isAdmin && <Link href="/admin" className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"><Shield className="h-4 w-4" />管理后台</Link>}
+            <Link href="/problem" className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">进入题库<ArrowRight className="h-4 w-4" /></Link>
+          </div>
+        </header>
+
+        <section aria-labelledby="learning-progress-title" className="grid gap-5 lg:grid-cols-12">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-8">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div><h2 id="learning-progress-title" className="text-base font-semibold">学习进度</h2><p className="mt-1 text-sm text-slate-600">已完成 {solvedProgress.length} / {allProblems.length} 道题</p></div>
+              <div className="text-right"><div className="text-3xl font-medium tabular-nums">{completionPercent}%</div><div className="mt-1 text-xs text-slate-600">题库完成度</div></div>
             </div>
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-xl font-bold text-gray-900">
-                  {user.name || user.email.split("@")[0]}
-                </h1>
-
-                {/* 🌟 动态会员身份与到期时间展示 */}
-                {isAdmin ? (
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                    👑 系统管理员 (Pro)
-                  </span>
-                ) : user.role === "PRO" && proDetails?.isActive !== false ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                      ⭐ EchoINTV Pro 会员
-                    </span>
-                    {proDetails?.text && (
-                      <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
-                        {proDetails.text}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
-                      {proDetails ? "Pro 会员已过期" : "免费用户"}
-                    </span>
-                    <Link
-                      href="/pricing"
-                      className="text-xs text-blue-600 font-bold hover:underline"
-                    >
-                      {proDetails ? "立即续费 Pro →" : "升级 Pro →"}
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              <p className="text-sm text-gray-500 mt-1">
-                ✉ {user.email} · 加入时间：{new Date(user.createdAt).toLocaleDateString("zh-CN")}
-              </p>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-100" aria-label={`题库完成度 ${completionPercent}%`}><div className="h-full rounded-full bg-blue-600" style={{ width: `${completionPercent}%` }} /></div>
+            <div className="mt-6 grid grid-cols-3 divide-x divide-slate-200 border-t border-slate-100 pt-5">
+              {(["Easy", "Medium", "Hard"] as const).map((level) => <div key={level} className="px-3 first:pl-0 last:pr-0"><div className="text-xs text-slate-600">{level}</div><div className="mt-1 text-xl font-medium tabular-nums">{solvedByDifficulty[level]}</div><div className="mt-1 text-xs text-slate-500">已完成</div></div>)}
             </div>
           </div>
 
-          {/* 右侧操作按钮组 */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"
-              >
-                <span>👑</span>
-                <span>进入管理后台</span>
-              </Link>
-            )}
-
-            <Link
-              href="/problem"
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition shadow-sm"
-            >
-              &lt;/&gt; 进入题库刷题
-            </Link>
+          <div className="flex flex-col rounded-lg border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-4">
+            <div className="flex items-center gap-2 text-slate-700"><Target className="h-4 w-4" /><h2 className="text-base font-semibold text-slate-950">下一步学习</h2></div>
+            {nextProblem ? <>
+              <p className="mt-5 text-xs font-medium text-slate-600">推荐未完成题目</p>
+              <h3 className="mt-2 text-lg font-semibold leading-6">{nextProblem.title}</h3>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600"><span>{nextProblem.company}</span><span aria-hidden="true">·</span><span>{nextProblem.category}</span><span className={`rounded-full px-2 py-1 font-medium ${difficultyStyle[difficultyName(nextProblem.difficulty)]}`}>{difficultyName(nextProblem.difficulty)}</span></div>
+              <Link href={`/problem/${nextProblem.slug}`} className="mt-auto inline-flex min-h-11 items-center justify-between border-t border-slate-100 pt-4 text-sm font-semibold text-slate-950 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">开始这道题<ArrowRight className="h-4 w-4" /></Link>
+            </> : <div className="mt-5 flex flex-1 flex-col justify-between"><p className="text-sm leading-6 text-slate-600">你已经完成了当前题库中的全部题目。</p><Link href="/blog" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-950 hover:text-blue-700">阅读面试经验<ArrowRight className="h-4 w-4" /></Link></div>}
           </div>
-        </div>
+        </section>
 
-        <SubscriptionManager subscription={user.billingSubscriptions[0] ? {
-          provider: user.billingSubscriptions[0].provider,
-          status: user.billingSubscriptions[0].status,
-          currentPeriodEnd: user.billingSubscriptions[0].currentPeriodEnd,
-          cancelAtPeriodEnd: user.billingSubscriptions[0].cancelAtPeriodEnd,
-        } : null} />
+        <section className="grid items-start gap-5 lg:grid-cols-12">
+          <DashboardList title="最近练习" icon={<CheckCircle2 className="h-4 w-4 text-slate-500" />} action={<Link href="/problem" className="text-sm font-medium text-slate-600 hover:text-blue-700">查看题库</Link>} className="lg:col-span-7">
+            {recentPractice.length ? recentPractice.map((item) => <Link key={item.id} href={`/problem/${item.problem.slug}`} className="group flex min-h-[68px] items-center gap-4 border-b border-slate-100 px-5 py-3 last:border-b-0 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 sm:px-6"><div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold group-hover:text-blue-700">{item.problem.title}</div><div className="mt-1 truncate text-xs text-slate-600">{item.problem.company} · {item.problem.category}</div></div><div className="shrink-0 text-right"><div className="text-xs font-medium text-emerald-800">已完成</div><div className="mt-1 text-xs tabular-nums text-slate-500">{new Intl.DateTimeFormat("zh-CN", { month: "short", day: "numeric" }).format(item.updatedAt)}</div></div></Link>) : <EmptyList text="还没有练习记录。完成第一道题后，它会出现在这里。" link="/problem" action="选择第一道题" />}
+          </DashboardList>
 
-        {/* 题库大厂真题总览 */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <span>📈</span> 题库大厂真题总览
-          </h2>
+          <DashboardList title="收藏题目" icon={<Bookmark className="h-4 w-4 text-slate-500" />} action={<span className="text-sm tabular-nums text-slate-600">{user.favorites.length} 道</span>} className="lg:col-span-5">
+            {savedQuestions.length ? savedQuestions.map((item) => <Link key={item.id} href={`/problem/${item.problem.slug}`} className="group flex min-h-[68px] items-center gap-3 border-b border-slate-100 px-5 py-3 last:border-b-0 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 sm:px-6"><div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold group-hover:text-blue-700">{item.problem.title}</div><div className="mt-1 truncate text-xs text-slate-600">{item.problem.company} · {difficultyName(item.problem.difficulty)}</div></div><ArrowRight className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-blue-700" /></Link>) : <EmptyList text="你还没有收藏题目。收藏后可以从这里快速返回。" link="/problem" action="浏览题库" />}
+          </DashboardList>
+        </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-2">
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>真题总库</span>
-                <span className="text-blue-600 font-mono">&lt;/&gt;</span>
-              </div>
-              <div className="text-2xl font-bold text-gray-900">
-                {totalProblems} <span className="text-xs font-normal text-gray-400">道大厂真题</span>
-              </div>
-              <div className="w-full bg-blue-500 h-1.5 rounded-full" />
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-2">
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>简单题 (Easy)</span>
-                <span className="w-2 h-2 rounded-full bg-green-500" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">
-                {easyCount} <span className="text-xs font-normal text-gray-400">道基础题</span>
-              </div>
-              <div className="w-full bg-green-500 h-1.5 rounded-full" />
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-2">
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>中等题 (Medium)</span>
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">
-                {mediumCount} <span className="text-xs font-normal text-gray-400">道高频题</span>
-              </div>
-              <div className="w-full bg-amber-500 h-1.5 rounded-full" />
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-2">
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>困难题 (Hard)</span>
-                <span className="w-2 h-2 rounded-full bg-rose-500" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">
-                {hardCount} <span className="text-xs font-normal text-gray-400">道挑战题</span>
-              </div>
-              <div className="w-full bg-rose-500 h-1.5 rounded-full" />
-            </div>
-          </div>
-        </div>
-
-        {/* 底部两列模块 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col justify-between space-y-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <span>📖</span> 大厂面试经验与技术指南
-              </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                收录了 Meta、Amazon、Google 等顶尖科技公司的真实面试真题还原、BQ 答题技巧与系统设计拆解。
-              </p>
-              <div className="pt-2">
-                <span className="text-xs font-semibold px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg">
-                  已更新 {totalPosts} 篇深度求职面经
-                </span>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-gray-100">
-              <Link
-                href="/blog"
-                className="text-sm font-semibold text-blue-600 hover:underline inline-flex items-center gap-1"
-              >
-                浏览所有面经文章 →
-              </Link>
+        <section className="grid gap-5 lg:grid-cols-12">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-7">
+            <div className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-slate-500" /><h2 className="text-base font-semibold">学习资源</h2></div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <ResourceLink href="/problem" value={allProblems.length} title="面试真题" description="按公司、难度和题型继续练习。" />
+              <ResourceLink href="/blog" value={totalPosts} title="面试经验" description="阅读真实流程、BQ 和技术复盘。" />
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-900 to-indigo-950 text-white rounded-2xl p-6 shadow-sm flex flex-col justify-between space-y-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-white">
-                <span>✨</span> 1 对 1 定制辅导与模拟面试
-              </h3>
-              <p className="text-sm text-blue-100/80 leading-relaxed">
-                由北美科技大厂在职工程师提供 1v1 Mock Interview、简历精修与技术深度复盘，助力通关秋招与全职面试。
-              </p>
-              <div className="flex flex-wrap gap-2 pt-2 text-xs">
-                <span className="bg-white/10 px-2.5 py-1 rounded-md text-blue-200">
-                  Resume Review
-                </span>
-                <span className="bg-white/10 px-2.5 py-1 rounded-md text-blue-200">
-                  Coding Mock
-                </span>
-                <span className="bg-white/10 px-2.5 py-1 rounded-md text-blue-200">
-                  System Design
-                </span>
-              </div>
-            </div>
+          <aside className="rounded-lg border border-slate-200 bg-white p-5 sm:p-6 lg:col-span-5">
+            <div className="flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white">{(user.name || user.email)[0].toUpperCase()}</div><div className="min-w-0"><h2 className="truncate text-base font-semibold">{user.name || user.email.split("@")[0]}</h2><p className="mt-1 truncate text-sm text-slate-600">{user.email}</p></div></div>
+            <dl className="mt-5 space-y-3 border-t border-slate-100 pt-4 text-sm">
+              <div className="flex items-center justify-between gap-4"><dt className="flex items-center gap-2 text-slate-600"><CalendarDays className="h-4 w-4" />加入时间</dt><dd className="text-right font-medium">{memberSince}</dd></div>
+              <div className="flex items-center justify-between gap-4"><dt className="flex items-center gap-2 text-slate-600"><Code2 className="h-4 w-4" />账户等级</dt><dd className="text-right font-medium">{isAdmin ? "管理员 · Pro" : user.role === "PRO" ? "EchoINTV Pro" : "免费用户"}</dd></div>
+              {proExpiry && <div className="flex items-center justify-between gap-4"><dt className="text-slate-600">Pro 有效期</dt><dd className="text-right font-medium tabular-nums">{proExpiry}</dd></div>}
+            </dl>
+            {!isAdmin && user.role !== "PRO" && <Link href="/pricing" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-950 hover:text-blue-700">查看会员方案<ArrowRight className="h-4 w-4" /></Link>}
+          </aside>
+        </section>
 
-            <div className="pt-4 border-t border-white/10">
-              <Link
-                href="/contact"
-                className="text-sm font-semibold text-white hover:text-blue-200 transition inline-flex items-center gap-1"
-              >
-                立即咨询导师服务 →
-              </Link>
-            </div>
-          </div>
-        </div>
+        {latestSubscription && <SubscriptionManager subscription={{ provider: latestSubscription.provider, status: latestSubscription.status, currentPeriodEnd: latestSubscription.currentPeriodEnd, cancelAtPeriodEnd: latestSubscription.cancelAtPeriodEnd }} />}
       </div>
     </main>
   );
+}
+
+function DashboardList({ title, icon, action, className, children }: { title: string; icon: React.ReactNode; action: React.ReactNode; className: string; children: React.ReactNode }) {
+  return <div className={`rounded-lg border border-slate-200 bg-white ${className}`}><div className="flex items-center justify-between px-5 py-4 sm:px-6"><div className="flex items-center gap-2">{icon}<h2 className="text-base font-semibold">{title}</h2></div>{action}</div><div className="border-t border-slate-100">{children}</div></div>;
+}
+function EmptyList({ text, link, action }: { text: string; link: string; action: string }) {
+  return <div className="px-5 py-8 sm:px-6"><p className="text-sm text-slate-600">{text}</p><Link href={link} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-slate-950 hover:text-blue-700">{action}<ArrowRight className="h-4 w-4" /></Link></div>;
+}
+function ResourceLink({ href, value, title, description }: { href: string; value: number; title: string; description: string }) {
+  return <Link href={href} className="group border-t border-slate-200 pt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"><div className="text-2xl font-medium tabular-nums">{value}</div><div className="mt-1 text-sm font-semibold group-hover:text-blue-700">{title}</div><p className="mt-2 text-sm leading-6 text-slate-600">{description}</p></Link>;
 }

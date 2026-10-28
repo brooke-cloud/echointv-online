@@ -56,6 +56,10 @@ export default async function ProblemDetailPage({ params }: Props) {
   const isAdmin = Boolean(session?.email && adminEmails.includes(session.email.toLowerCase().trim()));
   const paywallEnabled = await isPaywallEnabled();
   const canAccess = !paywallEnabled || isFree || isAdmin || Boolean(session && await hasProAccess(session.id));
+  const [progressRecord, favoriteRecord] = session && !isDatabaseDisabled() ? await Promise.all([
+    prisma.userProblemProgress.findUnique({ where: { userId_problemId: { userId: session.id, problemId: problem.id } }, select: { id: true } }),
+    prisma.favorite.findUnique({ where: { userId_problemId: { userId: session.id, problemId: problem.id } }, select: { id: true } }),
+  ]) : [null, null];
 
   return <AccountAccessGate isAuthenticated={Boolean(session)} contentType="problem" returnPath={`/problem/${slug}`}><ProblemWorkspace problem={{
     slug: problem.slug || slug,
@@ -85,5 +89,5 @@ export default async function ProblemDetailPage({ params }: Props) {
     aiCommonMistakes: "aiCommonMistakes" in problem ? problem.aiCommonMistakes || undefined : undefined,
     aiFollowUpQuestions: "aiFollowUpQuestions" in problem ? problem.aiFollowUpQuestions || undefined : undefined,
     aiBetterStrategy: "aiBetterStrategy" in problem ? problem.aiBetterStrategy || undefined : undefined,
-  }} canAccess={canAccess} /></AccountAccessGate>;
+  }} canAccess={canAccess} problemId={problem.id} initialSolved={Boolean(progressRecord)} initialFavorited={Boolean(favoriteRecord)} /></AccountAccessGate>;
 }
