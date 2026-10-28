@@ -227,7 +227,11 @@ function parseMarkdownExamples(text: string) {
 
 function parseParameters(text: string) {
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const tableParameters = lines.map((line) => line.replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim())).filter((cells) => cells.length >= 3 && !/^(name|名称)$/i.test(cells[0]) && !cells.every((cell) => /^:?-{2,}:?$/.test(cell))).map((cells) => ({ name: cells[0], type: cells[1], description: cells.slice(2).join(" | ") }));
+  const cleanTableCell = (cell: string) => cell.trim().replace(/^\*\*\s*(.*?)\s*\*\*$/, "$1").replace(/^`\s*(.*?)\s*`$/, "$1").trim();
+  const tableParameters = lines
+    .map((line) => line.replace(/^\||\|$/g, "").split("|").map(cleanTableCell))
+    .filter((cells) => cells.length >= 3 && !/^(name|名称)$/i.test(cells[0]) && !cells.every((cell) => /^:?-{2,}:?$/.test(cell)))
+    .map((cells) => ({ name: cells[0], type: cells[1], description: cells.slice(2).join(" | ") }));
   if (tableParameters.length) return tableParameters;
 
   const structured: Array<{ name: string; type: string; description: string }> = [];
@@ -257,6 +261,19 @@ function parseParameters(text: string) {
     return short ? { name: short[1].trim(), type: short[2].trim(), description: "" } : { name: line, type: "", description: "" };
   });
 }
+
+const inferFunctionNameFromSolutions = (solutions: { python: string; java: string; cpp: string }) => {
+  const pythonNames = [...solutions.python.matchAll(/^\s*(?:async\s+)?def\s+([A-Za-z_]\w*)\s*\(/gm)].map((match) => match[1]);
+  const pythonName = pythonNames.find((name) => !["__init__", "main"].includes(name));
+  if (pythonName) return pythonName;
+
+  const javaNames = [...solutions.java.matchAll(/\b(?:public|protected|private)\s+(?:static\s+)?(?:[\w<>,.?\[\]]+\s+)+([A-Za-z_]\w*)\s*\(/g)].map((match) => match[1]);
+  const javaName = javaNames.find((name) => !["main", "Solution"].includes(name));
+  if (javaName) return javaName;
+
+  const cppNames = [...solutions.cpp.matchAll(/(?:^|[;}\n])\s*(?:[\w:<>]+[\s*&]+)+([A-Za-z_]\w*)\s*\([^;{}]*\)\s*(?:const\s*)?\{/g)].map((match) => match[1]);
+  return cppNames.find((name) => name !== "main") || "";
+};
 
 export function parseProblemImportText(raw: string): InterviewImportPayload {
   // Parse the original fence sequence directly. Rewriting a
@@ -348,18 +365,23 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     const language = detectSolutionLanguage(genericSolution);
     if (!solutionBuckets[language]) solutionBuckets[language] = genericSolution;
   }
-  return normalizeInterviewImportPayload({
+  const importedFunctionName = get("functionName") || inferFunctionNameFromSolutions(solutionBuckets);
+  const payload = normalizeInterviewImportPayload({
     title: get("title") || fallbackTitle,
     company: get("company"), role: get("role"), difficulty: get("difficulty"), stage: get("stage"),
     category: splitList(get("category")), topics: splitList(get("topics")), problemDescription: get("problemDescription"),
     examples: parseMarkdownExamples(source),
-    functionDescription: { functionName: get("functionName"), parameters: parseParameters(get("parameters")), returnDescription: get("returnDescription") },
+    functionDescription: { functionName: importedFunctionName, parameters: parseParameters(get("parameters")), returnDescription: get("returnDescription") },
     constraints: splitLines(get("constraints")),
     approach: { coreIdea: get("coreIdea"), algorithmSteps: get("algorithmSteps"), whyWorks: get("whyWorks"), edgeCases: get("edgeCases") },
     solution: { python: normalizeImportedCode(solutionBuckets.python, "python"), java: normalizeImportedCode(solutionBuckets.java, "java"), cpp: normalizeImportedCode(solutionBuckets.cpp, "cpp") },
     complexity: { time: get("time"), space: get("space") },
     aiAnalysis: { interviewIntent: get("interviewIntent"), keyConcepts: get("keyConcepts"), commonMistakes: get("commonMistakes"), followUpQuestions: get("followUpQuestions"), betterStrategy: get("betterStrategy") },
   });
+  // `solve` remains the runtime fallback elsewhere, but it must not be shown as
+  // if it had been recognized from pasted content.
+  if (!importedFunctionName) payload.functionDescription.functionName = "";
+  return payload;
 }
 
 const hasExplicitSection = (raw: string, target: Section) => raw.split(/\r?\n/).some((line) => {
@@ -386,7 +408,7 @@ export function parseProblemImportTextWithDiagnostics(raw: string): { payload: I
     add(`Example ${index + 1} Output`, example.output);
     add(`Example ${index + 1} Explanation`, example.explanation);
   });
-  add("Function Name", hasExplicitSection(raw, "functionName") && payload.functionDescription.functionName);
+  add("Function Name", payload.functionDescription.functionName);
   add("Parameters", payload.functionDescription.parameters.length);
   add("Return Description", payload.functionDescription.returnDescription);
   add("Constraints", payload.constraints.length);
@@ -421,7 +443,7 @@ export function parseProblemImportTextWithDiagnostics(raw: string): { payload: I
 
   const validation = validateInterviewImportPayload(payload);
   const missingFields = [...validation.missingFields];
-  if (!hasExplicitSection(raw, "functionName") && !payload.functionDescription.parameters.length && !payload.functionDescription.returnDescription) {
+  if (!payload.functionDescription.functionName && !payload.functionDescription.parameters.length && !payload.functionDescription.returnDescription) {
     if (!missingFields.includes("Function Description")) missingFields.push("Function Description");
   }
   const missingFieldOrder = ["Title", "Company", "Problem Description", "Role", "Difficulty", "Stage", "Category", "Topics", "Examples", "Function Description", "Constraints", "Approach", "Solution", "Complexity", "AI Analysis"];

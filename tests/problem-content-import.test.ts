@@ -505,6 +505,44 @@ assert.deepEqual(tableParsed.functionDescription.parameters, [
   { name: "lr", type: "float", description: "Learning rate used by logistic regression" },
 ]);
 
+const boldHeaderTable = parseProblemImportText(`# Function Description
+Parameters
+| **Name** | **Type** | **Description** |
+| --- | --- | --- |
+| nums | List[int] | Input values. |
+| k | int | Number of values. |`);
+assert.deepEqual(boldHeaderTable.functionDescription.parameters, [
+  { name: "nums", type: "List[int]", description: "Input values." },
+  { name: "k", type: "int", description: "Number of values." },
+]);
+assert.equal(boldHeaderTable.functionDescription.parameters.some((parameter) => parameter.name.includes("Name")), false);
+
+for (const [source, expectedName] of [
+  [`# Python Solution
+\`\`\`python
+class Solution:
+    def maxDistance(self, grid):
+        return 0
+\`\`\``, "maxDistance"],
+  [`# Java Solution
+\`\`\`java
+public class Solution {
+    public int maxDistance(int[][] grid) { return 0; }
+}
+\`\`\``, "maxDistance"],
+  [`# C++ Solution
+\`\`\`cpp
+class Solution {
+public:
+    int maxDistance(vector<vector<int>>& grid) { return 0; }
+};
+\`\`\``, "maxDistance"],
+] as const) {
+  const inferredFunction = parseProblemImportTextWithDiagnostics(source);
+  assert.equal(inferredFunction.payload.functionDescription.functionName, expectedName);
+  assert.equal(inferredFunction.diagnostics.recognizedFields.includes("Function Name"), true);
+}
+
 const plainAiAnalysisBoundary = parseProblemImportText(`Complexity
 
 Time Complexity

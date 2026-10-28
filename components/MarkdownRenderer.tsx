@@ -1,6 +1,7 @@
 // components/MarkdownRenderer.tsx
 "use client";
 
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -9,6 +10,39 @@ import rehypeKatex from "rehype-katex";
 
 interface Props {
   content: string;
+}
+
+export function preserveAsciiTreeBlocks(markdown: string) {
+  const lines = markdown.split("\n");
+  const output: string[] = [];
+  const isTreeLine = (line: string) => {
+    const trimmed = line.trim();
+    if (!trimmed) return false;
+    const nodeTokens = trimmed.split(/\s+/);
+    return (nodeTokens.length <= 3 && nodeTokens.every((token) => /^[A-Za-z0-9_.-]+$/.test(token))) || /^[\/\\ \t]+$/.test(line);
+  };
+
+  for (let index = 0; index < lines.length;) {
+    if (!isTreeLine(lines[index])) {
+      output.push(lines[index]);
+      index += 1;
+      continue;
+    }
+    let end = index;
+    let hasBranch = false;
+    while (end < lines.length && isTreeLine(lines[end])) {
+      if (/[\/\\]/.test(lines[end])) hasBranch = true;
+      end += 1;
+    }
+    const block = lines.slice(index, end);
+    if (hasBranch && block.length >= 3) {
+      output.push("```ascii-tree", ...block, "```");
+    } else {
+      output.push(...block);
+    }
+    index = end;
+  }
+  return output.join("\n");
 }
 
 function normalizeMathDelimiters(markdown: string) {
@@ -30,7 +64,7 @@ function normalizeMathDelimiters(markdown: string) {
 
 export default function MarkdownRenderer({ content }: Props) {
   if (!content) return null;
-  const normalizedContent = normalizeMathDelimiters(content);
+  const normalizedContent = normalizeMathDelimiters(preserveAsciiTreeBlocks(content));
 
   return (
     <div className="markdown-renderer text-gray-800">
@@ -141,7 +175,17 @@ export default function MarkdownRenderer({ content }: Props) {
              核心修改在这里
           ========================= */
 
-          pre: ({ children }) => (
+          pre: ({ children }) => {
+            const child = React.Children.toArray(children)[0];
+            const className = React.isValidElement<{ className?: string }>(child) ? child.props.className || "" : "";
+            if (className.includes("language-ascii-tree")) {
+              return (
+                <pre className="my-3 overflow-x-auto whitespace-pre font-mono text-sm leading-6 text-gray-700" style={{ tabSize: 4 }}>
+                  {children}
+                </pre>
+              );
+            }
+            return (
             <div
               className="
                 my-4
@@ -174,7 +218,8 @@ export default function MarkdownRenderer({ content }: Props) {
                 {children}
               </pre>
             </div>
-          ),
+            );
+          },
 
           /* =========================
              INLINE CODE + CODE BLOCK
