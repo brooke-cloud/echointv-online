@@ -1,4 +1,14 @@
-import { normalizeInterviewImportPayload, type InterviewImportPayload } from "@/lib/interview-import-schema";
+import { normalizeInterviewImportPayload, validateInterviewImportPayload, type InterviewImportPayload } from "@/lib/interview-import-schema";
+
+export type ProblemImportDiagnostics = {
+  recognizedFields: string[];
+  missingFields: string[];
+  warnings: string[];
+};
+export type ProblemImportFeedback = {
+  tone: "success" | "warning" | "error";
+  message: string;
+};
 
 type Section =
   | "title" | "company" | "role" | "difficulty" | "stage" | "category" | "topics"
@@ -128,6 +138,13 @@ const isSectionBoundary = (line: string) => {
   if (!isMarkdownHeading && !isBoldHeading) return false;
   return Boolean(sectionFor(heading)) || ["basic information", "function description", "ai analysis"].includes(heading);
 };
+const isFenceLine = (line: string) => /^\s*(?:```|~~~)/.test(line);
+const isRecoveryBoundary = (line: string) => {
+  const trimmed = line.trim();
+  const explicitHeading = /^\s*#{2,6}\s+/.test(line) || /^\s*\*\*[^*]+\*\*\s*[:：]?\s*$/.test(line);
+  const plainContainer = ["basic information", "function description", "complexity", "ai analysis", "solutions"].includes(cleanLabel(trimmed));
+  return (explicitHeading || plainContainer) && isSectionBoundary(trimmed);
+};
 
 function parseExamples(text: string) {
   const examples: Array<{ input: string; output: string; explanation: string }> = [];
@@ -150,7 +167,7 @@ function parseExamples(text: string) {
       example = { input: "", output: "", explanation: "" };
       continue;
     }
-    if (!inExamples || /^```/.test(trimmed)) continue;
+    if (!inExamples || isFenceLine(trimmed)) continue;
 
     const label = trimmed.replace(/^\*\*(.*?)\*\*$/, "$1").replace(/[:：]\s*$/, "").toLowerCase();
     if (label === "input" || label === "输入") { example ||= { input: "", output: "", explanation: "" }; field = "input"; continue; }
@@ -184,7 +201,19 @@ function parseMarkdownExamples(text: string) {
       continue;
     }
     if (inExamples && isSectionBoundary(trimmed)) break;
-    if (!inExamples || /^```/.test(trimmed)) continue;
+    if (!inExamples || isFenceLine(trimmed)) continue;
+
+    const boldInline = trimmed.match(/^\*\*\s*(input|output|explanation|输入|输出|解释|说明)\s*[:：]?\s*\*\*\s*(?:[:：]\s*)?(.*)$/i);
+    const plainInline = trimmed.match(/^(input|output|explanation|输入|输出|解释|说明)\s*[:：]\s*(.*)$/i);
+    const inlineField = boldInline || plainInline;
+    if (inlineField) {
+      example ||= { input: "", output: "", explanation: "" };
+      const inlineLabel = inlineField[1].toLowerCase();
+      field = inlineLabel === "input" || inlineLabel === "输入" ? "input" : inlineLabel === "output" || inlineLabel === "输出" ? "output" : "explanation";
+      const inlineValue = inlineField[2].trim();
+      if (inlineValue) example[field] = [example[field], inlineValue].filter(Boolean).join("\n");
+      continue;
+    }
 
     const label = heading(trimmed).toLowerCase();
     if (label === "input" || label === "\u8f93\u5165") { example ||= { input: "", output: "", explanation: "" }; field = "input"; continue; }
@@ -235,8 +264,10 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
   // fences are the previous block's close and the next block's open.
   const source = raw.trim();
   if (!source) return normalizeInterviewImportPayload({});
-  if (source.startsWith("{")) {
-    try { return normalizeInterviewImportPayload(JSON.parse(source)); } catch { /* parse as labelled text */ }
+  const fencedJson = source.match(/^\s*(```|~~~)\s*json\s*\r?\n([\s\S]*?)\r?\n\1\s*$/i);
+  const jsonSource = fencedJson?.[2]?.trim() || source;
+  if (jsonSource.startsWith("{")) {
+    try { return normalizeInterviewImportPayload(JSON.parse(jsonSource)); } catch { /* parse as labelled text */ }
   }
 
   const buckets = new Map<Section, string[]>();
@@ -248,23 +279,42 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
   let current: Section | undefined;
   let codeLanguage = "";
   let contentFence = false;
+  let fenceMarker = "";
   let code: string[] = [];
 
   for (const originalLine of source.split(/\r?\n/)) {
     const line = originalLine.trimEnd();
-    const fence = line.trim().match(/^```\s*([^\s`]*)/);
+    if ((contentFence || codeLanguage) && isRecoveryBoundary(line)) {
+      if (codeLanguage && code.length) addCodeBlock(code.join("\n"), codeLanguage, current);
+      contentFence = false;
+      codeLanguage = "";
+      fenceMarker = "";
+      code = [];
+    }
+    const fence = line.trim().match(/^(```|~~~)\s*([^\s`~]*)/);
     if (fence) {
-      if (contentFence) { contentFence = false; continue; }
-      if (!codeLanguage && current && !["solution", "python", "java", "cpp"].includes(current)) { contentFence = true; continue; }
-      if (!codeLanguage) { codeLanguage = fence[1].toLowerCase() || (current === "java" ? "java" : current === "cpp" ? "cpp" : current === "python" ? "python" : "auto"); code = []; }
-      else {
+      const marker = fence[1];
+      const languageHint = fence[2];
+      if (contentFence) {
+        if (marker === fenceMarker) { contentFence = false; fenceMarker = ""; }
+        else if (current) add(current, originalLine);
+        continue;
+      }
+      if (codeLanguage) {
+        if (marker !== fenceMarker) { code.push(originalLine); continue; }
         const block = code.join("\n");
         const renderedLanguageLabel = standaloneSolutionLanguageMarker(block);
         if (renderedLanguageLabel) current = renderedLanguageLabel;
         else addCodeBlock(block, codeLanguage, current);
         codeLanguage = "";
+        fenceMarker = "";
         code = [];
+        continue;
       }
+      if (current && !["solution", "python", "java", "cpp"].includes(current)) { contentFence = true; fenceMarker = marker; continue; }
+      codeLanguage = languageHint.toLowerCase() || (current === "java" ? "java" : current === "cpp" ? "cpp" : current === "python" ? "python" : "auto");
+      fenceMarker = marker;
+      code = [];
       continue;
     }
     if (contentFence) { if (current) add(current, originalLine); continue; }
@@ -288,7 +338,16 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
   if (codeLanguage && code.length) addCodeBlock(code.join("\n"), codeLanguage, current);
 
   const get = (section: Section) => (buckets.get(section) || []).join("\n").trim();
-  const fallbackTitle = source.split(/\r?\n/).map((line) => line.replace(/^#+\s*/, "").trim()).find((line) => line && !sectionFor(line)) || "";
+  const fallbackTitle = source.split(/\r?\n/).map((line) => {
+    const match = line.match(/^\s*#\s+(.+?)\s*$/);
+    return match?.[1]?.trim() || "";
+  }).find((line) => line && !sectionFor(line)) || "";
+  const genericSolution = get("solution");
+  const solutionBuckets = { python: get("python"), java: get("java"), cpp: get("cpp") };
+  if (genericSolution) {
+    const language = detectSolutionLanguage(genericSolution);
+    if (!solutionBuckets[language]) solutionBuckets[language] = genericSolution;
+  }
   return normalizeInterviewImportPayload({
     title: get("title") || fallbackTitle,
     company: get("company"), role: get("role"), difficulty: get("difficulty"), stage: get("stage"),
@@ -297,8 +356,100 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     functionDescription: { functionName: get("functionName"), parameters: parseParameters(get("parameters")), returnDescription: get("returnDescription") },
     constraints: splitLines(get("constraints")),
     approach: { coreIdea: get("coreIdea"), algorithmSteps: get("algorithmSteps"), whyWorks: get("whyWorks"), edgeCases: get("edgeCases") },
-    solution: { python: normalizeImportedCode(get("python") || get("solution"), "python"), java: normalizeImportedCode(get("java"), "java"), cpp: normalizeImportedCode(get("cpp"), "cpp") },
+    solution: { python: normalizeImportedCode(solutionBuckets.python, "python"), java: normalizeImportedCode(solutionBuckets.java, "java"), cpp: normalizeImportedCode(solutionBuckets.cpp, "cpp") },
     complexity: { time: get("time"), space: get("space") },
     aiAnalysis: { interviewIntent: get("interviewIntent"), keyConcepts: get("keyConcepts"), commonMistakes: get("commonMistakes"), followUpQuestions: get("followUpQuestions"), betterStrategy: get("betterStrategy") },
   });
+}
+
+const hasExplicitSection = (raw: string, target: Section) => raw.split(/\r?\n/).some((line) => {
+  const inline = parseInlineLabel(line);
+  const heading = line.replace(/^\s*#{1,6}\s*/, "").replace(/^\s*\*\*(.*?)\*\*\s*$/, "$1").trim();
+  return sectionFor(inline?.label || heading) === target;
+});
+
+export function parseProblemImportTextWithDiagnostics(raw: string): { payload: InterviewImportPayload; diagnostics: ProblemImportDiagnostics } {
+  const payload = parseProblemImportText(raw);
+  const recognizedFields: string[] = [];
+  const add = (name: string, present: unknown) => { if (present) recognizedFields.push(name); };
+
+  add("Title", payload.title);
+  add("Company", payload.company);
+  add("Role", payload.role);
+  add("Difficulty", payload.difficulty);
+  add("Stage", payload.stage);
+  add("Category", payload.category.length);
+  add("Topics", payload.topics.length);
+  add("Problem Description", payload.problemDescription);
+  payload.examples.forEach((example, index) => {
+    add(`Example ${index + 1} Input`, example.input);
+    add(`Example ${index + 1} Output`, example.output);
+    add(`Example ${index + 1} Explanation`, example.explanation);
+  });
+  add("Function Name", hasExplicitSection(raw, "functionName") && payload.functionDescription.functionName);
+  add("Parameters", payload.functionDescription.parameters.length);
+  add("Return Description", payload.functionDescription.returnDescription);
+  add("Constraints", payload.constraints.length);
+  add("Approach", payload.approach.coreIdea);
+  add("Algorithm Steps", payload.approach.algorithmSteps);
+  add("Why It Works", payload.approach.whyWorks);
+  add("Edge Cases", payload.approach.edgeCases);
+  add("Python Solution", payload.solution.python);
+  add("Java Solution", payload.solution.java);
+  add("C++ Solution", payload.solution.cpp);
+  add("Time Complexity", payload.complexity.time);
+  add("Space Complexity", payload.complexity.space);
+  add("Interview Intent", payload.aiAnalysis.interviewIntent);
+  add("Key Concepts", payload.aiAnalysis.keyConcepts);
+  add("Common Mistakes", payload.aiAnalysis.commonMistakes);
+  add("Follow-up Questions", payload.aiAnalysis.followUpQuestions);
+  add("Better Strategy", payload.aiAnalysis.betterStrategy);
+
+  const warnings: string[] = [];
+  const fenceState = { "```": false, "~~~": false } as Record<string, boolean>;
+  for (const line of raw.split(/\r?\n/)) {
+    const marker = line.trim().match(/^(```|~~~)/)?.[1];
+    if (marker) fenceState[marker] = !fenceState[marker];
+  }
+  const unclosedMarkers = Object.entries(fenceState).filter(([, open]) => open).map(([marker]) => marker);
+  if (unclosedMarkers.length) warnings.push(`Unclosed code fence detected (${unclosedMarkers.join(", ")}); later sections were recovered where possible.`);
+  payload.examples.forEach((example, index) => {
+    const missing = (["input", "output", "explanation"] as const).filter((field) => !example[field]);
+    if (missing.length) warnings.push(`Example ${index + 1} is missing ${missing.join(", ")}.`);
+  });
+  if (!recognizedFields.length) warnings.push("No supported section labels or Markdown title were recognized.");
+
+  const validation = validateInterviewImportPayload(payload);
+  const missingFields = [...validation.missingFields];
+  if (!hasExplicitSection(raw, "functionName") && !payload.functionDescription.parameters.length && !payload.functionDescription.returnDescription) {
+    if (!missingFields.includes("Function Description")) missingFields.push("Function Description");
+  }
+  const missingFieldOrder = ["Title", "Company", "Problem Description", "Role", "Difficulty", "Stage", "Category", "Topics", "Examples", "Function Description", "Constraints", "Approach", "Solution", "Complexity", "AI Analysis"];
+  missingFields.sort((left, right) => missingFieldOrder.indexOf(left) - missingFieldOrder.indexOf(right));
+  return { payload, diagnostics: { recognizedFields, missingFields, warnings } };
+}
+
+export function buildProblemImportFeedback(diagnostics: ProblemImportDiagnostics): ProblemImportFeedback {
+  const recognizedCount = diagnostics.recognizedFields.length;
+  const details = [
+    diagnostics.missingFields.length ? `Missing: ${diagnostics.missingFields.join(", ")}.` : "",
+    diagnostics.warnings.length ? `Warnings: ${diagnostics.warnings.join(" ")}` : "",
+  ].filter(Boolean).join(" ");
+
+  if (!recognizedCount) {
+    return {
+      tone: "error",
+      message: `No recognized content was found. Use labelled sections such as Title, Problem Description, Example, or Solution. ${details}`.trim(),
+    };
+  }
+  if (diagnostics.warnings.length || diagnostics.missingFields.length) {
+    return {
+      tone: "warning",
+      message: `Import partially complete. ${recognizedCount} source fields were recognized. ${details}`.trim(),
+    };
+  }
+  return {
+    tone: "success",
+    message: `Import complete. ${recognizedCount} source fields were recognized. Review the form before creating the problem.`,
+  };
 }

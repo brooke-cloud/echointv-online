@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { parseProblemImportText } from "../lib/problem-content-import";
+import { buildProblemImportFeedback, parseProblemImportText, parseProblemImportTextWithDiagnostics } from "../lib/problem-content-import";
 
 const markdown = `# 1. Basic Information
 
@@ -109,6 +109,21 @@ assert.deepEqual(boldNumberedExamples.examples, [
   { input: "intervals = [[9, 10], [9, 11], [10, 12], [11, 13]]", output: "2", explanation: "The meetings `[9, 10]` and `[9, 11]` overlap, so they require two separate rooms.\nTherefore, a minimum of two conference rooms is sufficient." },
   { input: "intervals = [[0, 30], [5, 10], [15, 20]]", output: "2", explanation: "The long meeting overlaps with both shorter meetings. Therefore, two rooms are sufficient." },
   { input: "intervals = [[7, 10], [10, 12]]", output: "1", explanation: "The first meeting ends exactly when the second starts, so one room is required." },
+]);
+
+const inlineExamples = parseProblemImportText(`# Examples
+## Example 1
+Input: nums = [1, 2]
+Output: 3
+Explanation: Add both values.
+
+## Example 2
+**Input:** nums = [4, 5]
+**Output：** 9
+**Explanation:** Add the second pair.`);
+assert.deepEqual(inlineExamples.examples, [
+  { input: "nums = [1, 2]", output: "3", explanation: "Add both values." },
+  { input: "nums = [4, 5]", output: "9", explanation: "Add the second pair." },
 ]);
 
 const standaloneLabels = `# 3. Examples
@@ -311,6 +326,121 @@ int solve(vector<int> nums) { return nums.size(); }
 \`\`\``);
 assert.equal(inferredUnlabelledLanguages.solution.java.includes("import java.util.List"), true);
 assert.equal(inferredUnlabelledLanguages.solution.cpp.includes("#include <vector>"), true);
+
+const genericJavaSolution = parseProblemImportText(`# Solution
+public class Solution {
+    public int solve(int[] nums) { return nums.length; }
+}`);
+assert.equal(genericJavaSolution.solution.python, "");
+assert.equal(genericJavaSolution.solution.java.includes("public class Solution"), true);
+
+const genericCppSolution = parseProblemImportText(`# Solution
+#include <vector>
+using namespace std;
+int solve(vector<int> nums) { return nums.size(); }`);
+assert.equal(genericCppSolution.solution.python, "");
+assert.equal(genericCppSolution.solution.cpp.includes("#include <vector>"), true);
+
+const unrelatedImport = parseProblemImportTextWithDiagnostics("This is unrelated prose without supported labels.");
+assert.equal(unrelatedImport.payload.title, "");
+assert.deepEqual(unrelatedImport.diagnostics.recognizedFields, []);
+assert.equal(unrelatedImport.diagnostics.warnings.some((warning) => warning.includes("No supported section")), true);
+const unrelatedFeedback = buildProblemImportFeedback(unrelatedImport.diagnostics);
+assert.equal(unrelatedFeedback.tone, "error");
+assert.equal(unrelatedFeedback.message.startsWith("Import complete"), false);
+
+const diagnosticImport = parseProblemImportTextWithDiagnostics(`Title: Sum Values
+Company: Google
+Examples
+Example 1
+Input: nums = [1, 2]
+Output: 3
+Explanation: Add both values.`);
+assert.equal(diagnosticImport.diagnostics.recognizedFields.includes("Title"), true);
+assert.equal(diagnosticImport.diagnostics.recognizedFields.includes("Function Name"), false);
+assert.equal(diagnosticImport.diagnostics.missingFields.includes("Function Description"), true);
+assert.deepEqual(diagnosticImport.diagnostics.recognizedFields, [
+  "Title",
+  "Company",
+  "Example 1 Input",
+  "Example 1 Output",
+  "Example 1 Explanation",
+]);
+assert.equal(diagnosticImport.diagnostics.recognizedFields.length, 5);
+assert.deepEqual(diagnosticImport.diagnostics.missingFields, [
+  "Problem Description",
+  "Role",
+  "Difficulty",
+  "Stage",
+  "Category",
+  "Topics",
+  "Function Description",
+  "Constraints",
+  "Approach",
+  "Solution",
+  "Complexity",
+  "AI Analysis",
+]);
+const partialFeedback = buildProblemImportFeedback(diagnosticImport.diagnostics);
+assert.equal(partialFeedback.tone, "warning");
+assert.equal(partialFeedback.message.includes("5 source fields were recognized"), true);
+assert.equal(partialFeedback.message.includes("Missing: Problem Description"), true);
+
+const tildeFences = parseProblemImportText(`# Examples
+## Example 1
+Input
+~~~text
+nums = [1, 2]
+~~~
+Output
+~~~text
+3
+~~~
+Explanation
+Sum the values.
+
+# Solutions
+## C++
+~~~cpp
+#include <vector>
+using namespace std;
+int solve(vector<int> nums) { return nums.size(); }
+~~~`);
+assert.deepEqual(tildeFences.examples, [{ input: "nums = [1, 2]", output: "3", explanation: "Sum the values." }]);
+assert.equal(tildeFences.solution.cpp.includes("#include <vector>"), true);
+assert.equal(tildeFences.solution.cpp.includes("~~~"), false);
+
+const fencedJsonImport = parseProblemImportTextWithDiagnostics(`~~~json
+{
+  "title": "Two Sum",
+  "company": "Google",
+  "problemDescription": "Return two matching indices."
+}
+~~~`);
+assert.equal(fencedJsonImport.payload.title, "Two Sum");
+assert.equal(fencedJsonImport.payload.company, "Google");
+assert.equal(fencedJsonImport.payload.problemDescription, "Return two matching indices.");
+assert.equal(fencedJsonImport.diagnostics.recognizedFields.includes("Title"), true);
+
+const recoveredFence = parseProblemImportTextWithDiagnostics(`# Examples
+## Example 1
+Input
+\`\`\`text
+nums = [1]
+Output
+1
+Explanation
+Only one value.
+
+## Function Description
+### Function Name
+singleValue
+
+## Constraints
+- nums has one value.`);
+assert.equal(recoveredFence.payload.functionDescription.functionName, "singleValue");
+assert.deepEqual(recoveredFence.payload.constraints, ["nums has one value."]);
+assert.equal(recoveredFence.diagnostics.warnings.some((warning) => warning.includes("Unclosed code fence")), true);
 
 const plainFunctionBoundary = parseProblemImportText(`# 3. Examples
 Example 1
