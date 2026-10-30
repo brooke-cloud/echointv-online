@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { preserveAsciiTreeBlocks } from "../components/MarkdownRenderer";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import MarkdownRenderer, { preserveAsciiTreeBlocks } from "../components/MarkdownRenderer";
 
 const explanation = `The tree is:
     5
@@ -23,3 +25,10 @@ const regularText = "Use src / dst to describe the route.\nThen return the price
 assert.equal(preserveAsciiTreeBlocks(regularText), regularText);
 
 console.log("markdown renderer ASCII tree tests passed");
+
+const continuedList = renderToStaticMarkup(React.createElement(MarkdownRenderer, {
+  content: "1. First observation\n2. Second observation\n\n- Nested detail\n\n5. Continued observation",
+}));
+assert.match(continuedList, /<ol[^>]*start="5"/);
+assert.match(continuedList, />Continued observation</);
+console.log("markdown renderer ordered-list continuation test passed");

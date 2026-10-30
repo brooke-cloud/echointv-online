@@ -148,8 +148,8 @@ export default function MarkdownRenderer({ content }: Props) {
             </ul>
           ),
 
-          ol: ({ children }) => (
-            <ol className="my-3 list-decimal list-inside space-y-1.5 text-gray-700">
+          ol: ({ children, start }) => (
+            <ol start={start} className="my-3 list-decimal list-inside space-y-1.5 text-gray-700">
               {children}
             </ol>
           ),
