@@ -43,6 +43,7 @@ model Problem {
   solutionPython       String?
   solutionJava         String?
   solutionCpp          String?
+  solutionJavascript   String?
   aiInterviewFocus     String?
   aiKeyConcepts        String?
   aiCommonMistakes     String?

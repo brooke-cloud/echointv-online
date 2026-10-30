@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createPracticeTemplates, normalizeProblemFunctionDescription, preferredSolutionLanguage, primaryFunctionName } from "../lib/problem-function";
+import { alignSolutionFunctionName, createPracticeTemplates, normalizeProblemFunctionDescription, preferredSolutionLanguage, primaryFunctionName } from "../lib/problem-function";
 import { normalizeInterviewImportPayload } from "../lib/interview-import-schema";
 
 const functionDescription = normalizeProblemFunctionDescription({
@@ -20,6 +20,7 @@ const templates = createPracticeTemplates(functionDescription);
 assert.ok(templates["Python 3"].startsWith("def kSmallestPairs(nums1, nums2, k):"));
 assert.match(templates.Java, /kSmallestPairs\(int\[\] nums1, int\[\] nums2, int k\)/);
 assert.match(templates["C++"], /kSmallestPairs\(vector<int>& nums1, vector<int>& nums2, int k\)/);
+assert.match(templates.JavaScript, /function kSmallestPairs\(nums1, nums2, k\)/);
 assert.doesNotMatch(templates.Java, /\bsolve\s*\(/);
 assert.doesNotMatch(templates["C++"], /\bsolve\s*\(/);
 assert.match(templates["C++"], /^#include <bits\/stdc\+\+\.h>\nusing namespace std;/);
@@ -32,9 +33,14 @@ const noFixedFunctionTemplates = createPracticeTemplates(normalizeProblemFunctio
 assert.equal(noFixedFunctionTemplates["Python 3"], "# Write your solution here\n");
 assert.equal(noFixedFunctionTemplates.Java, "// Write your solution here\n");
 assert.equal(noFixedFunctionTemplates["C++"], "// Write your solution here\n");
+assert.equal(noFixedFunctionTemplates.JavaScript, "// Write your solution here\n");
 assert.doesNotMatch(noFixedFunctionTemplates["Python 3"], /def\s+solve|\bpass\b/);
 
 assert.equal(preferredSolutionLanguage({ solutionCpp: "#include <vector>" }), "C++");
+assert.equal(preferredSolutionLanguage({ solutionJavascript: "const solve = () => {};" }), "JavaScript");
+assert.equal(preferredSolutionLanguage({ solution: "const solve = (nums) => nums.length;", solutionLanguage: "javascript" }), "JavaScript");
+assert.match(alignSolutionFunctionName("const solve = (nums) => nums.length;", "maxDistance", "JavaScript"), /const maxDistance\s*=/);
+assert.match(alignSolutionFunctionName("function solve(nums) { return nums.length; }", "maxDistance", "JavaScript"), /function maxDistance\s*\(/);
 assert.equal(preferredSolutionLanguage({ solutionJava: "class Solution {}" }), "Java");
 assert.equal(preferredSolutionLanguage({ solutionPython: "def solve(): pass", solutionJava: "class Solution {}", solutionCpp: "#include <vector>" }), "Python 3");
 assert.equal(preferredSolutionLanguage({ solution: "#include <vector>\nusing namespace std;", solutionLanguage: "python" }), "C++");

@@ -59,9 +59,21 @@ function cppHarness(code: string, functionName: string, parameters: Parameter[],
   return `${code}${helpers}\nint main() {\n    ${declarations}\n    auto result = ${functionName}(${parameters.map((item) => item.name).join(", ")});\n    echoPrint(result);\n    cout << endl;\n    return 0;\n}\n`;
 }
 
+function javascriptHarness(code: string, functionName: string, parameters: Parameter[], values: Map<string, string>) {
+  const declarations = parameters.map((parameter) => `const ${parameter.name} = ${values.get(parameter.name) || "null"};`).join("\n");
+  const argumentsList = parameters.map((item) => item.name).join(", ");
+  const runner = `\n${declarations}\nPromise.resolve(${functionName}(${argumentsList}))\n  .then((result) => {\n    if (typeof result === "string") console.log(result);\n    else if (result !== undefined) console.log(JSON.stringify(result));\n  })\n  .catch((error) => { console.error(error); process.exitCode = 1; });\n`;
+  return `${code}\n${runner}`;
+}
+
 export function buildJudgeSource(language: JudgeLanguage, code: string, input: string, functionName: string, parameters: Parameter[]) {
   if (!identifier.test(functionName) || !parameters.every((item) => identifier.test(item.name))) return { sourceCode: code, stdin: input };
   const values = assignments(input);
   if (parameters.some((item) => !values.has(item.name))) return { sourceCode: code, stdin: input };
-  return { sourceCode: language === "Java" ? javaHarness(code, functionName, parameters, values) : cppHarness(code, functionName, parameters, values), stdin: "" };
+  const sourceCode = language === "Java"
+    ? javaHarness(code, functionName, parameters, values)
+    : language === "C++"
+      ? cppHarness(code, functionName, parameters, values)
+      : javascriptHarness(code, functionName, parameters, values);
+  return { sourceCode, stdin: "" };
 }

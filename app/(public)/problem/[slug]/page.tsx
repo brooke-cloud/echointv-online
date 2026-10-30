@@ -84,6 +84,7 @@ export default async function ProblemDetailPage({ params }: Props) {
     solutionPython: "solutionPython" in problem ? problem.solutionPython || undefined : undefined,
     solutionJava: "solutionJava" in problem ? problem.solutionJava || undefined : undefined,
     solutionCpp: "solutionCpp" in problem ? problem.solutionCpp || undefined : undefined,
+    solutionJavascript: "solutionJavascript" in problem ? (problem as { solutionJavascript?: string | null }).solutionJavascript || undefined : undefined,
     aiInterviewFocus: "aiInterviewFocus" in problem ? problem.aiInterviewFocus || undefined : undefined,
     aiKeyConcepts: "aiKeyConcepts" in problem ? problem.aiKeyConcepts || undefined : undefined,
     aiCommonMistakes: "aiCommonMistakes" in problem ? problem.aiCommonMistakes || undefined : undefined,

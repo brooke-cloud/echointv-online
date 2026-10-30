@@ -11,6 +11,10 @@ async function main() {
   assert.equal(java.success, true, java.output);
   assert.match(java.output, /42/);
 
+  const javascript = await executeWithJudge0("JavaScript", "console.log(42);", "");
+  assert.equal(javascript.success, true, javascript.output);
+  assert.match(javascript.output, /42/);
+
   const input = "nums = [1, 2, 3]\nk = 2";
   const parameters = [{ name: "nums", type: "int[]" }, { name: "k", type: "int" }];
   const cppHarness = buildJudgeSource("C++", "#include <bits/stdc++.h>\nusing namespace std;\nauto solve(vector<int>& nums, int k) { return nums[k]; }", input, "solve", parameters);
@@ -22,7 +26,12 @@ async function main() {
   const javaResult = await executeWithJudge0("Java", javaHarness.sourceCode, javaHarness.stdin);
   assert.equal(javaResult.success, true, javaResult.output);
   assert.match(javaResult.output, /3/);
-  console.log("Judge0 C++ and Java smoke tests passed");
+
+  const javascriptHarness = buildJudgeSource("JavaScript", "function solve(nums, k) { return nums[k]; }", input, "solve", parameters);
+  const javascriptResult = await executeWithJudge0("JavaScript", javascriptHarness.sourceCode, javascriptHarness.stdin);
+  assert.equal(javascriptResult.success, true, javascriptResult.output);
+  assert.match(javascriptResult.output, /3/);
+  console.log("Judge0 C++, Java, and JavaScript smoke tests passed");
 }
 
 main().catch((error) => { console.error(error); process.exitCode = 1; });

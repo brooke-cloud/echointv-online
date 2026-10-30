@@ -25,7 +25,7 @@ export type InterviewImportPayload = {
     whyWorks: string;
     edgeCases: string;
   };
-  solution: { python: string; java: string; cpp: string };
+  solution: { python: string; java: string; cpp: string; javascript: string };
   complexity: { time: string; space: string };
   aiAnalysis: {
     interviewIntent: string;
@@ -42,7 +42,7 @@ export type ImportQuestion = {
   category: string; topics: string[]; description: string; examples: ImportExample[];
   functionName: string; functionParameters: string; returnDescription: string; constraints: string[];
   approach: string; approachHowToThink: string; approachObservations: string; approachSteps: string;
-  solution: string; solutionLanguage: string; solutionPython: string; solutionJava: string; solutionCpp: string;
+  solution: string; solutionLanguage: string; solutionPython: string; solutionJava: string; solutionCpp: string; solutionJavascript: string;
   timeComplexity: string; spaceComplexity: string; aiInterviewFocus: string; aiKeyConcepts: string;
   aiCommonMistakes: string; aiFollowUpQuestions: string; aiBetterStrategy: string;
 };
@@ -93,6 +93,7 @@ export function normalizeInterviewImportPayload(value: unknown): InterviewImport
   const pythonSolution = stringValue(solution.python) || stringValue(input.solutionPython) || (solutionLanguage.startsWith('python') ? legacySolution : '');
   const javaSolution = stringValue(solution.java) || stringValue(input.solutionJava) || (solutionLanguage === 'java' ? legacySolution : '');
   const cppSolution = stringValue(solution.cpp) || stringValue(input.solutionCpp) || (['cpp', 'c++'].includes(solutionLanguage) ? legacySolution : '');
+  const javascriptSolution = stringValue(solution.javascript) || stringValue(input.solutionJavascript) || (['javascript', 'js'].includes(solutionLanguage) ? legacySolution : '');
 
   return {
     title: stringValue(input.title),
@@ -116,6 +117,7 @@ export function normalizeInterviewImportPayload(value: unknown): InterviewImport
       python: alignSolutionFunctionName(pythonSolution, normalizedFunctionDescription.functionName, 'Python 3'),
       java: alignSolutionFunctionName(javaSolution, normalizedFunctionDescription.functionName, 'Java'),
       cpp: alignSolutionFunctionName(cppSolution, normalizedFunctionDescription.functionName, 'C++'),
+      javascript: alignSolutionFunctionName(javascriptSolution, normalizedFunctionDescription.functionName, 'JavaScript'),
     },
     complexity: {
       time: stringValue(complexity.time) || stringValue(input.timeComplexity),
@@ -155,7 +157,7 @@ export function validateInterviewImportPayload(payload: InterviewImportPayload) 
 
 export function toLegacyImportQuestion(value: InterviewImportPayload): ImportQuestion {
   const payload = normalizeInterviewImportPayload(value);
-  const primaryLanguage = payload.solution.python ? 'python' : payload.solution.java ? 'java' : payload.solution.cpp ? 'cpp' : 'python';
+  const primaryLanguage = payload.solution.python ? 'python' : payload.solution.java ? 'java' : payload.solution.cpp ? 'cpp' : payload.solution.javascript ? 'javascript' : 'python';
   const primarySolution = payload.solution[primaryLanguage as keyof typeof payload.solution] || '';
   return normalizeImportQuestion({
     title: payload.title, company: payload.company, role: payload.role, difficulty: payload.difficulty, stage: payload.stage,
@@ -165,7 +167,7 @@ export function toLegacyImportQuestion(value: InterviewImportPayload): ImportQue
     returnDescription: payload.functionDescription.returnDescription, constraints: payload.constraints,
     approach: payload.approach.coreIdea, approachHowToThink: payload.approach.coreIdea, approachObservations: payload.approach.whyWorks,
     approachSteps: payload.approach.algorithmSteps, solution: primarySolution, solutionLanguage: primaryLanguage,
-    solutionPython: payload.solution.python, solutionJava: payload.solution.java, solutionCpp: payload.solution.cpp,
+    solutionPython: payload.solution.python, solutionJava: payload.solution.java, solutionCpp: payload.solution.cpp, solutionJavascript: payload.solution.javascript,
     timeComplexity: payload.complexity.time, spaceComplexity: payload.complexity.space,
     aiInterviewFocus: payload.aiAnalysis.interviewIntent, aiKeyConcepts: payload.aiAnalysis.keyConcepts,
     aiCommonMistakes: payload.aiAnalysis.commonMistakes, aiFollowUpQuestions: payload.aiAnalysis.followUpQuestions,
@@ -179,7 +181,7 @@ export function normalizeImportQuestion(value: unknown): ImportQuestion {
     title: stringValue(input.title), company: stringValue(input.company), role: stringValue(input.role), difficulty: stringValue(input.difficulty), stage: stringValue(input.stage), category: stringValue(input.category), topics: stringArray(input.topics), description: stringValue(input.description), examples: normalizeExamples(input.examples),
     functionName: stringValue(input.functionName), functionParameters: stringValue(input.functionParameters), returnDescription: stringValue(input.returnDescription), constraints: stringArray(input.constraints),
     approach: stringValue(input.approach), approachHowToThink: stringValue(input.approachHowToThink), approachObservations: stringValue(input.approachObservations), approachSteps: stringValue(input.approachSteps),
-    solution: stringValue(input.solution), solutionLanguage: stringValue(input.solutionLanguage) || 'python', solutionPython: stringValue(input.solutionPython), solutionJava: stringValue(input.solutionJava), solutionCpp: stringValue(input.solutionCpp),
+    solution: stringValue(input.solution), solutionLanguage: stringValue(input.solutionLanguage) || 'python', solutionPython: stringValue(input.solutionPython), solutionJava: stringValue(input.solutionJava), solutionCpp: stringValue(input.solutionCpp), solutionJavascript: stringValue(input.solutionJavascript),
     timeComplexity: stringValue(input.timeComplexity), spaceComplexity: stringValue(input.spaceComplexity), aiInterviewFocus: stringValue(input.aiInterviewFocus), aiKeyConcepts: stringValue(input.aiKeyConcepts), aiCommonMistakes: stringValue(input.aiCommonMistakes), aiFollowUpQuestions: stringValue(input.aiFollowUpQuestions), aiBetterStrategy: stringValue(input.aiBetterStrategy),
   };
 }
@@ -190,7 +192,7 @@ export function validateImportQuestion(question: ImportQuestion) {
   const required: Array<[string, string]> = [
     ['Title', question.title], ['Company', question.company], ['Role', question.role], ['Difficulty', question.difficulty], ['Stage', question.stage], ['Category', question.category], ['Problem Description', question.description],
     ['Function Description.Function Name', question.functionName], ['Function Description.Parameters', question.functionParameters], ['Function Description.Return Description', question.returnDescription], ['Approach', question.approach || question.approachSteps],
-    ['Solution', question.solution || question.solutionPython || question.solutionJava || question.solutionCpp], ['Complexity.Time Complexity', question.timeComplexity], ['Complexity.Space Complexity', question.spaceComplexity],
+    ['Solution', question.solution || question.solutionPython || question.solutionJava || question.solutionCpp || question.solutionJavascript], ['Complexity.Time Complexity', question.timeComplexity], ['Complexity.Space Complexity', question.spaceComplexity],
     ['AI Analysis', question.aiInterviewFocus || question.aiKeyConcepts || question.aiCommonMistakes || question.aiFollowUpQuestions || question.aiBetterStrategy],
   ];
   for (const [name, field] of required) if (!field) missing.push(name);

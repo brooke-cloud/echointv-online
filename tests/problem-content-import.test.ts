@@ -537,11 +537,28 @@ public:
     int maxDistance(vector<vector<int>>& grid) { return 0; }
 };
 \`\`\``, "maxDistance"],
+  [`# JavaScript Solution
+\`\`\`javascript
+const maxDistance = (grid) => {
+  return 0;
+};
+\`\`\``, "maxDistance"],
 ] as const) {
   const inferredFunction = parseProblemImportTextWithDiagnostics(source);
   assert.equal(inferredFunction.payload.functionDescription.functionName, expectedName);
   assert.equal(inferredFunction.diagnostics.recognizedFields.includes("Function Name"), true);
 }
+
+const javascriptSolution = parseProblemImportText(`## Solutions
+### JavaScript
+\`\`\`js
+function twoSum(nums, target) {
+  return [];
+}
+\`\`\``);
+assert.equal(javascriptSolution.solution.javascript.includes("function twoSum"), true);
+assert.equal(javascriptSolution.solution.python, "");
+assert.equal(javascriptSolution.functionDescription.functionName, "twoSum");
 
 const plainAiAnalysisBoundary = parseProblemImportText(`Complexity
 

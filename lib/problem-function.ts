@@ -1,7 +1,8 @@
 export type ProblemFunctionParameter = { name: string; type: string; description: string };
 export type ProblemFunctionDescription = { functionName: string; parameters: ProblemFunctionParameter[]; returnDescription: string };
-export type PracticeLanguage = "Python 3" | "Java" | "C++";
-type AvailableSolutions = { solution?: string | null; solutionLanguage?: string | null; solutionPython?: string | null; solutionJava?: string | null; solutionCpp?: string | null };
+export type PracticeLanguage = "Python 3" | "Java" | "C++" | "JavaScript";
+export type ReferenceSolutionLanguage = PracticeLanguage;
+type AvailableSolutions = { solution?: string | null; solutionLanguage?: string | null; solutionPython?: string | null; solutionJava?: string | null; solutionCpp?: string | null; solutionJavascript?: string | null };
 
 const clean = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const safeIdentifier = (value: string, fallback: string) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(value) ? value : fallback;
@@ -35,18 +36,21 @@ export function functionNames(value: string) {
     .filter(Boolean);
 }
 
-export function preferredSolutionLanguage(solutions: AvailableSolutions): PracticeLanguage {
+export function preferredSolutionLanguage(solutions: AvailableSolutions): ReferenceSolutionLanguage {
   if (clean(solutions.solutionPython)) return "Python 3";
   if (clean(solutions.solutionJava)) return "Java";
   if (clean(solutions.solutionCpp)) return "C++";
+  if (clean(solutions.solutionJavascript)) return "JavaScript";
 
   const legacyCode = clean(solutions.solution);
   if (/\bdef\s+[A-Za-z_]\w*\s*\(|\bimport\s+heapq\b|\bfrom\s+\w+\s+import\b/.test(legacyCode)) return "Python 3";
   if (/#include\s*[<"]|\bvector\s*<|\busing\s+namespace\s+std\b|\bpublic\s*:/.test(legacyCode)) return "C++";
   if (/\bimport\s+java\.|\bPriorityQueue\s*<|\bpublic\s+class\s+/.test(legacyCode)) return "Java";
+  if (/\b(?:const|let|var)\s+\w+\s*=|\bfunction\s+\w+\s*\(|=>/.test(legacyCode)) return "JavaScript";
 
   const configured = clean(solutions.solutionLanguage).toLowerCase();
   if (/c\+\+|cpp|cxx/.test(configured)) return "C++";
+  if (/javascript|\bjs\b/.test(configured)) return "JavaScript";
   if (/java/.test(configured)) return "Java";
   return "Python 3";
 }
@@ -115,12 +119,13 @@ function cppType(type: string) {
   return "auto";
 }
 
-export function createPracticeTemplates(description: ProblemFunctionDescription, references?: { python?: string | null; java?: string | null; cpp?: string | null }): Record<PracticeLanguage, string> {
+export function createPracticeTemplates(description: ProblemFunctionDescription, references?: { python?: string | null; java?: string | null; cpp?: string | null; javascript?: string | null }): Record<PracticeLanguage, string> {
   if (hasNoFixedFunctionName(description.functionName)) {
     return {
       "Python 3": "# Write your solution here\n",
       Java: "// Write your solution here\n",
       "C++": "// Write your solution here\n",
+      JavaScript: "// Write your solution here\n",
     };
   }
 
@@ -139,18 +144,25 @@ export function createPracticeTemplates(description: ProblemFunctionDescription,
   const pythonTemplate = namesToRender.map((name) => `def ${name}(${signatureParameters(references?.python, name, pythonParameters, "Python 3")}):\n    # Write your solution here\n    pass`).join("\n\n");
   const javaMethods = namesToRender.map((name) => `    public Object ${name}(${signatureParameters(references?.java, name, javaParameters, "Java")}) {\n        // Write your solution here\n        return null;\n    }`).join("\n\n");
   const cppFunctions = namesToRender.map((name) => `auto ${name}(${signatureParameters(references?.cpp, name, cppParameters, "C++")}) {\n    // Write your solution here\n}`).join("\n\n");
+  const javascriptFunctions = namesToRender.map((name) => `function ${name}(${signatureParameters(references?.javascript, name, pythonParameters, "JavaScript")}) {\n    // Write your solution here\n}`).join("\n\n");
   return {
     "Python 3": `${pythonTemplate}\n`,
     Java: `class Solution {\n${javaMethods}\n}\n`,
     "C++": `#include <bits/stdc++.h>\nusing namespace std;\n\n${cppFunctions}\n`,
+    JavaScript: `${javascriptFunctions}\n`,
   };
 }
 
-export function alignSolutionFunctionName(code: string, functionName: string, language: PracticeLanguage) {
+export function alignSolutionFunctionName(code: string, functionName: string, language: ReferenceSolutionLanguage) {
   const entryFunctionName = primaryFunctionName(functionName);
   if (!code.trim() || entryFunctionName === "solve") return code;
   const targetPattern = new RegExp(`\\b${entryFunctionName}\\s*\\(`);
   if (targetPattern.test(code)) return code;
   if (language === "Python 3") return code.replace(/\bdef\s+solve\s*\(/, `def ${entryFunctionName}(`);
+  if (language === "JavaScript") {
+    return code
+      .replace(/\bfunction\s+solve\s*\(/, `function ${entryFunctionName}(`)
+      .replace(/\b(const|let|var)\s+solve\b/, `$1 ${entryFunctionName}`);
+  }
   return code.replace(/\bsolve\s*\(/, `${entryFunctionName}(`);
 }
