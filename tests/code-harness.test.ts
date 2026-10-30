@@ -25,4 +25,9 @@ assert.equal(javascript.stdin, "");
 const standaloneJavascript = buildJudgeSource("JavaScript", "console.log('Start');", "raw input", "", []);
 assert.equal(standaloneJavascript.sourceCode, "console.log('Start');");
 assert.equal(standaloneJavascript.stdin, "raw input");
+
+const sql = buildJudgeSource("SQL", "SELECT name FROM users ORDER BY id;", "CREATE TABLE users (id INTEGER, name TEXT);\nINSERT INTO users VALUES (1, 'Ada');", "", []);
+assert.match(sql.sourceCode, /^CREATE TABLE users/);
+assert.match(sql.sourceCode, /SELECT name FROM users ORDER BY id;/);
+assert.equal(sql.stdin, "");
 console.log("code harness tests passed");

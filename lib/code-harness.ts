@@ -67,6 +67,10 @@ function javascriptHarness(code: string, functionName: string, parameters: Param
 }
 
 export function buildJudgeSource(language: JudgeLanguage, code: string, input: string, functionName: string, parameters: Parameter[]) {
+  if (language === "SQL") {
+    const setup = /\b(?:CREATE\s+TABLE|INSERT\s+INTO|PRAGMA|WITH)\b/i.test(input) ? `${input.trim()}\n` : "";
+    return { sourceCode: `${setup}${code}`.trim(), stdin: setup ? "" : input };
+  }
   if (!identifier.test(functionName) || !parameters.every((item) => identifier.test(item.name))) return { sourceCode: code, stdin: input };
   const values = assignments(input);
   if (parameters.some((item) => !values.has(item.name))) return { sourceCode: code, stdin: input };

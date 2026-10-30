@@ -10,7 +10,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json() as { language?: string; code?: string; input?: string; functionName?: string; parameters?: { name?: string; type?: string }[] };
-    if (body.language !== "Java" && body.language !== "C++" && body.language !== "JavaScript") return NextResponse.json({ error: "Only Java, C++, and JavaScript are supported by this endpoint." }, { status: 400 });
+    if (body.language !== "Java" && body.language !== "C++" && body.language !== "JavaScript" && body.language !== "SQL") return NextResponse.json({ error: "Only Java, C++, JavaScript, and SQL are supported by this endpoint." }, { status: 400 });
     if (!body.code?.trim()) return NextResponse.json({ error: "Source code is required." }, { status: 400 });
     if (body.code.length > 50_000 || (body.input?.length || 0) > 20_000) return NextResponse.json({ error: "Code or input is too large." }, { status: 413 });
     const parameters = Array.isArray(body.parameters) ? body.parameters.map((item) => ({ name: String(item.name || ""), type: String(item.type || "") })) : [];

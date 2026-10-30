@@ -1,10 +1,11 @@
-export type JudgeLanguage = "Java" | "C++" | "JavaScript";
+export type JudgeLanguage = "Java" | "C++" | "JavaScript" | "SQL";
 
 const DEFAULT_ENDPOINT = "https://ce.judge0.com";
 const DEFAULT_LANGUAGE_IDS: Record<JudgeLanguage, number> = {
   Java: 62,
   "C++": 54,
   JavaScript: 63,
+  SQL: 82,
 };
 
 type Judge0Result = {
@@ -25,7 +26,9 @@ function languageId(language: JudgeLanguage) {
     ? process.env.JUDGE0_JAVA_LANGUAGE_ID
     : language === "C++"
       ? process.env.JUDGE0_CPP_LANGUAGE_ID
-      : process.env.JUDGE0_JAVASCRIPT_LANGUAGE_ID;
+      : language === "JavaScript"
+        ? process.env.JUDGE0_JAVASCRIPT_LANGUAGE_ID
+        : process.env.JUDGE0_SQL_LANGUAGE_ID;
   const parsed = Number(configured);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_LANGUAGE_IDS[language];
 }

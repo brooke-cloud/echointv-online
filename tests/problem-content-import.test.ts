@@ -560,6 +560,15 @@ assert.equal(javascriptSolution.solution.javascript.includes("function twoSum"),
 assert.equal(javascriptSolution.solution.python, "");
 assert.equal(javascriptSolution.functionDescription.functionName, "twoSum");
 
+const sqlSolution = parseProblemImportText(`## SQL Solution
+\`\`\`sql
+SELECT department_id, COUNT(*) AS employee_count
+FROM employees
+GROUP BY department_id;
+\`\`\``);
+assert.match(sqlSolution.solution.sql, /SELECT department_id/);
+assert.equal(sqlSolution.solution.python, "");
+
 const plainAiAnalysisBoundary = parseProblemImportText(`Complexity
 
 Time Complexity

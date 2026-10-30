@@ -1,8 +1,8 @@
 export type ProblemFunctionParameter = { name: string; type: string; description: string };
 export type ProblemFunctionDescription = { functionName: string; parameters: ProblemFunctionParameter[]; returnDescription: string };
-export type PracticeLanguage = "Python 3" | "Java" | "C++" | "JavaScript";
+export type PracticeLanguage = "Python 3" | "Java" | "C++" | "JavaScript" | "SQL";
 export type ReferenceSolutionLanguage = PracticeLanguage;
-type AvailableSolutions = { solution?: string | null; solutionLanguage?: string | null; solutionPython?: string | null; solutionJava?: string | null; solutionCpp?: string | null; solutionJavascript?: string | null };
+type AvailableSolutions = { solution?: string | null; solutionLanguage?: string | null; solutionPython?: string | null; solutionJava?: string | null; solutionCpp?: string | null; solutionJavascript?: string | null; solutionSql?: string | null };
 
 const clean = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const safeIdentifier = (value: string, fallback: string) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(value) ? value : fallback;
@@ -41,16 +41,19 @@ export function preferredSolutionLanguage(solutions: AvailableSolutions): Refere
   if (clean(solutions.solutionJava)) return "Java";
   if (clean(solutions.solutionCpp)) return "C++";
   if (clean(solutions.solutionJavascript)) return "JavaScript";
+  if (clean(solutions.solutionSql)) return "SQL";
 
   const legacyCode = clean(solutions.solution);
   if (/\bdef\s+[A-Za-z_]\w*\s*\(|\bimport\s+heapq\b|\bfrom\s+\w+\s+import\b/.test(legacyCode)) return "Python 3";
   if (/#include\s*[<"]|\bvector\s*<|\busing\s+namespace\s+std\b|\bpublic\s*:/.test(legacyCode)) return "C++";
   if (/\bimport\s+java\.|\bPriorityQueue\s*<|\bpublic\s+class\s+/.test(legacyCode)) return "Java";
   if (/\b(?:const|let|var)\s+\w+\s*=|\bfunction\s+\w+\s*\(|=>/.test(legacyCode)) return "JavaScript";
+  if (/\b(?:SELECT|INSERT\s+INTO|CREATE\s+TABLE|UPDATE|DELETE\s+FROM|WITH)\b/i.test(legacyCode)) return "SQL";
 
   const configured = clean(solutions.solutionLanguage).toLowerCase();
   if (/c\+\+|cpp|cxx/.test(configured)) return "C++";
   if (/javascript|\bjs\b/.test(configured)) return "JavaScript";
+  if (/sql|sqlite/.test(configured)) return "SQL";
   if (/java/.test(configured)) return "Java";
   return "Python 3";
 }
@@ -119,13 +122,14 @@ function cppType(type: string) {
   return "auto";
 }
 
-export function createPracticeTemplates(description: ProblemFunctionDescription, references?: { python?: string | null; java?: string | null; cpp?: string | null; javascript?: string | null }): Record<PracticeLanguage, string> {
+export function createPracticeTemplates(description: ProblemFunctionDescription, references?: { python?: string | null; java?: string | null; cpp?: string | null; javascript?: string | null; sql?: string | null }): Record<PracticeLanguage, string> {
   if (hasNoFixedFunctionName(description.functionName)) {
     return {
       "Python 3": "# Write your solution here\n",
       Java: "// Write your solution here\n",
       "C++": "// Write your solution here\n",
       JavaScript: "// Write your solution here\n",
+      SQL: "-- Write your SQL query here\n",
     };
   }
 
@@ -150,12 +154,14 @@ export function createPracticeTemplates(description: ProblemFunctionDescription,
     Java: `class Solution {\n${javaMethods}\n}\n`,
     "C++": `#include <bits/stdc++.h>\nusing namespace std;\n\n${cppFunctions}\n`,
     JavaScript: `${javascriptFunctions}\n`,
+    SQL: "-- Write your SQL query here\n",
   };
 }
 
 export function alignSolutionFunctionName(code: string, functionName: string, language: ReferenceSolutionLanguage) {
   const entryFunctionName = primaryFunctionName(functionName);
   if (!code.trim() || entryFunctionName === "solve") return code;
+  if (language === "SQL") return code;
   const targetPattern = new RegExp(`\\b${entryFunctionName}\\s*\\(`);
   if (targetPattern.test(code)) return code;
   if (language === "Python 3") return code.replace(/\bdef\s+solve\s*\(/, `def ${entryFunctionName}(`);

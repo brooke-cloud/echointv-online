@@ -21,6 +21,7 @@ assert.ok(templates["Python 3"].startsWith("def kSmallestPairs(nums1, nums2, k):
 assert.match(templates.Java, /kSmallestPairs\(int\[\] nums1, int\[\] nums2, int k\)/);
 assert.match(templates["C++"], /kSmallestPairs\(vector<int>& nums1, vector<int>& nums2, int k\)/);
 assert.match(templates.JavaScript, /function kSmallestPairs\(nums1, nums2, k\)/);
+assert.equal(templates.SQL, "-- Write your SQL query here\n");
 assert.doesNotMatch(templates.Java, /\bsolve\s*\(/);
 assert.doesNotMatch(templates["C++"], /\bsolve\s*\(/);
 assert.match(templates["C++"], /^#include <bits\/stdc\+\+\.h>\nusing namespace std;/);
@@ -34,10 +35,12 @@ assert.equal(noFixedFunctionTemplates["Python 3"], "# Write your solution here\n
 assert.equal(noFixedFunctionTemplates.Java, "// Write your solution here\n");
 assert.equal(noFixedFunctionTemplates["C++"], "// Write your solution here\n");
 assert.equal(noFixedFunctionTemplates.JavaScript, "// Write your solution here\n");
+assert.equal(noFixedFunctionTemplates.SQL, "-- Write your SQL query here\n");
 assert.doesNotMatch(noFixedFunctionTemplates["Python 3"], /def\s+solve|\bpass\b/);
 
 assert.equal(preferredSolutionLanguage({ solutionCpp: "#include <vector>" }), "C++");
 assert.equal(preferredSolutionLanguage({ solutionJavascript: "const solve = () => {};" }), "JavaScript");
+assert.equal(preferredSolutionLanguage({ solutionSql: "SELECT * FROM users;" }), "SQL");
 assert.equal(preferredSolutionLanguage({ solution: "const solve = (nums) => nums.length;", solutionLanguage: "javascript" }), "JavaScript");
 assert.match(alignSolutionFunctionName("const solve = (nums) => nums.length;", "maxDistance", "JavaScript"), /const maxDistance\s*=/);
 assert.match(alignSolutionFunctionName("function solve(nums) { return nums.length; }", "maxDistance", "JavaScript"), /function maxDistance\s*\(/);

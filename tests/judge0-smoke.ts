@@ -15,6 +15,10 @@ async function main() {
   assert.equal(javascript.success, true, javascript.output);
   assert.match(javascript.output, /42/);
 
+  const sql = await executeWithJudge0("SQL", "CREATE TABLE numbers (value INTEGER);\nINSERT INTO numbers VALUES (42);\nSELECT value FROM numbers;", "");
+  assert.equal(sql.success, true, sql.output);
+  assert.match(sql.output, /42/);
+
   const input = "nums = [1, 2, 3]\nk = 2";
   const parameters = [{ name: "nums", type: "int[]" }, { name: "k", type: "int" }];
   const cppHarness = buildJudgeSource("C++", "#include <bits/stdc++.h>\nusing namespace std;\nauto solve(vector<int>& nums, int k) { return nums[k]; }", input, "solve", parameters);
@@ -31,7 +35,7 @@ async function main() {
   const javascriptResult = await executeWithJudge0("JavaScript", javascriptHarness.sourceCode, javascriptHarness.stdin);
   assert.equal(javascriptResult.success, true, javascriptResult.output);
   assert.match(javascriptResult.output, /3/);
-  console.log("Judge0 C++, Java, and JavaScript smoke tests passed");
+  console.log("Judge0 C++, Java, JavaScript, and SQL smoke tests passed");
 }
 
 main().catch((error) => { console.error(error); process.exitCode = 1; });

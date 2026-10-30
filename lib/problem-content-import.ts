@@ -14,7 +14,7 @@ type Section =
   | "title" | "company" | "role" | "difficulty" | "stage" | "category" | "topics"
   | "problemDescription" | "examples" | "functionName" | "parameters" | "returnDescription"
   | "constraints" | "coreIdea" | "algorithmSteps" | "whyWorks" | "edgeCases"
-  | "solution" | "python" | "java" | "cpp" | "javascript" | "time" | "space"
+  | "solution" | "python" | "java" | "cpp" | "javascript" | "sql" | "time" | "space"
   | "interviewIntent" | "keyConcepts" | "commonMistakes" | "followUpQuestions" | "betterStrategy";
 
 const aliases: Record<Section, string[]> = {
@@ -40,6 +40,7 @@ const aliases: Record<Section, string[]> = {
   java: ["java", "java solution", "java code", "java 代码", "java 解法"],
   cpp: ["c++", "cpp", "cxx", "c++ solution", "cpp solution", "c++ code", "cpp code", "c++ 代码", "cpp 代码"],
   javascript: ["javascript", "js", "javascript solution", "js solution", "javascript code", "js code", "javascript 代码", "js 代码"],
+  sql: ["sql", "sqlite", "sql solution", "sqlite solution", "sql code", "sqlite code", "sql 代码", "sql 解法"],
   time: ["time complexity", "时间复杂度"],
   space: ["space complexity", "空间复杂度"],
   interviewIntent: ["interview intent", "interview focus", "what interviewer is testing", "面试意图", "考察意图", "面试重点"],
@@ -52,7 +53,7 @@ const aliases: Record<Section, string[]> = {
 const cleanLabel = (value: string) => value.toLowerCase().replace(/^\s*#{1,6}\s*/, "").replace(/[*_`]/g, "").replace(/^\d+[.)、]\s*/, "").replace(/[：:]\s*$/, "").replace(/\s+/g, " ").trim();
 const splitList = (value: string) => value.split(/\r?\n|[,，;；]/).map((item) => item.replace(/^\s*(?:[-*•]|\d+[.)、])\s*/, "").trim()).filter(Boolean);
 const splitLines = (value: string) => value.split(/\r?\n/).map((item) => item.replace(/^\s*(?:[-*•]\s+|\d+[.)、]\s*)/, "").trim()).filter(Boolean);
-type SolutionLanguage = "python" | "java" | "cpp" | "javascript";
+type SolutionLanguage = "python" | "java" | "cpp" | "javascript" | "sql";
 
 const solutionLanguageFor = (value: string): SolutionLanguage | undefined => {
   const label = cleanLabel(value).replace(/^solutions?\s+/, "").replace(/\s+(?:solution|code)$/, "");
@@ -60,12 +61,13 @@ const solutionLanguageFor = (value: string): SolutionLanguage | undefined => {
   if (/^java$/.test(label)) return "java";
   if (/^(?:c\+\+|cpp|cxx)$/.test(label)) return "cpp";
   if (/^(?:javascript|js|node|node\.js)$/.test(label)) return "javascript";
+  if (/^(?:sql|sqlite)$/.test(label)) return "sql";
   return undefined;
 };
 
 const standaloneSolutionLanguageMarker = (value: string) => {
   const trimmed = value.trim();
-  if (!/^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:Python(?:\s*3)?|Py|Java|C\+\+|CPP|CXX|JavaScript|JS|Node(?:\.js)?)(?:\s+(?:Solution|Code))?(?:\*\*)?\s*:?\s*$/i.test(trimmed)) return undefined;
+  if (!/^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:Python(?:\s*3)?|Py|Java|C\+\+|CPP|CXX|JavaScript|JS|Node(?:\.js)?|SQL|SQLite)(?:\s+(?:Solution|Code))?(?:\*\*)?\s*:?\s*$/i.test(trimmed)) return undefined;
   return solutionLanguageFor(trimmed.replace(/^\s*#{1,6}\s*/, "").replace(/^\s*\*\*(.*?)\*\*\s*$/, "$1").replace(/:\s*$/, ""));
 };
 
@@ -74,6 +76,7 @@ const detectSolutionLanguage = (code: string, fallback: SolutionLanguage = "pyth
   if (/\bimport\s+java\.|\bpackage\s+[\w.]+\s*;|\bpublic\s+(?:final\s+)?class\b|\bSystem\.out\.|\bList\s*</.test(code)) return "java";
   if (/\bfrom\s+\S+\s+import\b|\bdef\s+\w+\s*\(|\bself\b/.test(code)) return "python";
   if (/\b(?:const|let|var)\s+[A-Za-z_$]\w*\s*=|\bfunction\s+[A-Za-z_$]\w*\s*\(|=>|\bmodule\.exports\b/.test(code)) return "javascript";
+  if (/\b(?:SELECT|INSERT\s+INTO|CREATE\s+TABLE|UPDATE|DELETE\s+FROM|WITH)\b/i.test(code)) return "sql";
   return fallback;
 };
 
@@ -265,7 +268,7 @@ function parseParameters(text: string) {
   });
 }
 
-const inferFunctionNameFromSolutions = (solutions: { python: string; java: string; cpp: string; javascript: string }) => {
+const inferFunctionNameFromSolutions = (solutions: { python: string; java: string; cpp: string; javascript: string; sql: string }) => {
   const pythonNames = [...solutions.python.matchAll(/^\s*(?:async\s+)?def\s+([A-Za-z_]\w*)\s*\(/gm)].map((match) => match[1]);
   const pythonName = pythonNames.find((name) => !["__init__", "main"].includes(name));
   if (pythonName) return pythonName;
@@ -300,7 +303,7 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
   const buckets = new Map<Section, string[]>();
   const add = (section: Section, value: string) => { if (value.trim()) buckets.set(section, [...(buckets.get(section) || []), value.trim()]); };
   const addCodeBlock = (value: string, hintedLanguage: string, section?: Section) => {
-    const fallback = solutionLanguageFor(hintedLanguage) || (section === "java" ? "java" : section === "cpp" ? "cpp" : section === "javascript" ? "javascript" : section === "python" ? "python" : "python");
+    const fallback = solutionLanguageFor(hintedLanguage) || (section === "java" ? "java" : section === "cpp" ? "cpp" : section === "javascript" ? "javascript" : section === "sql" ? "sql" : section === "python" ? "python" : "python");
     for (const part of splitMultilanguageCodeBlock(value, fallback)) add(part.language, part.code);
   };
   let current: Section | undefined;
@@ -338,8 +341,8 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
         code = [];
         continue;
       }
-      if (current && !["solution", "python", "java", "cpp", "javascript"].includes(current)) { contentFence = true; fenceMarker = marker; continue; }
-      codeLanguage = languageHint.toLowerCase() || (current === "java" ? "java" : current === "cpp" ? "cpp" : current === "javascript" ? "javascript" : current === "python" ? "python" : "auto");
+      if (current && !["solution", "python", "java", "cpp", "javascript", "sql"].includes(current)) { contentFence = true; fenceMarker = marker; continue; }
+      codeLanguage = languageHint.toLowerCase() || (current === "java" ? "java" : current === "cpp" ? "cpp" : current === "javascript" ? "javascript" : current === "sql" ? "sql" : current === "python" ? "python" : "auto");
       fenceMarker = marker;
       code = [];
       continue;
@@ -370,7 +373,7 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     return match?.[1]?.trim() || "";
   }).find((line) => line && !sectionFor(line)) || "";
   const genericSolution = get("solution");
-  const solutionBuckets = { python: get("python"), java: get("java"), cpp: get("cpp"), javascript: get("javascript") };
+  const solutionBuckets = { python: get("python"), java: get("java"), cpp: get("cpp"), javascript: get("javascript"), sql: get("sql") };
   if (genericSolution) {
     const language = detectSolutionLanguage(genericSolution);
     if (!solutionBuckets[language]) solutionBuckets[language] = genericSolution;
@@ -384,7 +387,7 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     functionDescription: { functionName: importedFunctionName, parameters: parseParameters(get("parameters")), returnDescription: get("returnDescription") },
     constraints: splitLines(get("constraints")),
     approach: { coreIdea: get("coreIdea"), algorithmSteps: get("algorithmSteps"), whyWorks: get("whyWorks"), edgeCases: get("edgeCases") },
-    solution: { python: normalizeImportedCode(solutionBuckets.python, "python"), java: normalizeImportedCode(solutionBuckets.java, "java"), cpp: normalizeImportedCode(solutionBuckets.cpp, "cpp"), javascript: normalizeImportedCode(solutionBuckets.javascript, "javascript") },
+    solution: { python: normalizeImportedCode(solutionBuckets.python, "python"), java: normalizeImportedCode(solutionBuckets.java, "java"), cpp: normalizeImportedCode(solutionBuckets.cpp, "cpp"), javascript: normalizeImportedCode(solutionBuckets.javascript, "javascript"), sql: normalizeImportedCode(solutionBuckets.sql, "sql") },
     complexity: { time: get("time"), space: get("space") },
     aiAnalysis: { interviewIntent: get("interviewIntent"), keyConcepts: get("keyConcepts"), commonMistakes: get("commonMistakes"), followUpQuestions: get("followUpQuestions"), betterStrategy: get("betterStrategy") },
   });
@@ -430,6 +433,7 @@ export function parseProblemImportTextWithDiagnostics(raw: string): { payload: I
   add("Java Solution", payload.solution.java);
   add("C++ Solution", payload.solution.cpp);
   add("JavaScript Solution", payload.solution.javascript);
+  add("SQL Solution", payload.solution.sql);
   add("Time Complexity", payload.complexity.time);
   add("Space Complexity", payload.complexity.space);
   add("Interview Intent", payload.aiAnalysis.interviewIntent);

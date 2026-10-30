@@ -44,6 +44,7 @@ model Problem {
   solutionJava         String?
   solutionCpp          String?
   solutionJavascript   String?
+  solutionSql          String?
   aiInterviewFocus     String?
   aiKeyConcepts        String?
   aiCommonMistakes     String?
