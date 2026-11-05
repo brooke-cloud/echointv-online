@@ -45,6 +45,31 @@ export function preserveAsciiTreeBlocks(markdown: string) {
   return output.join("\n");
 }
 
+export function normalizeMarkdownTables(markdown: string) {
+  const lines = markdown.split("\n");
+  const output: string[] = [];
+  let fence: string | undefined;
+  const isDelimiter = (line: string) => {
+    const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+    const cells = trimmed.split("|").map((cell) => cell.trim());
+    return cells.length >= 2 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+  };
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const fenceMatch = line.match(/^\s*(`{3,}|~{3,})/);
+    if (fenceMatch) {
+      fence = fence ? undefined : fenceMatch[1][0];
+      output.push(line);
+      continue;
+    }
+    const startsTable = !fence && line.includes("|") && isDelimiter(lines[index + 1] || "");
+    if (startsTable && output.length && output[output.length - 1].trim()) output.push("");
+    output.push(line);
+  }
+  return output.join("\n");
+}
+
 function normalizeMathDelimiters(markdown: string) {
   let inFence = false;
   return markdown
@@ -64,7 +89,7 @@ function normalizeMathDelimiters(markdown: string) {
 
 export default function MarkdownRenderer({ content }: Props) {
   if (!content) return null;
-  const normalizedContent = normalizeMathDelimiters(preserveAsciiTreeBlocks(content));
+  const normalizedContent = normalizeMathDelimiters(preserveAsciiTreeBlocks(normalizeMarkdownTables(content)));
 
   return (
     <div className="markdown-renderer text-gray-800">
