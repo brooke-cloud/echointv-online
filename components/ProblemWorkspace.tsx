@@ -6,28 +6,13 @@ import Link from "next/link";
 import { Bookmark, BrainCircuit, Check, ChevronLeft, Copy, Expand, Lightbulb, GripVertical, Minimize2, Moon, Play, RotateCcw, Save, Sun, TerminalSquare } from "lucide-react";
 import { alignSolutionFunctionName, createPracticeTemplates, preferredSolutionLanguage, primaryFunctionName, type PracticeLanguage, type ProblemFunctionDescription, type ReferenceSolutionLanguage } from "@/lib/problem-function";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import { splitComplexityContent } from "@/lib/complexity-content";
 
 type Props = { problem: { slug: string; title: string; company: string; difficulty: string; category: string; description: string; example: string; approach: string; solution: string; solutionLanguage?: string; topics: string[]; timeComplexity: string; spaceComplexity: string; examples?: { input: string; output: string; explanation: string }[]; functionDescription: ProblemFunctionDescription; constraints?: string[]; approachHowToThink?: string; approachObservations?: string; approachSteps?: string; solutionPython?: string; solutionJava?: string; solutionCpp?: string; solutionJavascript?: string; solutionSql?: string; aiInterviewFocus?: string; aiKeyConcepts?: string; aiCommonMistakes?: string; aiFollowUpQuestions?: string; aiBetterStrategy?: string }; canAccess: boolean; problemId?: number; initialSolved?: boolean; initialFavorited?: boolean };
 const examples = [{ name: "Example 1", input: "A = [[1, 2], [4, 5]]\nB = [[1, 4], [3, 6]]", output: "[[1, 6], [3, 6], [4, 5]]", explanation: "Merge observations in chronological order." }, { name: "Example 2", input: "A = [[1, 1]]\nB = [[1, 2]]", output: "[[1, 3]]", explanation: "Combine values that share the same timestamp." }, { name: "Empty Input", input: "A = []\nB = [[3, 7]]", output: "[[3, 7]]", explanation: "Return the non-empty series unchanged." }];
 const editorLanguage = (language: string) => language === "Python 3" ? "python" : language === "C++" ? "cpp" : language === "JavaScript" ? "javascript" : language === "SQL" ? "sql" : "java";
 const difficultyStyle = (value: string) => value.toLowerCase() === "easy" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : value.toLowerCase() === "hard" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-amber-200 bg-amber-50 text-amber-700";
 function Sample({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) { return <pre className={`overflow-x-auto rounded-xl border p-4 font-mono text-[15px] font-semibold leading-7 ${dark ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`}><code>{children}</code></pre>; }
-
-function splitComplexity(value: string, fallbackValue: string, fallbackExplanation: string) {
-  const normalized = (value || "").replace(/`/g, "").replace(/\s*#{1,6}\s*\d+[.)]?\s*AI Analysis[\s\S]*$/i, "").trim();
-  if (!normalized) return { value: fallbackValue, explanation: fallbackExplanation };
-  if (/^O\s*\(/i.test(normalized)) {
-    const start = normalized.indexOf("(");
-    let depth = 0;
-    for (let index = start; index < normalized.length; index += 1) {
-      if (normalized[index] === "(") depth += 1;
-      if (normalized[index] === ")") depth -= 1;
-      if (depth === 0) return { value: normalized.slice(0, index + 1).trim(), explanation: normalized.slice(index + 1).trim() || fallbackExplanation };
-    }
-  }
-  const [first, ...rest] = normalized.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  return { value: first || fallbackValue, explanation: rest.join("\n") || fallbackExplanation };
-}
 
 function runPython(code: string, input: string, functionName: string, parameters: string[]) {
   return new Promise<{ output: string; success: boolean }>((resolve, reject) => {
@@ -85,8 +70,8 @@ export default function ProblemWorkspace({ problem, canAccess, problemId, initia
   const visibleParameters = problem.functionDescription.parameters.filter((parameter) => parameter.name.trim() || parameter.type.trim() || parameter.description.trim());
   const categoryKey = problem.category.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   const hidesFunctionContract = categoryKey === "system design";
-  const timeComplexity = splitComplexity(problem.timeComplexity, "O(n + m)", "Complexity explanation has not been added yet.");
-  const spaceComplexity = splitComplexity(problem.spaceComplexity, "O(1) auxiliary", "Complexity explanation has not been added yet.");
+  const timeComplexity = splitComplexityContent(problem.timeComplexity, "O(n + m)", "Complexity explanation has not been added yet.");
+  const spaceComplexity = splitComplexityContent(problem.spaceComplexity, "O(1) auxiliary", "Complexity explanation has not been added yet.");
   useEffect(() => setNotes(window.localStorage.getItem(notesKey) || ""), [notesKey]);
   useEffect(() => {
     const htmlOverflow = document.documentElement.style.overflow;
