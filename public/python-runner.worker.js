@@ -10,7 +10,7 @@ async function getRuntime() {
 }
 
 self.onmessage = async (event) => {
-  const { code, input, functionName, parameters } = event.data || {};
+  const { code, input, functionName, parameters, autoInvoke = true } = event.data || {};
   const stdout = [];
   const stderr = [];
   try {
@@ -20,7 +20,7 @@ self.onmessage = async (event) => {
     const validFunction = typeof functionName === "string" && /^[A-Za-z_]\w*$/.test(functionName);
     const validParameters = Array.isArray(parameters) && parameters.every((item) => typeof item === "string" && /^[A-Za-z_]\w*$/.test(item));
     const inputLines = typeof input === "string" ? input.split(/\r?\n/).filter((line) => line.trim()) : [];
-    const harness = validFunction && validParameters
+    const harness = autoInvoke && validFunction && validParameters
       ? `\n\n# EchoINTV practice runner\n${inputLines.join("\n")}\n__echointv_result = ${functionName}(${parameters.join(", ")})\nif __echointv_result is not None:\n    print(__echointv_result)\n`
       : "";
     await pyodide.runPythonAsync(`${code}${harness}`);

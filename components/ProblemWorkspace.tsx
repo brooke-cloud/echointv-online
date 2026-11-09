@@ -7,6 +7,7 @@ import { Bookmark, BrainCircuit, Check, ChevronLeft, Copy, Expand, Lightbulb, Gr
 import { alignSolutionFunctionName, createPracticeTemplates, preferredSolutionLanguage, primaryFunctionName, type PracticeLanguage, type ProblemFunctionDescription, type ReferenceSolutionLanguage } from "@/lib/problem-function";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { splitComplexityContent } from "@/lib/complexity-content";
+import { shouldAutoInvokePython } from "@/lib/python-execution";
 
 type Props = { problem: { slug: string; title: string; company: string; difficulty: string; category: string; description: string; example: string; approach: string; solution: string; solutionLanguage?: string; topics: string[]; timeComplexity: string; spaceComplexity: string; examples?: { input: string; output: string; explanation: string }[]; functionDescription: ProblemFunctionDescription; constraints?: string[]; approachHowToThink?: string; approachObservations?: string; approachSteps?: string; solutionPython?: string; solutionJava?: string; solutionCpp?: string; solutionJavascript?: string; solutionSql?: string; aiInterviewFocus?: string; aiKeyConcepts?: string; aiCommonMistakes?: string; aiFollowUpQuestions?: string; aiBetterStrategy?: string }; canAccess: boolean; problemId?: number; initialSolved?: boolean; initialFavorited?: boolean };
 const examples = [{ name: "Example 1", input: "A = [[1, 2], [4, 5]]\nB = [[1, 4], [3, 6]]", output: "[[1, 6], [3, 6], [4, 5]]", explanation: "Merge observations in chronological order." }, { name: "Example 2", input: "A = [[1, 1]]\nB = [[1, 2]]", output: "[[1, 3]]", explanation: "Combine values that share the same timestamp." }, { name: "Empty Input", input: "A = []\nB = [[3, 7]]", output: "[[3, 7]]", explanation: "Return the non-empty series unchanged." }];
@@ -20,7 +21,7 @@ function runPython(code: string, input: string, functionName: string, parameters
     const timeout = window.setTimeout(() => { worker.terminate(); reject(new Error("Execution timed out after 10 seconds.")); }, 10_000);
     worker.onmessage = (event) => { window.clearTimeout(timeout); worker.terminate(); resolve(event.data); };
     worker.onerror = () => { window.clearTimeout(timeout); worker.terminate(); reject(new Error("Python runtime failed to load.")); };
-    worker.postMessage({ code, input, functionName, parameters });
+    worker.postMessage({ code, input, functionName, parameters, autoInvoke: shouldAutoInvokePython(code) });
   });
 }
 
