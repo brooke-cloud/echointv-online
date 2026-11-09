@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react";
 import Editor from "@monaco-editor/react";
 import Link from "next/link";
-import { AlertCircle, ChevronLeft, FileCode2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, FileCode2, Plus, RotateCcw, Sparkles, Trash2, X } from "lucide-react";
 import { createProblem } from "../actions";
-import { buildProblemImportFeedback, parseProblemImportTextWithDiagnostics } from "@/lib/problem-content-import";
+import { buildProblemImportFeedback, MAX_PROBLEM_IMPORT_CHARACTERS, parseProblemImportTextWithDiagnostics } from "@/lib/problem-content-import";
+import { buildProblemImportPreview, summarizeImportCandidate, type ImportCandidateKey, type ProblemImportPreview } from "@/lib/problem-import-preview";
 
 type Example = { input: string; output: string; explanation: string };
 type Parameter = { name: string; type: string; description: string };
@@ -19,45 +20,70 @@ const control = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py
 
 export default function NewProblemPage() {
   const [draft, setDraft] = useState<Draft>(emptyDraft); const [submitting, setSubmitting] = useState(false); const [error, setError] = useState(""); const [importText, setImportText] = useState(""); const [importMessage, setImportMessage] = useState(""); const [importTone, setImportTone] = useState<"idle" | "success" | "warning" | "error">("idle");
+  const [pendingImport, setPendingImport] = useState<ProblemImportPreview | null>(null);
+  const [selectedImportKeys, setSelectedImportKeys] = useState<Set<ImportCandidateKey>>(new Set());
+  const [undoDraft, setUndoDraft] = useState<Draft | null>(null);
   const update = (field: string, value: string) => setDraft((current) => ({ ...current, [field]: value }));
   const updateExample = (index: number, field: keyof Example, value: string) => setDraft((current) => ({ ...current, examples: current.examples.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) }));
   const updateParameter = (index: number, field: keyof Parameter, value: string) => setDraft((current) => ({ ...current, parameters: current.parameters.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) }));
   const importProblemContent = () => {
     if (!importText.trim()) { setImportMessage("Paste problem content before importing."); setImportTone("error"); return; }
+    if (importText.length > MAX_PROBLEM_IMPORT_CHARACTERS) { setImportMessage(`Content is too large to analyze safely. The limit is ${MAX_PROBLEM_IMPORT_CHARACTERS.toLocaleString()} characters.`); setImportTone("error"); setPendingImport(null); return; }
     const { payload: parsed, diagnostics } = parseProblemImportTextWithDiagnostics(importText);
-    const observations = [parsed.approach.whyWorks, parsed.approach.edgeCases && `Edge Cases:\n${parsed.approach.edgeCases}`].filter(Boolean).join("\n\n");
-    const difficulty = /easy/i.test(parsed.difficulty) ? "Easy" : /hard/i.test(parsed.difficulty) ? "Hard" : parsed.difficulty ? "Medium" : "";
-    const stage = /oa|online assessment|线上测评|笔试/i.test(parsed.stage) ? "OA" : parsed.stage ? "VO" : "";
-    setDraft((current) => ({
-      ...current,
-      title: parsed.title || current.title, company: parsed.company || current.company, role: parsed.role || current.role,
-      difficulty: difficulty || current.difficulty, stage: stage || current.stage,
-      category: parsed.category[0] || current.category, topics: parsed.topics.length ? parsed.topics.join(", ") : current.topics,
-      description: parsed.problemDescription || current.description, examples: parsed.examples.length ? parsed.examples : current.examples,
-      functionName: parsed.functionDescription.functionName || current.functionName, parameters: parsed.functionDescription.parameters.length ? parsed.functionDescription.parameters : current.parameters,
-      returnDescription: parsed.functionDescription.returnDescription || current.returnDescription,
-      constraintsText: parsed.constraints.length ? parsed.constraints.join("\n") : current.constraintsText,
-      approachHowToThink: parsed.approach.coreIdea || current.approachHowToThink,
-      approachObservations: observations || current.approachObservations,
-      approachSteps: parsed.approach.algorithmSteps || current.approachSteps,
-      solutionPython: parsed.solution.python || current.solutionPython, solutionJava: parsed.solution.java || current.solutionJava, solutionCpp: parsed.solution.cpp || current.solutionCpp, solutionJavascript: parsed.solution.javascript || current.solutionJavascript, solutionSql: parsed.solution.sql || current.solutionSql,
-      solutionLanguage: parsed.solution.python ? "Python" : parsed.solution.java ? "Java" : parsed.solution.cpp ? "C++" : parsed.solution.javascript ? "JavaScript" : parsed.solution.sql ? "SQL" : current.solutionLanguage,
-      timeComplexity: parsed.complexity.time || current.timeComplexity, spaceComplexity: parsed.complexity.space || current.spaceComplexity,
-      aiInterviewFocus: parsed.aiAnalysis.interviewIntent || current.aiInterviewFocus,
-      aiKeyConcepts: parsed.aiAnalysis.keyConcepts || current.aiKeyConcepts,
-      aiCommonMistakes: parsed.aiAnalysis.commonMistakes || current.aiCommonMistakes,
-      aiFollowUpQuestions: parsed.aiAnalysis.followUpQuestions || current.aiFollowUpQuestions,
-      aiBetterStrategy: parsed.aiAnalysis.betterStrategy || current.aiBetterStrategy,
-    }));
+    const preview = buildProblemImportPreview(importText, parsed);
+    const warnings = [...diagnostics.warnings, ...preview.warnings];
+    const nextPreview = { ...preview, warnings: [...new Set(warnings)] };
+    setPendingImport(nextPreview);
+    setSelectedImportKeys(new Set(nextPreview.candidates.filter((candidate) => candidate.confidence === "high" && !candidate.warning).map((candidate) => candidate.key)));
     const feedback = buildProblemImportFeedback(diagnostics);
-    setImportTone(feedback.tone);
-    setImportMessage(feedback.message);
+    setImportTone(nextPreview.candidates.length ? (nextPreview.warnings.length ? "warning" : "success") : feedback.tone);
+    setImportMessage(nextPreview.candidates.length ? `Analysis complete. ${nextPreview.candidates.length} fields are ready for review; the form has not been changed.` : feedback.message);
+  };
+  const applyPendingImport = () => {
+    if (!pendingImport) return;
+    const selected = pendingImport.candidates.filter((candidate) => selectedImportKeys.has(candidate.key));
+    if (!selected.length) { setImportTone("error"); setImportMessage("Select at least one field to apply."); return; }
+    setUndoDraft(draft);
+    setDraft((current) => {
+      const next = { ...current };
+      for (const candidate of selected) next[candidate.key] = candidate.value;
+      const preferredLanguage = selected.find((candidate) => candidate.key === "solutionPython") ? "Python"
+        : selected.find((candidate) => candidate.key === "solutionJava") ? "Java"
+        : selected.find((candidate) => candidate.key === "solutionCpp") ? "C++"
+        : selected.find((candidate) => candidate.key === "solutionJavascript") ? "JavaScript"
+        : selected.find((candidate) => candidate.key === "solutionSql") ? "SQL" : current.solutionLanguage;
+      next.solutionLanguage = preferredLanguage;
+      return next;
+    });
+    setPendingImport(null);
+    setImportTone("success");
+    setImportMessage(`${selected.length} reviewed fields were applied. You can undo this import.`);
+  };
+  const undoImport = () => {
+    if (!undoDraft) return;
+    setDraft(undoDraft);
+    setUndoDraft(null);
+    setImportTone("success");
+    setImportMessage("The last import was undone.");
   };
   const activeSolution = solutionFieldMap[draft.solutionLanguage] || "solutionPython";
   const legacyExample = useMemo(() => draft.examples.filter((item) => item.input || item.output || item.explanation).map((item, index) => `Example ${index + 1}\nInput:\n${item.input}\n\nOutput:\n${item.output}\n\nExplanation:\n${item.explanation}`).join("\n\n"), [draft.examples]);
   const submit = async (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); setError(""); setSubmitting(true); try { const formData = new FormData(event.currentTarget); await createProblem(formData); } catch (cause: unknown) { if (cause instanceof Error && cause.message.includes("NEXT_REDIRECT")) return; setError(cause instanceof Error ? cause.message : "Unable to create problem."); } finally { setSubmitting(false); } };
   return <main className="min-h-screen bg-slate-50 py-8"><div className="mx-auto max-w-6xl px-4 sm:px-6"><Link href="/admin/problems" className="inline-flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-blue-600"><ChevronLeft className="h-4 w-4"/>Back to Problems</Link><div className="mt-5"><h1 className="text-3xl font-black tracking-tight text-slate-950">Add Interview Problem</h1><p className="mt-1 text-sm text-slate-500">Create the exact learning experience users see in the Practice Workspace.</p></div>
-    <section className="mt-7 rounded-2xl border border-blue-200 bg-blue-50/60 p-5 shadow-sm sm:p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-blue-600"/><h2 className="text-lg font-black text-slate-950">One-click Content Import</h2></div><p className="mt-1 text-sm text-slate-600">Paste JSON, Markdown, or labelled text. English and Chinese section keywords are supported.</p></div><button type="button" onClick={importProblemContent} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700">Parse and fill form</button></div><textarea value={importText} onChange={(event) => { setImportText(event.target.value); setImportMessage(""); setImportTone("idle"); }} rows={10} className="mt-4 w-full rounded-xl border border-blue-200 bg-white p-4 font-mono text-sm leading-6 text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder={"Title: K Smallest Pairs\nCompany: Google\nDifficulty: Medium\nProblem Description:\n...\n\nExample:\nInput: ...\nOutput: ..."}/><div className="mt-3 flex flex-wrap items-center justify-between gap-3"><p role={importTone === "error" ? "alert" : "status"} className={`text-sm font-semibold ${importTone === "success" ? "text-emerald-700" : importTone === "warning" ? "text-amber-700" : importTone === "error" ? "text-rose-700" : "text-slate-600"}`}>{importMessage || "Existing form values are preserved when a section is missing."}</p>{importText && <button type="button" onClick={() => { setImportText(""); setImportMessage(""); setImportTone("idle"); }} className="text-sm font-bold text-slate-500 hover:text-slate-900">Clear pasted content</button>}</div></section>
+    <section className="mt-7 rounded-2xl border border-blue-200 bg-blue-50/60 p-5 shadow-sm sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div><div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-blue-600"/><h2 className="text-lg font-black text-slate-950">One-click Content Import</h2></div><p className="mt-1 text-sm text-slate-600">Paste JSON, Markdown, or labelled text. Content is analyzed before any form value changes.</p></div>
+        <div className="flex flex-wrap gap-2"><button type="button" onClick={importProblemContent} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700">Analyze content</button>{undoDraft && <button type="button" onClick={undoImport} className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50"><RotateCcw className="h-4 w-4"/>Undo import</button>}</div>
+      </div>
+      <textarea value={importText} onChange={(event) => { setImportText(event.target.value); setImportMessage(""); setImportTone("idle"); setPendingImport(null); }} rows={10} className="mt-4 w-full rounded-xl border border-blue-200 bg-white p-4 font-mono text-sm leading-6 text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder={"Title: K Smallest Pairs\nCompany: Google\nDifficulty: Medium\nProblem Description:\n...\n\nExample:\nInput: ...\nOutput: ..."}/>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><p role={importTone === "error" ? "alert" : "status"} className={`text-sm font-semibold ${importTone === "success" ? "text-emerald-700" : importTone === "warning" ? "text-amber-700" : importTone === "error" ? "text-rose-700" : "text-slate-600"}`}>{importMessage || "Analyze first, then choose which recognized fields to apply."}</p>{importText && <button type="button" onClick={() => { setImportText(""); setImportMessage(""); setImportTone("idle"); setPendingImport(null); }} className="text-sm font-bold text-slate-500 hover:text-slate-900">Clear pasted content</button>}</div>
+      {pendingImport && <div className="mt-4 overflow-hidden rounded-xl border border-blue-200 bg-white" aria-label="Import preview">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3"><div><h3 className="text-sm font-black text-slate-950">Review before applying</h3><p className="mt-0.5 text-xs text-slate-500">High-confidence fields are selected. Inferred fields require manual confirmation.</p><div className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold"><span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">{pendingImport.candidates.filter((candidate) => candidate.confidence === "high").length} safe</span><span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">{pendingImport.issues.filter((issue) => issue.severity === "warning").length} warnings</span><span className="rounded-full bg-rose-50 px-2 py-1 text-rose-700">{pendingImport.issues.filter((issue) => issue.severity === "error").length} errors</span></div></div><button type="button" onClick={() => setPendingImport(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close import preview"><X className="h-4 w-4"/></button></div>
+        {pendingImport.warnings.length > 0 && <div className="border-b border-amber-200 bg-amber-50 px-4 py-3"><p className="text-xs font-black uppercase tracking-wide text-amber-800">Needs attention</p><ul className="mt-1.5 space-y-1 text-sm text-amber-900">{pendingImport.warnings.map((warning) => <li key={warning}>• {warning}</li>)}</ul></div>}
+        <div className="max-h-80 divide-y divide-slate-100 overflow-y-auto">{pendingImport.candidates.map((candidate) => { const selected = selectedImportKeys.has(candidate.key); return <label key={candidate.key} className="flex cursor-pointer items-start gap-3 px-4 py-3 hover:bg-slate-50"><input type="checkbox" checked={selected} onChange={(event) => setSelectedImportKeys((current) => { const next = new Set(current); if (event.target.checked) next.add(candidate.key); else next.delete(candidate.key); return next; })} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"/><span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><span className="text-sm font-bold text-slate-900">{candidate.label}</span><span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${candidate.confidence === "high" ? "bg-emerald-50 text-emerald-700" : candidate.confidence === "medium" ? "bg-amber-50 text-amber-700" : "bg-rose-50 text-rose-700"}`}>{candidate.confidence}</span></span><span className="mt-0.5 block truncate text-xs text-slate-600">{summarizeImportCandidate(candidate.value)}</span><span className="mt-1 block text-[11px] text-slate-400">{candidate.source}{candidate.sourceLine ? ` · line ${candidate.sourceLine}` : ""}</span>{candidate.warning && <span className="mt-1 block text-xs font-semibold text-rose-700">{candidate.warning}</span>}</span></label>; })}</div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3"><p className="text-xs font-semibold text-slate-500">{selectedImportKeys.size} of {pendingImport.candidates.length} fields selected</p><button type="button" onClick={applyPendingImport} disabled={!selectedImportKeys.size} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"><CheckCircle2 className="h-4 w-4"/>Apply selected fields</button></div>
+      </div>}
+    </section>
     <form onSubmit={submit} className="mt-5 space-y-5">{error && <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-bold text-rose-700"><AlertCircle className="h-4 w-4"/>{error}</div>}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="text-lg font-black text-slate-950">1. Basic Information</h2><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><Field label="Title "><input required name="title" value={draft.title} onChange={(e) => update("title", e.target.value)} className={control}/></Field><Field label="Company *"><input required name="company" value={draft.company} onChange={(e) => update("company", e.target.value)} className={control}/></Field><Field label="Role"><input name="role" value={draft.role} onChange={(e) => update("role", e.target.value)} className={control}/></Field><Field label="Difficulty"><select name="difficulty" value={draft.difficulty} onChange={(e) => update("difficulty", e.target.value)} className={control}><option value="">Select difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select></Field><Field label="Interview Type"><select name="stage" value={draft.stage} onChange={(e) => update("stage", e.target.value)} className={control}><option value="">Select interview type</option><option value="VO">Coding Interview</option><option value="OA">Online Assessment</option></select></Field><Field label="Category *"><input required name="category" value={draft.category} onChange={(e) => update("category", e.target.value)} className={control}/></Field></div><Field label="Topics" hint="Separate with commas"><input name="topics" value={draft.topics} onChange={(e) => update("topics", e.target.value)} placeholder="Algorithms, Hash Map, Two Pointers" className={control}/></Field></section>
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="text-lg font-black text-slate-950">2. Problem Description</h2><p className="mt-1 text-xs text-slate-500">Markdown is supported.</p><textarea required name="description" value={draft.description} onChange={(e) => update("description", e.target.value)} rows={8} className={`${control} font-mono`} placeholder="Write the interview problem as candidates should read it."/></section>

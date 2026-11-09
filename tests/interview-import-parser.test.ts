@@ -87,4 +87,15 @@ assert.equal(minimalValidation.valid, true);
 assert.ok(minimalValidation.missingFields.includes('Examples'));
 assert.ok(minimalValidation.missingFields.includes('Solution'));
 
+const modernLanguages = parseNotionInterviewQuestion({
+  pageId: 'modern-languages', title: 'Modern Languages', company: 'Example', date: '',
+  blocks: [
+    block('heading_2', 'Problem Description'), block('paragraph', 'Return the requested records.'),
+    block('heading_2', 'JavaScript Solution'), block('code', 'function findRecords(rows) { return rows; }', 'javascript'),
+    block('heading_2', 'SQL Solution'), block('code', 'SELECT * FROM records;', 'sql'),
+  ],
+});
+assert.match(modernLanguages.solution.javascript, /function findRecords/);
+assert.match(modernLanguages.solution.sql, /SELECT \* FROM records/);
+
 console.log('Interview import parser fixture passed.');

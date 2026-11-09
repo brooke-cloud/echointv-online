@@ -596,4 +596,51 @@ assert.equal(plainAiAnalysisBoundary.complexity.space.includes("AI Analysis"), f
 assert.equal(plainAiAnalysisBoundary.aiAnalysis.interviewIntent, "This problem evaluates sweep-line reasoning and tie-breaking.");
 assert.equal(plainAiAnalysisBoundary.aiAnalysis.keyConcepts, "Sweep Line Algorithm\nEvent Sorting");
 
+const unrelatedMarkdownHeading = parseProblemImportTextWithDiagnostics(`# Meeting Notes
+This is unrelated prose.`);
+assert.equal(unrelatedMarkdownHeading.payload.title, "");
+assert.deepEqual(unrelatedMarkdownHeading.diagnostics.recognizedFields, []);
+
+const unstructuredParameters = parseProblemImportTextWithDiagnostics(`Title: Process Values
+Company: Example
+Problem Description: Process the input values.
+Parameters:
+The function receives some values and should process them.`);
+assert.deepEqual(unstructuredParameters.payload.functionDescription.parameters, []);
+assert.equal(unstructuredParameters.diagnostics.warnings.some((warning) => warning.includes("no valid structured parameter rows")), true);
+
+const packagePrivateJava = parseProblemImportTextWithDiagnostics(`Title: Count Values
+Company: Example
+Problem Description: Return the array length.
+Solution:
+\`\`\`
+class Solution { int solve(int[] nums) { return nums.length; } }
+\`\`\``);
+assert.equal(packagePrivateJava.payload.solution.python, "");
+assert.match(packagePrivateJava.payload.solution.java, /int\[\] nums/);
+
+const unknownGenericCode = parseProblemImportTextWithDiagnostics(`Title: Unknown Code
+Company: Example
+Problem Description: Demonstrate an unknown language.
+Solution:
+\`\`\`
+BEGIN CUSTOM PROGRAM
+RUN TASK
+END CUSTOM PROGRAM
+\`\`\``);
+assert.equal(Object.values(unknownGenericCode.payload.solution).some(Boolean), false);
+assert.equal(unknownGenericCode.diagnostics.warnings.some((warning) => warning.includes("could not be determined safely")), true);
+
+const malformedJson = parseProblemImportTextWithDiagnostics(`{"title":"Broken",`);
+assert.equal(malformedJson.diagnostics.warnings.some((warning) => warning.startsWith("JSON parsing failed")), true);
+
+const mismatchedFunctionCode = parseProblemImportText(`Function Name: maxDistance
+Python Solution:
+\`\`\`python
+def solve(grid):
+    return 0
+\`\`\``);
+assert.match(mismatchedFunctionCode.solution.python, /def solve\(/);
+assert.doesNotMatch(mismatchedFunctionCode.solution.python, /def maxDistance\(/);
+
 console.log("problem-content-import tests passed");

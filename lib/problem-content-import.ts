@@ -1,4 +1,5 @@
 import { normalizeInterviewImportPayload, validateInterviewImportPayload, type InterviewImportPayload } from "@/lib/interview-import-schema";
+import { classifyImportedCode, type ImportedSolutionLanguage } from "@/lib/problem-import-validation";
 
 export type ProblemImportDiagnostics = {
   recognizedFields: string[];
@@ -9,6 +10,7 @@ export type ProblemImportFeedback = {
   tone: "success" | "warning" | "error";
   message: string;
 };
+export const MAX_PROBLEM_IMPORT_CHARACTERS = 500_000;
 
 type Section =
   | "title" | "company" | "role" | "difficulty" | "stage" | "category" | "topics"
@@ -53,7 +55,7 @@ const aliases: Record<Section, string[]> = {
 const cleanLabel = (value: string) => value.toLowerCase().replace(/^\s*#{1,6}\s*/, "").replace(/[*_`]/g, "").replace(/^\d+[.)、]\s*/, "").replace(/[：:]\s*$/, "").replace(/\s+/g, " ").trim();
 const splitList = (value: string) => value.split(/\r?\n|[,，;；]/).map((item) => item.replace(/^\s*(?:[-*•]|\d+[.)、])\s*/, "").trim()).filter(Boolean);
 const splitLines = (value: string) => value.split(/\r?\n/).map((item) => item.replace(/^\s*(?:[-*•]\s+|\d+[.)、]\s*)/, "").trim()).filter(Boolean);
-type SolutionLanguage = "python" | "java" | "cpp" | "javascript" | "sql";
+type SolutionLanguage = ImportedSolutionLanguage;
 
 const solutionLanguageFor = (value: string): SolutionLanguage | undefined => {
   const label = cleanLabel(value).replace(/^solutions?\s+/, "").replace(/\s+(?:solution|code)$/, "");
@@ -71,23 +73,19 @@ const standaloneSolutionLanguageMarker = (value: string) => {
   return solutionLanguageFor(trimmed.replace(/^\s*#{1,6}\s*/, "").replace(/^\s*\*\*(.*?)\*\*\s*$/, "$1").replace(/:\s*$/, ""));
 };
 
-const detectSolutionLanguage = (code: string, fallback: SolutionLanguage = "python"): SolutionLanguage => {
-  if (/#include\s*[<"]|\busing\s+namespace\s+std\b|\bstd::|\bvector\s*</.test(code)) return "cpp";
-  if (/\bimport\s+java\.|\bpackage\s+[\w.]+\s*;|\bpublic\s+(?:final\s+)?class\b|\bSystem\.out\.|\bList\s*</.test(code)) return "java";
-  if (/\bfrom\s+\S+\s+import\b|\bdef\s+\w+\s*\(|\bself\b/.test(code)) return "python";
-  if (/\b(?:const|let|var)\s+[A-Za-z_$]\w*\s*=|\bfunction\s+[A-Za-z_$]\w*\s*\(|=>|\bmodule\.exports\b/.test(code)) return "javascript";
-  if (/\b(?:SELECT|INSERT\s+INTO|CREATE\s+TABLE|UPDATE|DELETE\s+FROM|WITH)\b/i.test(code)) return "sql";
-  return fallback;
+const detectSolutionLanguage = (code: string, fallback?: SolutionLanguage): SolutionLanguage | undefined => {
+  return classifyImportedCode(code, fallback).language;
 };
 
-function splitMultilanguageCodeBlock(value: string, fallback: SolutionLanguage) {
+function splitMultilanguageCodeBlock(value: string, fallback?: SolutionLanguage) {
   const sections: Array<{ language: SolutionLanguage; code: string }> = [];
   let language: SolutionLanguage | undefined;
   let lines: string[] = [];
   let foundLanguageMarker = false;
   const save = () => {
     const code = lines.join("\n").trim();
-    if (code) sections.push({ language: language || detectSolutionLanguage(code, fallback), code });
+    const detected = language || detectSolutionLanguage(code, fallback);
+    if (code && detected) sections.push({ language: detected, code });
     lines = [];
   };
 
@@ -102,7 +100,9 @@ function splitMultilanguageCodeBlock(value: string, fallback: SolutionLanguage) 
     lines.push(originalLine);
   }
   save();
-  return foundLanguageMarker ? sections : [{ language: detectSolutionLanguage(value, fallback), code: value.trim() }];
+  if (foundLanguageMarker) return sections;
+  const detected = detectSolutionLanguage(value, fallback);
+  return detected ? [{ language: detected, code: value.trim() }] : [];
 }
 
 const normalizeImportedCode = (value: string, language: SolutionLanguage) => {
@@ -258,13 +258,13 @@ function parseParameters(text: string) {
   if (parameter?.name) structured.push(parameter);
   if (structured.length) return structured;
 
-  return splitLines(text).map((line) => {
+  return splitLines(text).flatMap((line) => {
     const pipe = line.split("|").map((item) => item.trim());
-    if (pipe.length >= 3) return { name: pipe[0], type: pipe[1], description: pipe.slice(2).join(" | ") };
+    if (pipe.length >= 2 && /^[A-Za-z_$][\w$.-]*$/.test(pipe[0])) return [{ name: pipe[0], type: pipe[1], description: pipe.slice(2).join(" | ") }];
     const match = line.match(/^([^:：-]+)\s*[:：]\s*(.*?)(?:\s+-\s+|\s+—\s+)(.*)$/);
-    if (match) return { name: match[1].trim(), type: match[2].trim(), description: match[3].trim() };
-    const short = line.match(/^([^:：]+)\s*[:：]\s*(.*)$/);
-    return short ? { name: short[1].trim(), type: short[2].trim(), description: "" } : { name: line, type: "", description: "" };
+    if (match && /^[A-Za-z_$][\w$.-]*$/.test(match[1].trim())) return [{ name: match[1].trim(), type: match[2].trim(), description: match[3].trim() }];
+    const short = line.match(/^([A-Za-z_$][\w$.-]*)\s*[:：]\s*(\S.*)$/);
+    return short ? [{ name: short[1].trim(), type: short[2].trim(), description: "" }] : [];
   });
 }
 
@@ -293,17 +293,17 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
   // ``` / Java / ``` sequence is ambiguous: in normal Markdown those two
   // fences are the previous block's close and the next block's open.
   const source = raw.trim();
-  if (!source) return normalizeInterviewImportPayload({});
+  if (!source) return normalizeInterviewImportPayload({}, { alignFunctionNames: false });
   const fencedJson = source.match(/^\s*(```|~~~)\s*json\s*\r?\n([\s\S]*?)\r?\n\1\s*$/i);
   const jsonSource = fencedJson?.[2]?.trim() || source;
   if (jsonSource.startsWith("{")) {
-    try { return normalizeInterviewImportPayload(JSON.parse(jsonSource)); } catch { /* parse as labelled text */ }
+    try { return normalizeInterviewImportPayload(JSON.parse(jsonSource), { alignFunctionNames: false }); } catch { /* parse as labelled text */ }
   }
 
   const buckets = new Map<Section, string[]>();
   const add = (section: Section, value: string) => { if (value.trim()) buckets.set(section, [...(buckets.get(section) || []), value.trim()]); };
   const addCodeBlock = (value: string, hintedLanguage: string, section?: Section) => {
-    const fallback = solutionLanguageFor(hintedLanguage) || (section === "java" ? "java" : section === "cpp" ? "cpp" : section === "javascript" ? "javascript" : section === "sql" ? "sql" : section === "python" ? "python" : "python");
+    const fallback = solutionLanguageFor(hintedLanguage) || (section === "java" ? "java" : section === "cpp" ? "cpp" : section === "javascript" ? "javascript" : section === "sql" ? "sql" : section === "python" ? "python" : undefined);
     for (const part of splitMultilanguageCodeBlock(value, fallback)) add(part.language, part.code);
   };
   let current: Section | undefined;
@@ -368,15 +368,17 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
   if (codeLanguage && code.length) addCodeBlock(code.join("\n"), codeLanguage, current);
 
   const get = (section: Section) => (buckets.get(section) || []).join("\n").trim();
-  const fallbackTitle = source.split(/\r?\n/).map((line) => {
+  const fallbackTitleCandidate = source.split(/\r?\n/).map((line) => {
     const match = line.match(/^\s*#\s+(.+?)\s*$/);
     return match?.[1]?.trim() || "";
   }).find((line) => line && !sectionFor(line)) || "";
+  const hasProblemSignal = (Array.from(buckets.keys()) as Section[]).some((section) => !["title", "company", "role", "difficulty", "stage", "category", "topics"].includes(section));
+  const fallbackTitle = hasProblemSignal ? fallbackTitleCandidate : "";
   const genericSolution = get("solution");
   const solutionBuckets = { python: get("python"), java: get("java"), cpp: get("cpp"), javascript: get("javascript"), sql: get("sql") };
   if (genericSolution) {
     const language = detectSolutionLanguage(genericSolution);
-    if (!solutionBuckets[language]) solutionBuckets[language] = genericSolution;
+    if (language && !solutionBuckets[language]) solutionBuckets[language] = genericSolution;
   }
   const importedFunctionName = get("functionName") || inferFunctionNameFromSolutions(solutionBuckets);
   const payload = normalizeInterviewImportPayload({
@@ -390,7 +392,16 @@ export function parseProblemImportText(raw: string): InterviewImportPayload {
     solution: { python: normalizeImportedCode(solutionBuckets.python, "python"), java: normalizeImportedCode(solutionBuckets.java, "java"), cpp: normalizeImportedCode(solutionBuckets.cpp, "cpp"), javascript: normalizeImportedCode(solutionBuckets.javascript, "javascript"), sql: normalizeImportedCode(solutionBuckets.sql, "sql") },
     complexity: { time: get("time"), space: get("space") },
     aiAnalysis: { interviewIntent: get("interviewIntent"), keyConcepts: get("keyConcepts"), commonMistakes: get("commonMistakes"), followUpQuestions: get("followUpQuestions"), betterStrategy: get("betterStrategy") },
-  });
+  }, { alignFunctionNames: false });
+  // One-click paste import is review-first: keep the source code unchanged so
+  // function-name conflicts can be shown to the administrator before applying.
+  payload.solution = {
+    python: normalizeImportedCode(solutionBuckets.python, "python"),
+    java: normalizeImportedCode(solutionBuckets.java, "java"),
+    cpp: normalizeImportedCode(solutionBuckets.cpp, "cpp"),
+    javascript: normalizeImportedCode(solutionBuckets.javascript, "javascript"),
+    sql: normalizeImportedCode(solutionBuckets.sql, "sql"),
+  };
   // `solve` remains the runtime fallback elsewhere, but it must not be shown as
   // if it had been recognized from pasted content.
   if (!importedFunctionName) payload.functionDescription.functionName = "";
@@ -443,6 +454,14 @@ export function parseProblemImportTextWithDiagnostics(raw: string): { payload: I
   add("Better Strategy", payload.aiAnalysis.betterStrategy);
 
   const warnings: string[] = [];
+  const trimmedRaw = raw.trim();
+  const fencedJson = trimmedRaw.match(/^\s*(```|~~~)\s*json\s*\r?\n([\s\S]*?)\r?\n\1\s*$/i);
+  const jsonCandidate = fencedJson?.[2]?.trim() || trimmedRaw;
+  if ((fencedJson || jsonCandidate.startsWith("{")) && jsonCandidate) {
+    try { JSON.parse(jsonCandidate); } catch (cause) {
+      warnings.push(`JSON parsing failed${cause instanceof Error ? `: ${cause.message}` : ""}.`);
+    }
+  }
   const fenceState = { "```": false, "~~~": false } as Record<string, boolean>;
   for (const line of raw.split(/\r?\n/)) {
     const marker = line.trim().match(/^(```|~~~)/)?.[1];
@@ -455,6 +474,8 @@ export function parseProblemImportTextWithDiagnostics(raw: string): { payload: I
     if (missing.length) warnings.push(`Example ${index + 1} is missing ${missing.join(", ")}.`);
   });
   if (!recognizedFields.length) warnings.push("No supported section labels or Markdown title were recognized.");
+  if (hasExplicitSection(raw, "parameters") && !payload.functionDescription.parameters.length) warnings.push("A Parameters section was found, but no valid structured parameter rows were detected.");
+  if (hasExplicitSection(raw, "solution") && !Object.values(payload.solution).some(Boolean)) warnings.push("A Solution section was found, but its programming language could not be determined safely.");
 
   const validation = validateInterviewImportPayload(payload);
   const missingFields = [...validation.missingFields];

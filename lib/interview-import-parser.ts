@@ -5,6 +5,7 @@ import {
   type ImportParameter,
   type InterviewImportPayload,
 } from '@/lib/interview-import-schema';
+import { parseProblemImportText } from '@/lib/problem-content-import';
 
 type Section =
   | 'title' | 'company' | 'role' | 'difficulty' | 'stage' | 'category' | 'topics'
@@ -117,6 +118,28 @@ function stripFence(value: string) {
 }
 
 export function parseNotionInterviewQuestion(source: NotionInterviewSource): InterviewImportPayload {
+  const canonicalMarkdown = [
+    source.title && `Title: ${source.title}`,
+    source.company && `Company: ${source.company}`,
+    ...source.blocks.map((block) => {
+      const indent = '  '.repeat(Math.max(0, block.depth || 0));
+      if (block.type === 'code') {
+        const marker = block.text.includes('```') ? '~~~' : '```';
+        return `${marker}${block.language || ''}\n${block.text}\n${marker}`;
+      }
+      if (block.type.startsWith('heading_')) {
+        const level = Number(block.type.slice('heading_'.length)) || 2;
+        return `${'#'.repeat(Math.min(6, Math.max(1, level)))} ${block.text}`;
+      }
+      if (block.type.includes('numbered_list_item')) return `${indent}1. ${block.text}`;
+      if (block.type.includes('list_item')) return `${indent}- ${block.text}`;
+      return `${indent}${block.text}`;
+    }),
+  ].filter(Boolean).join('\n\n');
+  if (canonicalMarkdown.trim()) return parseProblemImportText(canonicalMarkdown);
+
+  /* Legacy implementation retained temporarily below for source compatibility;
+     it is unreachable and can be removed after downstream rollout verification. */
   const buckets = new Map<Section, string[]>();
   const codeBlocks: Array<{ section: Section; language: string; text: string }> = [];
   let current: Section = 'unknown';

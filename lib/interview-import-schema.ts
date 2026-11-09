@@ -75,7 +75,7 @@ function normalizeParameters(value: unknown): ImportParameter[] {
   });
 }
 
-export function normalizeInterviewImportPayload(value: unknown): InterviewImportPayload {
+export function normalizeInterviewImportPayload(value: unknown, options: { alignFunctionNames?: boolean } = {}): InterviewImportPayload {
   const input = objectValue(value);
   const functionDescription = objectValue(input.functionDescription);
   const approach = objectValue(input.approach);
@@ -115,10 +115,10 @@ export function normalizeInterviewImportPayload(value: unknown): InterviewImport
       edgeCases: stringValue(approach.edgeCases),
     },
     solution: {
-      python: alignSolutionFunctionName(pythonSolution, normalizedFunctionDescription.functionName, 'Python 3'),
-      java: alignSolutionFunctionName(javaSolution, normalizedFunctionDescription.functionName, 'Java'),
-      cpp: alignSolutionFunctionName(cppSolution, normalizedFunctionDescription.functionName, 'C++'),
-      javascript: alignSolutionFunctionName(javascriptSolution, normalizedFunctionDescription.functionName, 'JavaScript'),
+      python: options.alignFunctionNames === false ? pythonSolution : alignSolutionFunctionName(pythonSolution, normalizedFunctionDescription.functionName, 'Python 3'),
+      java: options.alignFunctionNames === false ? javaSolution : alignSolutionFunctionName(javaSolution, normalizedFunctionDescription.functionName, 'Java'),
+      cpp: options.alignFunctionNames === false ? cppSolution : alignSolutionFunctionName(cppSolution, normalizedFunctionDescription.functionName, 'C++'),
+      javascript: options.alignFunctionNames === false ? javascriptSolution : alignSolutionFunctionName(javascriptSolution, normalizedFunctionDescription.functionName, 'JavaScript'),
       sql: sqlSolution,
     },
     complexity: {
