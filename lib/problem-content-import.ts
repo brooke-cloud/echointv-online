@@ -190,8 +190,15 @@ function parseMarkdownExamples(text: string) {
   let inExamples = false;
   let example: { input: string; output: string; explanation: string } | undefined;
   let field: "input" | "output" | "explanation" | undefined;
-  const heading = (value: string) => value.trim().replace(/^#{1,6}\s*/, "").replace(/^\*\*\s*(.*?)\s*\*\*$/, "$1").replace(/^\d+[.)]?\s*/, "").replace(/[:\uFF1A]\s*$/, "").trim();
-  const isExampleHeading = (value: string) => /^(?:examples?|\u793a\u4f8b|\u6837\u4f8b)(?:\s*\d+)?$/i.test(heading(value));
+  const heading = (value: string) => {
+    let normalized = value.trim().replace(/^#{1,6}\s*/, "").replace(/^\d+[.)]\s+/, "").trim();
+    // Colons are frequently placed outside Markdown emphasis: **Example 2**:
+    // Remove punctuation before and after unwrapping so both forms normalize.
+    normalized = normalized.replace(/[:\uFF1A]\s*$/, "").trim();
+    normalized = normalized.replace(/^\*\*\s*(.*?)\s*\*\*$/, "$1").trim();
+    return normalized.replace(/[:\uFF1A]\s*$/, "").trim();
+  };
+  const exampleHeading = (value: string) => heading(value).match(/^(?:examples?|samples?|\u793a\u4f8b|\u6837\u4f8b)\s*(?:#\s*|no\.?\s*)?(?:\d+|[\u4e00-\u5341]+)?$/i);
   const save = () => {
     if (example && (example.input || example.output || example.explanation)) examples.push(example);
     example = undefined;
@@ -200,7 +207,7 @@ function parseMarkdownExamples(text: string) {
 
   for (const originalLine of text.split(/\r?\n/)) {
     const trimmed = originalLine.trim();
-    if (isExampleHeading(trimmed)) {
+    if (exampleHeading(trimmed)) {
       inExamples = true;
       save();
       example = { input: "", output: "", explanation: "" };

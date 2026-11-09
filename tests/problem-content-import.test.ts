@@ -111,6 +111,51 @@ assert.deepEqual(boldNumberedExamples.examples, [
   { input: "intervals = [[7, 10], [10, 12]]", output: "1", explanation: "The first meeting ends exactly when the second starts, so one room is required." },
 ]);
 
+const boldExamplesWithExternalColons = parseProblemImportText(`# Examples
+**Example 1**:
+**Input**: first = 1
+**Output**: 1
+**Explanation**: First result.
+
+**Example 2**:
+**Input**: second = 2
+**Output**: 2
+**Explanation**: Second result.
+
+**Example 3**:
+**Input**: third = 3
+**Output**: 3
+**Explanation**: Third result.
+
+## Constraints
+- Values are positive.`);
+assert.deepEqual(boldExamplesWithExternalColons.examples, [
+  { input: "first = 1", output: "1", explanation: "First result." },
+  { input: "second = 2", output: "2", explanation: "Second result." },
+  { input: "third = 3", output: "3", explanation: "Third result." },
+]);
+
+const compactExampleHeadings = parseProblemImportText(`Examples:
+Example1:
+Input: a = 1
+Output: 1
+Explanation: One.
+
+Example #2:
+Input: a = 2
+Output: 2
+Explanation: Two.
+
+3. Example 3:
+Input: a = 3
+Output: 3
+Explanation: Three.`);
+assert.deepEqual(compactExampleHeadings.examples, [
+  { input: "a = 1", output: "1", explanation: "One." },
+  { input: "a = 2", output: "2", explanation: "Two." },
+  { input: "a = 3", output: "3", explanation: "Three." },
+]);
+
 const inlineExamples = parseProblemImportText(`# Examples
 ## Example 1
 Input: nums = [1, 2]

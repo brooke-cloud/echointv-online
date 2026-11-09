@@ -39,4 +39,24 @@ const parsedJsonMismatch = parseProblemImportText(jsonMismatch);
 assert.match(parsedJsonMismatch.solution.python, /def solve\(/);
 assert.equal(buildProblemImportPreview(jsonMismatch, parsedJsonMismatch).warnings.some((warning) => warning.includes("Code was left unchanged")), true);
 
+const multipleExamplesRaw = `Examples:
+**Example 1**:
+Input: value = 1
+Output: 1
+Explanation: First.
+
+**Example 2**:
+Input: value = 2
+Output: 2
+Explanation: Second.
+
+**Example 3**:
+Input: value = 3
+Output: 3
+Explanation: Third.`;
+const multipleExamplesPreview = buildProblemImportPreview(multipleExamplesRaw, parseProblemImportText(multipleExamplesRaw));
+const examplesCandidate = multipleExamplesPreview.candidates.find((candidate) => candidate.key === "examples");
+assert.equal(examplesCandidate?.confidence, "high");
+assert.equal(Array.isArray(examplesCandidate?.value) ? examplesCandidate.value.length : 0, 3);
+
 console.log("problem import preview tests passed");
