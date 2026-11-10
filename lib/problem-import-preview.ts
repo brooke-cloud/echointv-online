@@ -87,7 +87,7 @@ export function buildProblemImportPreview(raw: string, payload: InterviewImportP
   field("category", "Category", payload.category[0] || "", /^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:category|categories)\b/i);
   field("topics", "Topics", payload.topics.join(", "), /^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:topics?|tags)\b/i);
   field("description", "Problem Description", payload.problemDescription, /^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:problem description|problem)\b/i);
-  field("examples", "Examples", payload.examples, /^\s*(?:#{1,6}\s*)?(?:\d+[.)]\s*)?(?:\*\*)?(?:examples?|samples?)(?:\s*(?:#\s*|no\.?\s*)?\d+)?(?:\*\*)?\s*[:\uFF1A]?\s*$/im);
+  field("examples", "Examples", payload.examples, /^\s*(?:#{1,6}\s*)?(?:[-*+]\s+|\d+[.)]\s+)?(?:\*\*)?(?:examples?|samples?)(?:\s*(?:#\s*|no\.?\s*)?\d+)?(?:\*\*)?\s*[.):\uFF1A\-\u2013\u2014]?/im);
   field("functionName", "Function Name", payload.functionDescription.functionName, /^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:function name|method name)\b/i);
   field("parameters", "Parameters", payload.functionDescription.parameters, /^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:parameters?|params)\b/i);
   field("returnDescription", "Return Description", payload.functionDescription.returnDescription, /^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:return description|returns?|return)\b/i);

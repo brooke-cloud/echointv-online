@@ -190,45 +190,56 @@ function parseMarkdownExamples(text: string) {
   let inExamples = false;
   let example: { input: string; output: string; explanation: string } | undefined;
   let field: "input" | "output" | "explanation" | undefined;
-  const heading = (value: string) => {
-    let normalized = value.trim().replace(/^#{1,6}\s*/, "").replace(/^\d+[.)]\s+/, "").trim();
-    // Colons are frequently placed outside Markdown emphasis: **Example 2**:
-    // Remove punctuation before and after unwrapping so both forms normalize.
-    normalized = normalized.replace(/[:\uFF1A]\s*$/, "").trim();
-    normalized = normalized.replace(/^\*\*\s*(.*?)\s*\*\*$/, "$1").trim();
-    return normalized.replace(/[:\uFF1A]\s*$/, "").trim();
+  const heading = (value: string) => value.trim()
+    .replace(/^#{1,6}\s*/, "")
+    .replace(/^\s*[-*+]\s+/, "")
+    .replace(/^\d+[.)]\s+(?=(?:\*\*)?(?:examples?|samples?|\u793a\u4f8b|\u6837\u4f8b))/i, "")
+    .replace(/\*\*/g, "")
+    .replace(/^`|`$/g, "")
+    .trim();
+  const parseExampleHeading = (value: string) => {
+    const normalized = heading(value);
+    const match = normalized.match(/^(?:examples?|samples?|\u793a\u4f8b|\u6837\u4f8b)\s*(?:#\s*|no\.?\s*)?(?:\d+|[\u4e00-\u5341]+)?\s*(?:[.):\uFF1A\-\u2013\u2014]\s*)?(.*)$/i);
+    if (!match) return undefined;
+    const remainder = match[1].trim();
+    if (remainder && !/^(?:input|output|explanation|\u8f93\u5165|\u8f93\u51fa|\u89e3\u91ca|\u8bf4\u660e)\s*[:\uFF1A]/i.test(remainder)) return undefined;
+    return { remainder };
   };
-  const exampleHeading = (value: string) => heading(value).match(/^(?:examples?|samples?|\u793a\u4f8b|\u6837\u4f8b)\s*(?:#\s*|no\.?\s*)?(?:\d+|[\u4e00-\u5341]+)?$/i);
   const save = () => {
     if (example && (example.input || example.output || example.explanation)) examples.push(example);
     example = undefined;
     field = undefined;
   };
+  const applyFieldLine = (value: string) => {
+    const trimmed = value.trim();
+    const boldInline = trimmed.match(/^\*\*\s*(input|output|explanation|\u8f93\u5165|\u8f93\u51fa|\u89e3\u91ca|\u8bf4\u660e)\s*[:\uFF1A]?\s*\*\*\s*(?:[:\uFF1A]\s*)?(.*)$/i);
+    const plainInline = trimmed.match(/^(input|output|explanation|\u8f93\u5165|\u8f93\u51fa|\u89e3\u91ca|\u8bf4\u660e)\s*[:\uFF1A]\s*(.*)$/i);
+    const inlineField = boldInline || plainInline;
+    if (!inlineField) return false;
+    example ||= { input: "", output: "", explanation: "" };
+    const inlineLabel = inlineField[1].toLowerCase();
+    field = inlineLabel === "input" || inlineLabel === "\u8f93\u5165" ? "input" : inlineLabel === "output" || inlineLabel === "\u8f93\u51fa" ? "output" : "explanation";
+    const inlineValue = inlineField[2].trim();
+    if (inlineValue) example[field] = [example[field], inlineValue].filter(Boolean).join("\n");
+    return true;
+  };
 
   for (const originalLine of text.split(/\r?\n/)) {
     const trimmed = originalLine.trim();
-    if (exampleHeading(trimmed)) {
+    const exampleHeading = parseExampleHeading(trimmed);
+    if (exampleHeading) {
       inExamples = true;
       save();
       example = { input: "", output: "", explanation: "" };
+      if (exampleHeading.remainder) applyFieldLine(exampleHeading.remainder);
       continue;
     }
     if (inExamples && isSectionBoundary(trimmed)) break;
     if (!inExamples || isFenceLine(trimmed)) continue;
 
-    const boldInline = trimmed.match(/^\*\*\s*(input|output|explanation|输入|输出|解释|说明)\s*[:：]?\s*\*\*\s*(?:[:：]\s*)?(.*)$/i);
-    const plainInline = trimmed.match(/^(input|output|explanation|输入|输出|解释|说明)\s*[:：]\s*(.*)$/i);
-    const inlineField = boldInline || plainInline;
-    if (inlineField) {
-      example ||= { input: "", output: "", explanation: "" };
-      const inlineLabel = inlineField[1].toLowerCase();
-      field = inlineLabel === "input" || inlineLabel === "输入" ? "input" : inlineLabel === "output" || inlineLabel === "输出" ? "output" : "explanation";
-      const inlineValue = inlineField[2].trim();
-      if (inlineValue) example[field] = [example[field], inlineValue].filter(Boolean).join("\n");
-      continue;
-    }
+    if (applyFieldLine(trimmed)) continue;
 
-    const label = heading(trimmed).toLowerCase();
+    const label = heading(trimmed).replace(/[:\uFF1A]\s*$/, "").toLowerCase();
     if (label === "input" || label === "\u8f93\u5165") { example ||= { input: "", output: "", explanation: "" }; field = "input"; continue; }
     if (label === "output" || label === "\u8f93\u51fa") { example ||= { input: "", output: "", explanation: "" }; field = "output"; continue; }
     if (["explanation", "\u89e3\u91ca", "\u8bf4\u660e"].includes(label)) { example ||= { input: "", output: "", explanation: "" }; field = "explanation"; continue; }

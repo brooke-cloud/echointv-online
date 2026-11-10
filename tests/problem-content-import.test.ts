@@ -156,6 +156,26 @@ assert.deepEqual(compactExampleHeadings.examples, [
   { input: "a = 3", output: "3", explanation: "Three." },
 ]);
 
+const mixedExampleBoundaries = parseProblemImportText(`## Examples
+**Example1.**
+Input: x = 1
+Output: 1
+Explanation: First.
+
+- **Example2**:
+Input: x = 2
+Output: 2
+Explanation: Second.
+
+3. Example 3 - Input: x = 3
+Output: 3
+Explanation: Third.`);
+assert.deepEqual(mixedExampleBoundaries.examples, [
+  { input: "x = 1", output: "1", explanation: "First." },
+  { input: "x = 2", output: "2", explanation: "Second." },
+  { input: "x = 3", output: "3", explanation: "Third." },
+]);
+
 const inlineExamples = parseProblemImportText(`# Examples
 ## Example 1
 Input: nums = [1, 2]
