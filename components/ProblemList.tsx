@@ -30,7 +30,6 @@ export default function ProblemList({
   const [selectedCompany, setSelectedCompany] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
   const [selectedStage, setSelectedStage] = useState("All");
-  const [selectedCategory, setSelectedCategory] = useState("All");
 
   // 1. 公司列表去重
   const companies = useMemo(() => {
@@ -43,22 +42,6 @@ export default function ProblemList({
 
   const difficulties = ["All", "Easy", "Medium", "Hard"];
   const stages = ["All", "OA (线上测评/笔试)", "VO (技术轮面/Onsite)"];
-
-  // 2. 提取一级主分类并去重
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    problems.forEach((p) => {
-      if (p.category) {
-        let mainCat = p.category.split(/[,，/]/)[0].trim();
-        mainCat = mainCat.replace(/\(.*?\)/g, "").trim();
-        mainCat = mainCat.replace(/MathAlgorithms.*/i, "Math");
-        mainCat = mainCat.replace(/SimulationAlgorithms.*/i, "Simulation");
-
-        if (mainCat) set.add(mainCat);
-      }
-    });
-    return ["All", ...Array.from(set).sort()];
-  }, [problems]);
 
   // 🌟 3. 精准判定 OA / VO（严格以数据库 stage 为准，绝不再误伤 board/load/loan 等英文单词）
   const isProblemOA = (prob: Problem) => {
@@ -99,33 +82,22 @@ export default function ProblemList({
         (isFilterOA && isOA) ||
         (isFilterVO && !isOA);
 
-      const pMainCat = p.category
-        ? p.category.split(/[,，/]/)[0].replace(/\(.*?\)/g, "").trim().toLowerCase()
-        : "";
-
-      const matchCategory =
-        selectedCategory === "All" ||
-        pMainCat === selectedCategory.toLowerCase() ||
-        p.category.toLowerCase().includes(selectedCategory.toLowerCase());
-
-      return matchSearch && matchCompany && matchDifficulty && matchStage && matchCategory;
+      return matchSearch && matchCompany && matchDifficulty && matchStage;
     });
-  }, [problems, searchQuery, selectedCompany, selectedDifficulty, selectedStage, selectedCategory]);
+  }, [problems, searchQuery, selectedCompany, selectedDifficulty, selectedStage]);
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setSelectedCompany("All");
     setSelectedDifficulty("All");
     setSelectedStage("All");
-    setSelectedCategory("All");
   };
 
   const hasActiveFilters =
     searchQuery !== "" ||
     selectedCompany !== "All" ||
     selectedDifficulty !== "All" ||
-    selectedStage !== "All" ||
-    selectedCategory !== "All";
+    selectedStage !== "All";
 
   return (
     <div className="space-y-6">
@@ -197,26 +169,6 @@ export default function ProblemList({
               }`}
             >
               {st}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 4. Category 分类筛选 */}
-      <div className="space-y-2">
-        <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">Category</div>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition ${
-                selectedCategory.toLowerCase() === cat.toLowerCase()
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-600"
-              }`}
-            >
-              {cat}
             </button>
           ))}
         </div>
