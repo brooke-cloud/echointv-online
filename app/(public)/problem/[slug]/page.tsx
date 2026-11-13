@@ -5,9 +5,6 @@ import { isDatabaseDisabled } from "@/lib/db-mode";
 import { getCurrentUser } from "@/lib/user-auth";
 import { problems as fallbackProblems } from "@/data/problems";
 import { retryAsync } from "@/lib/retry";
-import { normalizeInterviewImportPayload } from "@/lib/interview-import-schema";
-import { parseNotionInterviewQuestion } from "@/lib/interview-import-parser";
-import type { NotionContentBlock } from "@/lib/notion-interviews";
 import { normalizeProblemFunctionDescription } from "@/lib/problem-function";
 import ProblemWorkspace from "@/components/ProblemWorkspace";
 import { hasProAccess } from "@/lib/billing/entitlements";
@@ -37,14 +34,9 @@ export default async function ProblemDetailPage({ params }: Props) {
   const problem = await findProblem(slug);
   if (!problem) notFound();
 
-  const importDraft = isDatabaseDisabled() ? null : await retryAsync(() => prisma.interviewImportDraft.findFirst({ where: { problemId: problem.id }, select: { notionPageId: true, notionTitle: true, notionName: true, notionCompany: true, notionDate: true, parsedPayload: true, sourceSnapshot: true } })).catch(() => null);
-  const savedImportPayload = importDraft?.parsedPayload ? normalizeInterviewImportPayload(importDraft.parsedPayload) : undefined;
-  const snapshot = importDraft && Array.isArray(importDraft.sourceSnapshot) ? importDraft.sourceSnapshot as unknown as NotionContentBlock[] : [];
-  const reparsedImportPayload = importDraft && snapshot.length ? parseNotionInterviewQuestion({ pageId: importDraft.notionPageId, title: importDraft.notionTitle || importDraft.notionName, company: importDraft.notionCompany || "", date: importDraft.notionDate || "", blocks: snapshot }) : undefined;
-  const importedFunctionDescription = reparsedImportPayload && reparsedImportPayload.functionDescription.parameters.length > (savedImportPayload?.functionDescription.parameters.length || 0)
-    ? { ...savedImportPayload?.functionDescription, ...reparsedImportPayload.functionDescription }
-    : savedImportPayload?.functionDescription;
-  const functionDescription = normalizeProblemFunctionDescription(importedFunctionDescription, {
+  // Published problem fields are canonical. Import drafts belong to the admin
+  // review workflow and must never overwrite values edited after publication.
+  const functionDescription = normalizeProblemFunctionDescription(undefined, {
     functionName: "functionName" in problem ? problem.functionName : undefined,
     functionParameters: "functionParameters" in problem ? problem.functionParameters : undefined,
     returnDescription: "returnDescription" in problem ? problem.returnDescription : undefined,

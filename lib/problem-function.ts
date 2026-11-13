@@ -80,7 +80,11 @@ function normalizeParameter(value: unknown, index: number): ProblemFunctionParam
 }
 
 export function parseLegacyFunctionParameters(value?: string | null): ProblemFunctionParameter[] {
-  const lines = clean(value).split(/\r?\n/).flatMap((line) => line.split(/(?<=[.!?])(?=[A-Za-z_][A-Za-z0-9_]*\s*\|)/)).map((line) => line.replace(/^[-*•]\s*/, "").trim()).filter(Boolean);
+  const lines = clean(value)
+    .split(/\r?\n/)
+    .flatMap((line) => line.split(/(?<=[.!?])(?=[A-Za-z_][A-Za-z0-9_]*\s*\|[^|\r\n]+\|)/))
+    .map((line) => line.replace(/^[-*•]\s*/, "").trim())
+    .filter(Boolean);
   return lines.map((line, index) => {
     const parts = line.split("|").map((part) => part.trim()).filter(Boolean);
     if (parts.length >= 3) return { name: parts[0], type: parts[1] || "unknown", description: parts.slice(2).join(" | ") || defaultDescription(parts[0], index) };

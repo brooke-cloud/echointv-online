@@ -82,6 +82,17 @@ assert.deepEqual(joinedLegacyParameters.parameters, [
   { name: "k", type: "int", description: "The maximum number of pairs to return." },
 ]);
 
+const tensorParameters = normalizeProblemFunctionDescription(undefined, {
+  functionName: "sort_data_by_key",
+  functionParameters: "data | torch.Tensor | Input data tensor with shape [B, S, D].\nkey | torch.Tensor | Sorting key tensor with shape [B, S]. Each key corresponds to one sequence element in data.",
+  returnDescription: "Return a sorted tensor with shape [B, S, D], ordered by ascending key values.",
+});
+assert.deepEqual(tensorParameters.parameters, [
+  { name: "data", type: "torch.Tensor", description: "Input data tensor with shape [B, S, D]." },
+  { name: "key", type: "torch.Tensor", description: "Sorting key tensor with shape [B, S]. Each key corresponds to one sequence element in data." },
+]);
+assert.equal(tensorParameters.returnDescription, "Return a sorted tensor with shape [B, S, D], ordered by ascending key values.");
+
 const imported = normalizeInterviewImportPayload({
   title: "K Smallest Pairs From Two Arrays",
   company: "Google",
