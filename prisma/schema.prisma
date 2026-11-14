@@ -29,6 +29,7 @@ model Problem {
   updatedAt            DateTime              @updatedAt
   topics               String[]
   slug                 String                @unique
+  isFree               Boolean               @default(false)
   similarProblems      String?
   stage                String                @default("VO")
   solutionLanguage     String                @default("python")
@@ -56,6 +57,7 @@ model Problem {
   @@index([company])
   @@index([category])
   @@index([difficulty])
+  @@index([isFree])
   @@index([createdAt])
 }
 
@@ -100,8 +102,10 @@ model Post {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   company     String?
+  isFree      Boolean  @default(false)
 
   @@index([category])
+  @@index([isFree])
   @@index([createdAt])
 }
 

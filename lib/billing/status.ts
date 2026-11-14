@@ -1,7 +1,17 @@
-export function subscriptionProvidesAccess(subscription: { status: string; currentPeriodEnd?: Date | null }) {
+export function subscriptionProvidesAccess(
+  subscription: { status: string; currentPeriodEnd?: Date | null },
+  now = new Date(),
+) {
   const status = subscription.status.toUpperCase();
-  if (status === "ACTIVE" || status === "TRIALING") return true;
+  const periodIsCurrent = !subscription.currentPeriodEnd || subscription.currentPeriodEnd.getTime() > now.getTime();
+  if (status === "ACTIVE" || status === "TRIALING") return periodIsCurrent;
   return ["PAST_DUE", "CANCELED", "CANCELLED"].includes(status) &&
-    Boolean(subscription.currentPeriodEnd && subscription.currentPeriodEnd.getTime() > Date.now());
+    Boolean(subscription.currentPeriodEnd && subscription.currentPeriodEnd.getTime() > now.getTime());
 }
-export function grantProvidesAccess(grant: { startsAt: Date; expiresAt?: Date | null; revokedAt?: Date | null }) { const now = Date.now(); return !grant.revokedAt && grant.startsAt.getTime() <= now && (!grant.expiresAt || grant.expiresAt.getTime() > now); }
+export function grantProvidesAccess(
+  grant: { startsAt: Date; expiresAt?: Date | null; revokedAt?: Date | null },
+  now = new Date(),
+) {
+  const timestamp = now.getTime();
+  return !grant.revokedAt && grant.startsAt.getTime() <= timestamp && (!grant.expiresAt || grant.expiresAt.getTime() > timestamp);
+}

@@ -47,7 +47,7 @@ export default async function EditProblemPage({ params }: Props) {
         <h1 className="mt-6 text-3xl font-black text-slate-950">
           Edit Interview Problem
         </h1>
-        <div className="mt-8"><StructuredProblemEditor problemId={problem.id} initial={initial} legacyExample={problem.example || ""} similarProblems={problem.similarProblems || ""} /></div>
+        <div className="mt-8"><StructuredProblemEditor problemId={problem.id} initial={initial} initialIsFree={(problem as { isFree?: boolean }).isFree ?? false} legacyExample={problem.example || ""} similarProblems={problem.similarProblems || ""} /></div>
       </div>
     </main>
   );

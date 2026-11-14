@@ -32,6 +32,7 @@ type HomeLandingProps = {
   totalProblems: number;
   totalPosts: number;
   companyCount: number;
+  statsAvailable: boolean;
   questions: QuestionPreview[];
   experiences: ExperiencePreview[];
 };
@@ -47,7 +48,7 @@ function CompanyMark({ company }: { company: string }) {
   return <span className={`flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-xl font-black ${companyStyle[company] || "text-blue-600"}`}>{letter}</span>;
 }
 
-export default function HomeLanding({ totalProblems, totalPosts, companyCount, questions, experiences }: HomeLandingProps) {
+export default function HomeLanding({ totalProblems, totalPosts, companyCount, statsAvailable, questions, experiences }: HomeLandingProps) {
   const { language } = useLanguage();
   const zh = language === "zh";
   const topCompanies = ["Google", "Amazon", "Meta", "Microsoft", "Apple", "TikTok", "NVIDIA", "Databricks", "Snowflake", "Palantir"];
@@ -90,13 +91,7 @@ export default function HomeLanding({ totalProblems, totalPosts, companyCount, q
     ctaEyebrow: "READY TO START?", cta: "Join EchoINTV and Get Closer to Your Dream Offer", ctaDesc: "Access real interview questions, AI analysis, and personalized study plans.", ctaButton: "Get Started for Free",
   };
 
-  const fallbackQuestions: QuestionPreview[] = [
-    { id: 901, slug: "design-url-shortener", title: "Design a URL Shortener", company: "Google", difficulty: "Medium", category: "System Design", description: "Design a scalable URL shortener like bit.ly. How would you handle redirects, storage, and traffic spikes?" },
-    { id: 902, slug: "lru-cache", title: "Implement an LRU Cache", company: "Amazon", difficulty: "Medium", category: "Algorithms", description: "Design and implement an efficient LRU cache with constant-time access and eviction." },
-    { id: 903, slug: "behavioral", title: "Behavioral Interview Questions", company: "Meta", difficulty: "Easy", category: "Behavioral", description: "Common behavioral questions and answer frameworks for Meta interviews." },
-    { id: 904, slug: "design-youtube", title: "Design YouTube", company: "TikTok", difficulty: "Hard", category: "System Design", description: "Design a global video sharing platform with resilient upload and streaming workflows." },
-  ];
-  const visibleQuestions = [...questions, ...fallbackQuestions].slice(0, 4);
+  const visibleQuestions = questions.slice(0, 4);
 
   return (
     <main className="w-full max-w-[100vw] overflow-hidden bg-white text-slate-950">
@@ -129,7 +124,7 @@ export default function HomeLanding({ totalProblems, totalPosts, companyCount, q
           </div>
 
            <div className="mt-11 grid gap-4 sm:grid-cols-3">
-            {[[`${totalProblems || 73}+`, copy.stats[0], FileText], [`${totalPosts || 30}+`, copy.stats[1], MessageCircle], [`${companyCount || 16}+`, copy.stats[2], Building2]].map(([value, label, Icon]) => {
+            {[[statsAvailable ? `${totalProblems}+` : "—", copy.stats[0], FileText], [statsAvailable ? `${totalPosts}+` : "—", copy.stats[1], MessageCircle], [statsAvailable ? `${companyCount}+` : "—", copy.stats[2], Building2]].map(([value, label, Icon]) => {
               const StatIcon = Icon as typeof FileText;
                return <div key={String(label)} className="flex min-h-[108px] items-center gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><StatIcon className="h-7 w-7" /></span><div><div className="text-3xl font-black tabular-nums tracking-tight">{value as string}</div><div className="mt-1 text-sm text-slate-500">{label as string}</div></div></div>;
             })}

@@ -1,0 +1,111 @@
+npm notice run Echo INTV@0.1.0 dev
+npm notice run next dev
+(node:33828) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Unable to load the problem catalog. Error: Query read timeout
+    at async attempts (lib\problem-catalog.ts:47:22)
+    at async retryAsync (lib\retry.ts:22:14)
+    at async ProblemsPage (app\(public)\problem\page.tsx:23:43)
+  45 |   return retryAsync(
+  46 |     async () => {
+> 47 |       const result = await problemCatalogPool.query<ProblemCatalogItem>(`
+     |                      ^
+  48 |         SELECT
+  49 |           "id", "slug", "title", "company", "role", "difficulty",
+  50 |           "category", "description", "topics", "stage", "isFree"
+Unable to read paywall setting; using secure default. Error: Connection terminated due to connection timeout
+    at ignore-listed frames {
+  clientVersion: '7.9.1',
+  [cause]: Error: Connection terminated unexpectedly
+      at ignore-listed frames
+}
+⨯ ./app/(public)/problem/page.tsx:5:1
+Error: Module not found: Can't resolve '@/data/problem-catalog.snapshot.json'
+  [90m3 |[0m [36mimport[0m { isDatabaseDisabled } [36mfrom[0m [32m'@/lib/db-mode'[0m;
+  [90m4 |[0m [36mimport[0m { problems [36mas[0m fallbackProblems } [36mfrom[0m [32m"@/data/problems"[0m;
+[31m[1m>[0m [90m5 |[0m [36mimport[0m problemCatalogSnapshot [36mfrom[0m [32m"@/data/problem-catalog.snapshot.json"[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m [36mimport[0m { isPaywallEnabled } [36mfrom[0m [32m"@/lib/site-settings"[0m;
+  [90m7 |[0m [36mimport[0m { loadProblemCatalog } [36mfrom[0m [32m"@/lib/problem-catalog"[0m;
+  [90m8 |[0m [36mimport[0m [36mtype[0m { [33mProblemCatalogItem[0m } [36mfrom[0m [32m"@/lib/problem-catalog"[0m;
+
+Import map: aliased to relative './data/problem-catalog.snapshot.json' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/problem/page.tsx:5:1
+Error: Module not found: Can't resolve '@/data/problem-catalog.snapshot.json'
+  [90m3 |[0m [36mimport[0m { isDatabaseDisabled } [36mfrom[0m [32m'@/lib/db-mode'[0m;
+  [90m4 |[0m [36mimport[0m { problems [36mas[0m fallbackProblems } [36mfrom[0m [32m"@/data/problems"[0m;
+[31m[1m>[0m [90m5 |[0m [36mimport[0m problemCatalogSnapshot [36mfrom[0m [32m"@/data/problem-catalog.snapshot.json"[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m [36mimport[0m { isPaywallEnabled } [36mfrom[0m [32m"@/lib/site-settings"[0m;
+  [90m7 |[0m [36mimport[0m { loadProblemCatalog } [36mfrom[0m [32m"@/lib/problem-catalog"[0m;
+  [90m8 |[0m [36mimport[0m [36mtype[0m { [33mProblemCatalogItem[0m } [36mfrom[0m [32m"@/lib/problem-catalog"[0m;
+
+Import map: aliased to relative './data/problem-catalog.snapshot.json' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/problem/page.tsx:5:1
+Error: Module not found: Can't resolve '@/data/problem-catalog.snapshot.json'
+  [90m3 |[0m [36mimport[0m { isDatabaseDisabled } [36mfrom[0m [32m'@/lib/db-mode'[0m;
+  [90m4 |[0m [36mimport[0m { problems [36mas[0m fallbackProblems } [36mfrom[0m [32m"@/data/problems"[0m;
+[31m[1m>[0m [90m5 |[0m [36mimport[0m problemCatalogSnapshot [36mfrom[0m [32m"@/data/problem-catalog.snapshot.json"[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m [36mimport[0m { isPaywallEnabled } [36mfrom[0m [32m"@/lib/site-settings"[0m;
+  [90m7 |[0m [36mimport[0m { loadProblemCatalog } [36mfrom[0m [32m"@/lib/problem-catalog"[0m;
+  [90m8 |[0m [36mimport[0m [36mtype[0m { [33mProblemCatalogItem[0m } [36mfrom[0m [32m"@/lib/problem-catalog"[0m;
+
+Import map: aliased to relative './data/problem-catalog.snapshot.json' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/problem/page.tsx:5:1
+Error: Module not found: Can't resolve '@/data/problem-catalog.snapshot.json'
+  [90m3 |[0m [36mimport[0m { isDatabaseDisabled } [36mfrom[0m [32m'@/lib/db-mode'[0m;
+  [90m4 |[0m [36mimport[0m { problems [36mas[0m fallbackProblems } [36mfrom[0m [32m"@/data/problems"[0m;
+[31m[1m>[0m [90m5 |[0m [36mimport[0m problemCatalogSnapshot [36mfrom[0m [32m"@/data/problem-catalog.snapshot.json"[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m [36mimport[0m { isPaywallEnabled } [36mfrom[0m [32m"@/lib/site-settings"[0m;
+  [90m7 |[0m [36mimport[0m { loadProblemCatalog } [36mfrom[0m [32m"@/lib/problem-catalog"[0m;
+  [90m8 |[0m [36mimport[0m [36mtype[0m { [33mProblemCatalogItem[0m } [36mfrom[0m [32m"@/lib/problem-catalog"[0m;
+
+Import map: aliased to relative './data/problem-catalog.snapshot.json' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+Unable to read paywall setting; using secure default. Error: Connection terminated due to connection timeout
+    at ignore-listed frames {
+  clientVersion: '7.9.1',
+  [cause]: Error: Connection terminated unexpectedly
+      at ignore-listed frames
+}
+[browser] ./app/(public)/problem/page.tsx:5:1
+Error: Module not found: Can't resolve '@/data/problem-catalog.snapshot.json'
+  3 | import { isDatabaseDisabled } from '@/lib/db-mode';
+  4 | import { problems as fallbackProblems } from "@/data/problems";
+> 5 | import problemCatalogSnapshot from "@/data/problem-catalog.snapshot.json";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 | import { isPaywallEnabled } from "@/lib/site-settings";
+  7 | import { loadProblemCatalog } from "@/lib/problem-catalog";
+  8 | import type { ProblemCatalogItem } from "@/lib/problem-catalog";
+
+Import map: aliased to relative './data/problem-catalog.snapshot.json' inside of [project]/
+
+https://nextjs.org/docs/messages/module-not-found 

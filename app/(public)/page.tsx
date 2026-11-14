@@ -25,16 +25,16 @@ export default async function HomePage() {
     fallbackPosts.slice(0, 6).map((post, index) => ({ id: index + 1, ...post })),
   ] as const;
 
-  const [totalProblems, totalPosts, distinctCompanies, freeProblems, freePosts] =
-  isDatabaseDisabled()
-    ? fallbackData
-      : await retryAsync(() => Promise.all([
+  const liveData = isDatabaseDisabled()
+    ? null
+    : await retryAsync(() => Promise.all([
           prisma.problem.count(),
           prisma.post.count(),
           prisma.problem.findMany({ select: { company: true }, distinct: ["company"] }),
           prisma.problem.findMany({ take: 6, orderBy: { id: "asc" } }),
           prisma.post.findMany({ take: 6, orderBy: { id: "asc" } }),
-        ])).catch(() => fallbackData);
+        ])).catch(() => null);
+  const [totalProblems, totalPosts, distinctCompanies, freeProblems, freePosts] = liveData ?? fallbackData;
 const companyList = distinctCompanies.map((c) => c.company).filter(Boolean);
 const stats = [
   { value: `${totalProblems}`, label: "Interview Problems" },
@@ -47,7 +47,8 @@ const stats = [
       totalProblems={totalProblems}
       totalPosts={totalPosts}
       companyCount={companyList.length}
-      questions={freeProblems.map((problem) => ({
+      statsAvailable={Boolean(liveData)}
+      questions={(liveData ? freeProblems : []).map((problem) => ({
         id: problem.id,
         slug: problem.slug || String(problem.id),
         title: problem.title,
@@ -56,7 +57,7 @@ const stats = [
         category: problem.category,
         description: problem.description,
       }))}
-      experiences={freePosts.map((post) => ({
+      experiences={(liveData ? freePosts : []).map((post) => ({
         id: post.id,
         slug: post.slug,
         title: post.title,
@@ -228,7 +229,7 @@ const stats = [
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3">
             {freeProblems.map((p, index) => {
               const isOA =
-                (p as any).stage?.toUpperCase() === "OA" ||
+                ("stage" in p && typeof p.stage === "string" && p.stage.toUpperCase() === "OA") ||
                 p.title.toUpperCase().includes("OA") ||
                 p.category.toUpperCase().includes("OA");
 

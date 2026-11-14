@@ -142,6 +142,7 @@ export default async function AdminProblemsPage({
                 <th className="px-6 py-4">Company</th>
                 <th className="px-6 py-4">Difficulty</th>
                 <th className="px-6 py-4">Category</th>
+                <th className="px-6 py-4">Access</th>
                 <th className="px-6 py-4">Actions</th>
               </tr>
             </thead>
@@ -192,6 +193,13 @@ export default async function AdminProblemsPage({
                     {/* Category */}
                     <td className="px-6 py-5 text-gray-600">
                       {problem.category}
+                    </td>
+
+                    {/* Access */}
+                    <td className="px-6 py-5">
+                      <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${problem.isFree ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
+                        {problem.isFree ? "Free" : "Paid"}
+                      </span>
                     </td>
 
                     {/* Actions */}

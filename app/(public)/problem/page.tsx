@@ -1,10 +1,11 @@
 import ProblemList from "@/components/ProblemList";
-import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import { isDatabaseDisabled } from '@/lib/db-mode';
 import { problems as fallbackProblems } from "@/data/problems";
-import { retryAsync } from "@/lib/retry";
+import problemCatalogSnapshot from "@/data/problem-catalog.snapshot.json";
 import { isPaywallEnabled } from "@/lib/site-settings";
+import { loadProblemCatalog } from "@/lib/problem-catalog";
+import type { ProblemCatalogItem } from "@/lib/problem-catalog";
 
 
 export const metadata: Metadata = {
@@ -21,12 +22,21 @@ export default async function ProblemsPage() {
     ...problem,
     slug: problem.slug ?? String(problem.id),
   }));
-  const problems = isDatabaseDisabled()
-    ? offlineProblems
-    : await retryAsync(() => prisma.problem.findMany({
-        orderBy: { id: "asc" },
-      })).catch(() => offlineProblems);
-  const paywallEnabled = await isPaywallEnabled();
+  const catalogSnapshot = problemCatalogSnapshot as ProblemCatalogItem[];
+  const [problemResult, paywallEnabled] = await Promise.all([
+    isDatabaseDisabled()
+      ? Promise.resolve({ problems: offlineProblems, databaseUnavailable: false })
+      : process.env.NODE_ENV !== "production"
+        ? Promise.resolve({ problems: catalogSnapshot, databaseUnavailable: false })
+      : loadProblemCatalog()
+          .then((problems) => ({ problems, databaseUnavailable: false }))
+          .catch((error) => {
+            console.error("Unable to load the problem catalog.", error);
+            return { problems: catalogSnapshot, databaseUnavailable: true };
+          }),
+    isPaywallEnabled(),
+  ]);
+  const { problems, databaseUnavailable } = problemResult;
 
   return (
     <main className="min-h-screen bg-gray-50 py-16">
@@ -41,6 +51,11 @@ export default async function ProblemsPage() {
         </section>
 
         <section className="mt-10">
+          {databaseUnavailable && (
+            <div role="alert" className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+              Live updates are temporarily unavailable. Showing the latest synchronized problem catalog.
+            </div>
+          )}
           <ProblemList problems={problems} paywallEnabled={paywallEnabled} />
         </section>
       </div>

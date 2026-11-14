@@ -1,0 +1,17 @@
+▲ Next.js 16.3.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.131.1:3000
+- Environments: .env
+✓ Ready in 415ms
+✓ Running next.config.ts took 31ms
+Creating turbopack project { dir: 'F:\\Desktop\\echo', testMode: true }
+
+ GET /api/auth/me 200 in 85ms (next.js: 51ms, proxy.ts: 4ms, application-code: 31ms)
+ GET /api/auth/me 200 in 21ms (next.js: 3ms, proxy.ts: 6ms, application-code: 12ms)
+ GET /problem 200 in 36.7s (next.js: 197ms, proxy.ts: 154ms, application-code: 36.3s)
+ GET /problem 200 in 62s (next.js: 6ms, proxy.ts: 5ms, application-code: 62s)
+ GET /problem 200 in 24.4s (next.js: 5ms, proxy.ts: 6ms, application-code: 24.4s)
+ GET /problem 200 in 26.6s (next.js: 15ms, proxy.ts: 5ms, application-code: 26.6s)
+ GET /problem 200 in 5.1s (next.js: 10ms, proxy.ts: 5ms, application-code: 5.1s)
+ GET /problem 200 in 4.5s (next.js: 3ms, proxy.ts: 4ms, application-code: 4.5s)
+ GET /problem 200 in 5.1s (next.js: 4ms, proxy.ts: 4ms, application-code: 5.1s)

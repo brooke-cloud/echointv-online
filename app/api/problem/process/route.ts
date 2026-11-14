@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/user-auth";
+import { isPaywallEnabled } from "@/lib/site-settings";
+import { hasProAccess } from "@/lib/billing/entitlements";
+import { decideContentAccess } from "@/lib/content-access";
 
 export async function POST(req: Request) {
   try {
@@ -9,37 +12,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "请先登录" }, { status: 401 });
     }
 
-    const { problemId, status = "SOLVED" } = await req.json();
-    if (!problemId) {
-      return NextResponse.json({ error: "缺少 problemId" }, { status: 400 });
+    const { problemId, status = "SOLVED" } = await req.json() as { problemId?: number; status?: string };
+    if (!Number.isInteger(problemId) || Number(problemId) <= 0 || status !== "SOLVED") {
+      return NextResponse.json({ error: "A valid problem and status are required." }, { status: 400 });
     }
 
-    const existing = await (prisma as any).userProblemProgress.findUnique({
-      where: {
-        userId_problemId: {
-          userId: session.id,
-          problemId: Number(problemId),
-        },
-      },
+    const [problem, freeProblems, paywallEnabled, proAccess] = await Promise.all([
+      prisma.problem.findUnique({ where: { id: Number(problemId) }, select: { id: true, isFree: true } }),
+      prisma.problem.findMany({ take: 6, orderBy: { id: "asc" }, select: { id: true } }),
+      isPaywallEnabled(),
+      hasProAccess(session.id),
+    ]);
+    if (!problem) return NextResponse.json({ error: "Problem not found." }, { status: 404 });
+
+    const access = decideContentAccess({
+      isAuthenticated: true,
+      paywallEnabled,
+      isFree: problem.isFree || freeProblems.some((item) => item.id === problem.id),
+      isAdmin: session.role === "ADMIN",
+      hasProAccess: proAccess,
     });
-
-    if (existing) {
-      await (prisma as any).userProblemProgress.delete({
-        where: { id: existing.id },
-      });
-      return NextResponse.json({ isSolved: false, message: "已取消打卡" });
-    } else {
-      await (prisma as any).userProblemProgress.create({
-        data: {
-          userId: session.id,
-          problemId: Number(problemId),
-          status,
-        },
-      });
-      return NextResponse.json({ isSolved: true, message: "打卡成功！" });
+    if (!access.allowed) {
+      return NextResponse.json({ error: "A Pro membership is required to save progress for this problem." }, { status: 403 });
     }
+
+    await prisma.userProblemProgress.upsert({
+      where: { userId_problemId: { userId: session.id, problemId: problem.id } },
+      create: { userId: session.id, problemId: problem.id, status: "SOLVED" },
+      update: { status: "SOLVED" },
+    });
+    return NextResponse.json({ isSolved: true, message: "Progress saved." });
   } catch (error) {
     console.error("Progress error:", error);
-    return NextResponse.json({ error: "操作失败" }, { status: 500 });
+    return NextResponse.json({ error: "Unable to save progress." }, { status: 500 });
   }
 }

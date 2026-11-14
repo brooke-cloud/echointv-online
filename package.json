@@ -5,7 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "node scripts/run-tests.mjs",
+    "test:judge0": "node --import tsx tests/judge0-smoke.ts",
+    "sync:problem-catalog": "node scripts/sync-problem-catalog.mjs",
+    "typecheck": "tsc --noEmit --incremental false",
+    "lint": "eslint .",
+    "check": "npm run test && npm run typecheck && npm run lint"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

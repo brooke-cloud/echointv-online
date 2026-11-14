@@ -19,15 +19,7 @@ export default async function AdminPostsPage({
   const { search } = (await searchParams) || {};
   const trimmedSearch = search?.trim();
 
-  // 1. 查询全部文章
-  const allPosts = await prisma.post.findMany({
-    orderBy: { id: "asc" }, // 按最早入库正序
-  });
-
-  // 🌟 核心：锁定最早创建的前 6 篇（即倒序表格中处于最底部的 6 篇）为免费白名单
-  const freePostIds = new Set(allPosts.slice(0, 6).map((p) => p.id));
-
-  // 2. 根据搜索词过滤（表格按 id: desc 倒序展示）
+  // 根据搜索词过滤（表格按 id: desc 倒序展示）
   const posts = await prisma.post.findMany({
     where: trimmedSearch
       ? {
@@ -131,8 +123,7 @@ export default async function AdminPostsPage({
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-700">
                 {posts.map((post) => {
-                  // 🌟 精准判断：只有在最早 6 篇白名单内的文章才显示 Free（即最底部的 6 篇）
-                  const isFree = freePostIds.has(post.id);
+                  const isFree = post.isFree;
 
                   return (
                     <tr

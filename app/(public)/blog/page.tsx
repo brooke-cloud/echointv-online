@@ -6,7 +6,6 @@ import type { Metadata } from "next";
 import { posts as fallbackPosts } from "@/data/posts";
 import { retryAsync } from "@/lib/retry";
 import { isPaywallEnabled } from "@/lib/site-settings";
-import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -36,7 +35,9 @@ export default async function BlogPage() {
     company: post.company || undefined,
     content: post.content ?? "",
     readingTime: post.readingTime || "5 min read",
-    isFree: index < 6,
+    isFree: typeof (post as { isFree?: boolean }).isFree === "boolean"
+      ? Boolean((post as { isFree?: boolean }).isFree)
+      : index < 5,
   }));
   const paywallEnabled = await isPaywallEnabled();
 

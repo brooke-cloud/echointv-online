@@ -10,6 +10,7 @@ import { hasProAccess } from "@/lib/billing/entitlements";
 import { isPaywallEnabled } from "@/lib/site-settings";
 import { retryAsync } from "@/lib/retry";
 import AccountAccessGate from "@/components/AccountAccessGate";
+import { decideContentAccess } from "@/lib/content-access";
 import {
   Calendar,
   Clock,
@@ -77,40 +78,24 @@ export default async function BlogDetailPage({ params }: Props) {
     notFound();
   }
   // 会员权限校验
-  const freePosts = await prisma.post.findMany({
+  const explicitFree = (post as { isFree?: boolean }).isFree;
+  const freePosts = typeof explicitFree === "boolean" ? [] : await prisma.post.findMany({
     take: 5,
     orderBy: { id: "asc" },
     select: { id: true },
   });
-  const isFree = freePosts.some((p) => p.id === post.id);
-  let isMember = false;
-  const ADMIN_EMAILS = ["admin@echointv.com", "shihaoy74@gmail.com"];
-  if (session) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.id },
-    });
-    const isEmailAdmin =
-      session.email &&
-      ADMIN_EMAILS.includes(session.email.toLowerCase().trim());
-    isMember = isEmailAdmin || Boolean(user && await hasProAccess(user.id));
-  }
-  const isAdmin =
-    Boolean(
-      session?.email &&
-        ADMIN_EMAILS.includes(session.email.toLowerCase().trim())
-    ) ||
-    false;
-  let isRoleAdmin = false;
-  if (session) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.id },
-      select: { role: true },
-    });
-    isRoleAdmin = user?.role === "ADMIN";
-  }
-  const canExportPdf = isAdmin || isRoleAdmin;
+  const isFree = typeof explicitFree === "boolean" ? explicitFree : freePosts.some((p) => p.id === post.id);
+  const isAdmin = session?.role === "ADMIN";
+  const proAccess = Boolean(session && await hasProAccess(session.id));
+  const canExportPdf = isAdmin;
   const paywallEnabled = await isPaywallEnabled();
-  const canAccess = !paywallEnabled || isFree || isMember;
+  const canAccess = decideContentAccess({
+    isAuthenticated: Boolean(session),
+    paywallEnabled,
+    isFree,
+    isAdmin,
+    hasProAccess: proAccess,
+  }).allowed;
   // These links are supplementary. A transient database disconnect must not
   // take down the article page after the post itself has already loaded.
   const [prevPost, nextPost, relatedPosts] = await Promise.all([

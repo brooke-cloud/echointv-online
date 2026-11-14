@@ -18,7 +18,9 @@ const adapter = new PrismaPg({
   connectionString: databaseUrl.toString(),
   max: 5,
   idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 10_000,
+  connectionTimeoutMillis: 5_000,
+  statement_timeout: 15_000,
+  query_timeout: 15_000,
   keepAlive: true,
   keepAliveInitialDelayMillis: 10_000,
 });

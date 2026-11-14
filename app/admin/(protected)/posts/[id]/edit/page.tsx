@@ -67,6 +67,15 @@ export default async function EditPostPage({ params }: Props) {
 
           {/* Company */}
           <div>
+            <label htmlFor="isFree" className="font-medium text-gray-900">Access</label>
+            <select id="isFree" name="isFree" defaultValue={(post as { isFree?: boolean }).isFree ? "true" : "false"} className={inputStyle}>
+              <option value="false">Paid (Pro)</option>
+              <option value="true">Free</option>
+            </select>
+          </div>
+
+          {/* Company */}
+          <div>
             <label htmlFor="company" className="font-medium text-gray-900">
               Company (目标大厂)
             </label>

@@ -10,6 +10,7 @@ import ProblemWorkspace from "@/components/ProblemWorkspace";
 import { hasProAccess } from "@/lib/billing/entitlements";
 import { isPaywallEnabled } from "@/lib/site-settings";
 import AccountAccessGate from "@/components/AccountAccessGate";
+import { decideContentAccess } from "@/lib/content-access";
 
 type Props = { params: Promise<{ slug: string }> };
 export const dynamic = "force-dynamic";
@@ -44,10 +45,17 @@ export default async function ProblemDetailPage({ params }: Props) {
 
   const freeProblems = isDatabaseDisabled() ? [] : await retryAsync(() => prisma.problem.findMany({ take: 6, orderBy: { id: "asc" }, select: { id: true } })).catch(() => []);
   const isFree = typeof (problem as { isFree?: boolean }).isFree === "boolean" ? Boolean((problem as { isFree?: boolean }).isFree) : freeProblems.some((item) => item.id === problem.id);
-  const adminEmails = ["admin@echointv.com", "shihaoy74@gmail.com"];
-  const isAdmin = Boolean(session?.email && adminEmails.includes(session.email.toLowerCase().trim()));
+  const isAdmin = session?.role === "ADMIN";
   const paywallEnabled = await isPaywallEnabled();
-  const canAccess = !paywallEnabled || isFree || isAdmin || Boolean(session && await hasProAccess(session.id));
+  const proAccess = Boolean(session && await hasProAccess(session.id));
+  const access = decideContentAccess({
+    isAuthenticated: Boolean(session),
+    paywallEnabled,
+    isFree,
+    isAdmin,
+    hasProAccess: proAccess,
+  });
+  const canAccess = access.allowed;
   const [progressRecord, favoriteRecord] = session && !isDatabaseDisabled() ? await Promise.all([
     prisma.userProblemProgress.findUnique({ where: { userId_problemId: { userId: session.id, problemId: problem.id } }, select: { id: true } }),
     prisma.favorite.findUnique({ where: { userId_problemId: { userId: session.id, problemId: problem.id } }, select: { id: true } }),

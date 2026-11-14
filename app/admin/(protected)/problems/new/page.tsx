@@ -6,14 +6,65 @@ import Link from "next/link";
 import { AlertCircle, CheckCircle2, ChevronLeft, FileCode2, Plus, RotateCcw, Sparkles, Trash2, X } from "lucide-react";
 import { createProblem } from "../actions";
 import { buildProblemImportFeedback, MAX_PROBLEM_IMPORT_CHARACTERS, parseProblemImportTextWithDiagnostics } from "@/lib/problem-content-import";
-import { buildProblemImportPreview, summarizeImportCandidate, type ImportCandidateKey, type ProblemImportPreview } from "@/lib/problem-import-preview";
+import { buildProblemImportPreview, summarizeImportCandidate, type ImportCandidateKey, type ProblemImportCandidate, type ProblemImportPreview } from "@/lib/problem-import-preview";
 
 type Example = { input: string; output: string; explanation: string };
 type Parameter = { name: string; type: string; description: string };
-type Draft = { [key: string]: any; examples: Example[]; parameters: Parameter[]; solutionLanguage: "Python" | "Java" | "C++" | "JavaScript" | "SQL" };
-const emptyDraft: Draft = { title: "", company: "", role: "", difficulty: "", stage: "", category: "", topics: "", description: "", functionName: "", parameters: [], returnDescription: "", constraintsText: "", approachHowToThink: "", approachObservations: "", approachSteps: "", timeComplexity: "", spaceComplexity: "", aiInterviewFocus: "", aiKeyConcepts: "", aiCommonMistakes: "", aiFollowUpQuestions: "", aiBetterStrategy: "", solutionPython: "", solutionJava: "", solutionCpp: "", solutionJavascript: "", solutionSql: "", examples: [{ input: "", output: "", explanation: "" }], solutionLanguage: "Python" };
+type Draft = {
+  title: string; company: string; role: string; difficulty: string; stage: string; category: string; topics: string;
+  description: string; isFree: boolean; functionName: string; parameters: Parameter[]; returnDescription: string;
+  constraintsText: string; approachHowToThink: string; approachObservations: string; approachSteps: string;
+  timeComplexity: string; spaceComplexity: string; aiInterviewFocus: string; aiKeyConcepts: string;
+  aiCommonMistakes: string; aiFollowUpQuestions: string; aiBetterStrategy: string; solutionPython: string;
+  solutionJava: string; solutionCpp: string; solutionJavascript: string; solutionSql: string; examples: Example[];
+  solutionLanguage: "Python" | "Java" | "C++" | "JavaScript" | "SQL";
+};
+const emptyDraft: Draft = { title: "", company: "", role: "", difficulty: "", stage: "", category: "", topics: "", description: "", isFree: false, functionName: "", parameters: [], returnDescription: "", constraintsText: "", approachHowToThink: "", approachObservations: "", approachSteps: "", timeComplexity: "", spaceComplexity: "", aiInterviewFocus: "", aiKeyConcepts: "", aiCommonMistakes: "", aiFollowUpQuestions: "", aiBetterStrategy: "", solutionPython: "", solutionJava: "", solutionCpp: "", solutionJavascript: "", solutionSql: "", examples: [{ input: "", output: "", explanation: "" }], solutionLanguage: "Python" };
 const languageMap = { Python: "python", Java: "java", "C++": "cpp", JavaScript: "javascript", SQL: "sql" } as const;
 const solutionFieldMap = { Python: "solutionPython", Java: "solutionJava", "C++": "solutionCpp", JavaScript: "solutionJavascript", SQL: "solutionSql" } as const;
+
+function applyImportCandidate(draft: Draft, candidate: ProblemImportCandidate): Draft {
+  if (candidate.key === "examples") {
+    if (!Array.isArray(candidate.value)) return draft;
+    const examples = candidate.value.filter((item): item is Example => Boolean(item && typeof item === "object" && typeof (item as Example).input === "string" && typeof (item as Example).output === "string" && typeof (item as Example).explanation === "string"));
+    return examples.length ? { ...draft, examples } : draft;
+  }
+  if (candidate.key === "parameters") {
+    if (!Array.isArray(candidate.value)) return draft;
+    const parameters = candidate.value.filter((item): item is Parameter => Boolean(item && typeof item === "object" && typeof (item as Parameter).name === "string" && typeof (item as Parameter).type === "string" && typeof (item as Parameter).description === "string"));
+    return { ...draft, parameters };
+  }
+  if (typeof candidate.value !== "string") return draft;
+  switch (candidate.key) {
+    case "title": return { ...draft, title: candidate.value };
+    case "company": return { ...draft, company: candidate.value };
+    case "role": return { ...draft, role: candidate.value };
+    case "difficulty": return { ...draft, difficulty: candidate.value };
+    case "stage": return { ...draft, stage: candidate.value };
+    case "category": return { ...draft, category: candidate.value };
+    case "topics": return { ...draft, topics: candidate.value };
+    case "description": return { ...draft, description: candidate.value };
+    case "functionName": return { ...draft, functionName: candidate.value };
+    case "returnDescription": return { ...draft, returnDescription: candidate.value };
+    case "constraintsText": return { ...draft, constraintsText: candidate.value };
+    case "approachHowToThink": return { ...draft, approachHowToThink: candidate.value };
+    case "approachObservations": return { ...draft, approachObservations: candidate.value };
+    case "approachSteps": return { ...draft, approachSteps: candidate.value };
+    case "solutionPython": return { ...draft, solutionPython: candidate.value };
+    case "solutionJava": return { ...draft, solutionJava: candidate.value };
+    case "solutionCpp": return { ...draft, solutionCpp: candidate.value };
+    case "solutionJavascript": return { ...draft, solutionJavascript: candidate.value };
+    case "solutionSql": return { ...draft, solutionSql: candidate.value };
+    case "timeComplexity": return { ...draft, timeComplexity: candidate.value };
+    case "spaceComplexity": return { ...draft, spaceComplexity: candidate.value };
+    case "aiInterviewFocus": return { ...draft, aiInterviewFocus: candidate.value };
+    case "aiKeyConcepts": return { ...draft, aiKeyConcepts: candidate.value };
+    case "aiCommonMistakes": return { ...draft, aiCommonMistakes: candidate.value };
+    case "aiFollowUpQuestions": return { ...draft, aiFollowUpQuestions: candidate.value };
+    case "aiBetterStrategy": return { ...draft, aiBetterStrategy: candidate.value };
+    default: return draft;
+  }
+}
 
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) { return <label className="block"><span className="text-sm font-bold text-slate-800">{label}</span>{hint && <span className="ml-2 text-xs text-slate-400">{hint}</span>}{children}</label>; }
 const control = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
@@ -45,8 +96,8 @@ export default function NewProblemPage() {
     if (!selected.length) { setImportTone("error"); setImportMessage("Select at least one field to apply."); return; }
     setUndoDraft(draft);
     setDraft((current) => {
-      const next = { ...current };
-      for (const candidate of selected) next[candidate.key] = candidate.value;
+      let next = { ...current };
+      for (const candidate of selected) next = applyImportCandidate(next, candidate);
       const preferredLanguage = selected.find((candidate) => candidate.key === "solutionPython") ? "Python"
         : selected.find((candidate) => candidate.key === "solutionJava") ? "Java"
         : selected.find((candidate) => candidate.key === "solutionCpp") ? "C++"
@@ -85,7 +136,7 @@ export default function NewProblemPage() {
       </div>}
     </section>
     <form onSubmit={submit} className="mt-5 space-y-5">{error && <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-bold text-rose-700"><AlertCircle className="h-4 w-4"/>{error}</div>}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="text-lg font-black text-slate-950">1. Basic Information</h2><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><Field label="Title "><input required name="title" value={draft.title} onChange={(e) => update("title", e.target.value)} className={control}/></Field><Field label="Company *"><input required name="company" value={draft.company} onChange={(e) => update("company", e.target.value)} className={control}/></Field><Field label="Role"><input name="role" value={draft.role} onChange={(e) => update("role", e.target.value)} className={control}/></Field><Field label="Difficulty"><select name="difficulty" value={draft.difficulty} onChange={(e) => update("difficulty", e.target.value)} className={control}><option value="">Select difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select></Field><Field label="Interview Type"><select name="stage" value={draft.stage} onChange={(e) => update("stage", e.target.value)} className={control}><option value="">Select interview type</option><option value="VO">Coding Interview</option><option value="OA">Online Assessment</option></select></Field><Field label="Category *"><input required name="category" value={draft.category} onChange={(e) => update("category", e.target.value)} className={control}/></Field></div><Field label="Topics" hint="Separate with commas"><input name="topics" value={draft.topics} onChange={(e) => update("topics", e.target.value)} placeholder="Algorithms, Hash Map, Two Pointers" className={control}/></Field></section>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="text-lg font-black text-slate-950">1. Basic Information</h2><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><Field label="Title "><input required name="title" value={draft.title} onChange={(e) => update("title", e.target.value)} className={control}/></Field><Field label="Company *"><input required name="company" value={draft.company} onChange={(e) => update("company", e.target.value)} className={control}/></Field><Field label="Role"><input name="role" value={draft.role} onChange={(e) => update("role", e.target.value)} className={control}/></Field><Field label="Difficulty"><select name="difficulty" value={draft.difficulty} onChange={(e) => update("difficulty", e.target.value)} className={control}><option value="">Select difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select></Field><Field label="Interview Type"><select name="stage" value={draft.stage} onChange={(e) => update("stage", e.target.value)} className={control}><option value="">Select interview type</option><option value="VO">Coding Interview</option><option value="OA">Online Assessment</option></select></Field><Field label="Access"><select name="isFree" value={draft.isFree ? "true" : "false"} onChange={(event) => setDraft((current) => ({ ...current, isFree: event.target.value === "true" }))} className={control}><option value="false">Paid (Pro)</option><option value="true">Free</option></select></Field><Field label="Category *"><input required name="category" value={draft.category} onChange={(e) => update("category", e.target.value)} className={control}/></Field></div><Field label="Topics" hint="Separate with commas"><input name="topics" value={draft.topics} onChange={(e) => update("topics", e.target.value)} placeholder="Algorithms, Hash Map, Two Pointers" className={control}/></Field></section>
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="text-lg font-black text-slate-950">2. Problem Description</h2><p className="mt-1 text-xs text-slate-500">Markdown is supported.</p><textarea required name="description" value={draft.description} onChange={(e) => update("description", e.target.value)} rows={8} className={`${control} font-mono`} placeholder="Write the interview problem as candidates should read it."/></section>
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex items-center justify-between"><div><h2 className="text-lg font-black text-slate-950">3. Examples</h2><p className="mt-1 text-xs text-slate-500">Each example has its own input, output, and explanation.</p></div><button type="button" onClick={() => setDraft((current) => ({ ...current, examples: [...current.examples, { input: "", output: "", explanation: "" }] }))} className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700"><Plus className="h-3.5 w-3.5"/>Add Example</button></div><input type="hidden" name="examplesJson" value={JSON.stringify(draft.examples)}/><textarea className="hidden" name="example" value={legacyExample} readOnly/>{draft.examples.map((item, index) => <div key={index} className="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4"><div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-900">Example {index + 1}</h3>{draft.examples.length > 1 && <button type="button" onClick={() => setDraft((current) => ({ ...current, examples: current.examples.filter((_, itemIndex) => itemIndex !== index) }))} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 className="h-4 w-4"/></button>}</div><div className="mt-3 grid gap-3 sm:grid-cols-2"><Field label="Input"><textarea value={item.input} onChange={(e) => updateExample(index, "input", e.target.value)} rows={4} className={`${control} font-mono`}/></Field><Field label="Output"><textarea value={item.output} onChange={(e) => updateExample(index, "output", e.target.value)} rows={4} className={`${control} font-mono`}/></Field></div><Field label="Explanation"><textarea value={item.explanation} onChange={(e) => updateExample(index, "explanation", e.target.value)} rows={3} className={control}/></Field></div>)}</section>
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

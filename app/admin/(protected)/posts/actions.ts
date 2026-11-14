@@ -42,6 +42,7 @@ export async function createPost(formData: FormData) {
   const content = (formData.get("content") as string) || "";
   const category = (formData.get("category") as string)?.trim() || "Career";
   const readingTime = (formData.get("readingTime") as string)?.trim() || "5 min read";
+  const isFree = formData.get("isFree") === "true";
   const date =
     (formData.get("date") as string)?.trim() ||
     new Date().toLocaleDateString("en-US", {
@@ -83,6 +84,7 @@ export async function createPost(formData: FormData) {
       category,
       readingTime,
       date,
+      isFree,
     },
   });
 
@@ -107,6 +109,7 @@ export async function updatePost(postId: number, formData: FormData) {
   const category = (formData.get("category") as string)?.trim() || "Career";
   const readingTime = (formData.get("readingTime") as string)?.trim() || "5 min read";
   const date = (formData.get("date") as string)?.trim();
+  const isFree = formData.get("isFree") === "true";
 
   if (!postId) throw new Error("无效的文章 ID");
   if (!title) throw new Error("文章标题不能为空");
@@ -129,6 +132,7 @@ export async function updatePost(postId: number, formData: FormData) {
       ...(slug ? { slug } : {}), // 🌟 保存修改后的 Slug
       ...(company !== undefined ? { company } : {}),
       ...(date ? { date } : {}),
+      isFree,
     },
   });
 
